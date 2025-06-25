@@ -1,4 +1,4 @@
-name: grain_flutter
+name: grain
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -57,7 +57,7 @@ dependencies:
       ref: main # or the branch/commit you want
       path: packages/xrpc
   http: ^1.4.0
-
+  flutter_dotenv: ^5.2.1
 
 dependency_overrides:
   atproto_oauth:
@@ -132,3 +132,5 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+  assets:
+    - .env

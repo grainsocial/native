@@ -1,4 +1,4 @@
-# grain_flutter
+# grain
 
 A new Flutter project.
 

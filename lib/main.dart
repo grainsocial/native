@@ -1,9 +1,14 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
-import 'package:grain_flutter/api.dart';
-import 'package:grain_flutter/gallery.dart';
+import 'package:grain/api.dart';
+import 'package:grain/gallery.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-void main() {
+Future<void> main() async {
+  if (!kReleaseMode) {
+    await dotenv.load(fileName: '.env');
+  }
   runApp(const MyApp());
 }
 
@@ -82,10 +87,10 @@ class _SplashPageState extends State<SplashPage> {
       _signingIn = true;
     });
     try {
+      final apiUrl = dotenv.env['API_URL'] ?? 'http://localhost:8080';
       final redirectedUrl = await FlutterWebAuth2.authenticate(
         url:
-            'http://localhost:8080/oauth/login?client=native&handle=' +
-            Uri.encodeComponent(handle),
+            '$apiUrl/oauth/login?client=native&handle=${Uri.encodeComponent(handle)}',
         callbackUrlScheme: 'grainflutter',
       );
       final uri = Uri.parse(redirectedUrl);

@@ -2,11 +2,14 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'profile.dart';
 import 'gallery.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ApiService {
   String? _accessToken;
   Profile? currentUser;
   List<Gallery> galleries = [];
+
+  String get _apiUrl => dotenv.env['API_URL'] ?? 'http://localhost:8080';
 
   void setToken(String token) {
     _accessToken = token;
@@ -15,7 +18,7 @@ class ApiService {
   Future<void> fetchProfile() async {
     if (_accessToken == null) return;
     final response = await http.get(
-      Uri.parse('http://localhost:8080/xrpc/social.grain.actor.getProfile'),
+      Uri.parse('$_apiUrl/xrpc/social.grain.actor.getProfile'),
       headers: {'Authorization': 'Bearer $_accessToken'},
     );
     if (response.statusCode == 200) {
@@ -29,9 +32,7 @@ class ApiService {
   Future<List<Gallery>> fetchActorGalleries() async {
     if (_accessToken == null) return [];
     final response = await http.get(
-      Uri.parse(
-        'http://localhost:8080/xrpc/social.grain.gallery.getActorGalleries',
-      ),
+      Uri.parse('$_apiUrl/xrpc/social.grain.gallery.getActorGalleries'),
       headers: {'Authorization': 'Bearer $_accessToken'},
     );
     if (response.statusCode == 200) {
@@ -44,7 +45,7 @@ class ApiService {
       }
       return galleries;
     } else {
-      throw Exception('Failed to load galleries: \\${response.statusCode}');
+      throw Exception('Failed to load galleries: ${response.statusCode}');
     }
   }
 }
