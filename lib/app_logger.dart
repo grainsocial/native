@@ -36,8 +36,19 @@ class SimpleLogPrinter extends LogPrinter {
   }
 }
 
+class DualLogOutput extends LogOutput {
+  final _inMemory = InMemoryLogOutput();
+  final _console = ConsoleOutput();
+
+  @override
+  void output(OutputEvent event) {
+    _inMemory.output(event);
+    _console.output(event);
+  }
+}
+
 // Globally available logger
 final appLogger = Logger(
-  printer: SimpleLogPrinter('AppLogger'),
-  output: InMemoryLogOutput(),
+  printer: SimpleLogPrinter('Grain'),
+  output: DualLogOutput(),
 );
