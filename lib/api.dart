@@ -1,9 +1,9 @@
 import 'package:grain/app_logger.dart';
+import 'package:grain/main.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'profile.dart';
 import 'gallery.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'notification.dart' as grain;
 
 class ApiService {
@@ -12,7 +12,7 @@ class ApiService {
   Profile? loadedProfile;
   List<Gallery> galleries = [];
 
-  String get _apiUrl => dotenv.env['API_URL'] ?? 'http://localhost:8080';
+  String get _apiUrl => AppConfig.apiUrl;
 
   void setToken(String token) {
     _accessToken = token;
@@ -31,7 +31,9 @@ class ApiService {
       loadedProfile = Profile.fromJson(data);
       return loadedProfile;
     } else {
-      appLogger.e('Failed to load profile: status ${response.statusCode}, body: ${response.body}');
+      appLogger.e(
+        'Failed to load profile: status ${response.statusCode}, body: ${response.body}',
+      );
       throw Exception('Failed to load profile: \\${response.statusCode}');
     }
   }
@@ -56,7 +58,9 @@ class ApiService {
       }
       return galleries;
     } else {
-      appLogger.e('Failed to load galleries: status ${response.statusCode}, body: ${response.body}');
+      appLogger.e(
+        'Failed to load galleries: status ${response.statusCode}, body: ${response.body}',
+      );
       throw Exception('Failed to load galleries: ${response.statusCode}');
     }
   }
@@ -73,7 +77,9 @@ class ApiService {
       final data = json.decode(response.body);
       currentUser = Profile.fromJson(data);
     } else {
-      appLogger.e('Failed to fetch current user: status ${response.statusCode}, body: ${response.body}');
+      appLogger.e(
+        'Failed to fetch current user: status ${response.statusCode}, body: ${response.body}',
+      );
       throw Exception('Failed to fetch current user: \\${response.statusCode}');
     }
   }
@@ -97,7 +103,9 @@ class ApiService {
         return [];
       }
     } else {
-      appLogger.e('Failed to load timeline: status ${response.statusCode}, body: ${response.body}');
+      appLogger.e(
+        'Failed to load timeline: status ${response.statusCode}, body: ${response.body}',
+      );
       throw Exception('Failed to load timeline: ${response.statusCode}');
     }
   }
@@ -114,7 +122,9 @@ class ApiService {
       final data = json.decode(response.body);
       return Gallery.fromJson(data);
     } else {
-      appLogger.e('Failed to load gallery: status ${response.statusCode}, body: ${response.body}');
+      appLogger.e(
+        'Failed to load gallery: status ${response.statusCode}, body: ${response.body}',
+      );
       throw Exception('Failed to load gallery: ${response.statusCode}');
     }
   }
@@ -132,7 +142,9 @@ class ApiService {
     if (response.statusCode == 200) {
       return json.decode(response.body) as Map<String, dynamic>;
     } else {
-      appLogger.e('Failed to load gallery thread: status ${response.statusCode}, body: ${response.body}');
+      appLogger.e(
+        'Failed to load gallery thread: status ${response.statusCode}, body: ${response.body}',
+      );
       throw Exception('Failed to load gallery thread: ${response.statusCode}');
     }
   }
@@ -159,7 +171,9 @@ class ApiService {
         return [];
       }
     } else {
-      appLogger.e('Failed to load notifications: status ${response.statusCode}, body: ${response.body}');
+      appLogger.e(
+        'Failed to load notifications: status ${response.statusCode}, body: ${response.body}',
+      );
       throw Exception('Failed to load notifications: \\${response.statusCode}');
     }
   }
