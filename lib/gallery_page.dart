@@ -170,24 +170,9 @@ class _GalleryPageState extends State<GalleryPage> {
                     icon: const Icon(Icons.comment_outlined),
                     onPressed: () {
                       Navigator.of(context).push(
-                        PageRouteBuilder(
-                          pageBuilder:
-                              (context, animation, secondaryAnimation) =>
-                                  CommentsPage(galleryUri: gallery.uri),
-                          transitionsBuilder:
-                              (context, animation, secondaryAnimation, child) {
-                                const begin = Offset(1.0, 0.0);
-                                const end = Offset.zero;
-                                const curve = Curves.ease;
-                                final tween = Tween(
-                                  begin: begin,
-                                  end: end,
-                                ).chain(CurveTween(curve: curve));
-                                return SlideTransition(
-                                  position: animation.drive(tween),
-                                  child: child,
-                                );
-                              },
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              CommentsPage(galleryUri: gallery.uri),
                         ),
                       );
                     },
