@@ -6,6 +6,7 @@ import 'package:grain/comments_page.dart';
 import 'profile_page.dart';
 import 'utils.dart';
 import 'log_page.dart';
+import 'app_version_text.dart';
 
 class TimelineItem {
   final Gallery gallery;
@@ -263,7 +264,13 @@ class _MyHomePageState extends State<MyHomePage> {
                 );
               },
             ),
+
             // Add more menu items here
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16.0),
+              child: Center(child: AppVersionText()),
+            ),
           ],
         ),
       ),
