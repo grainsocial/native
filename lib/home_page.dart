@@ -7,6 +7,7 @@ import 'profile_page.dart';
 import 'utils.dart';
 import 'log_page.dart';
 import 'app_version_text.dart';
+import 'notifications_page.dart';
 
 class TimelineItem {
   final Gallery gallery;
@@ -33,6 +34,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   bool showProfile = false;
+  bool showNotifications = false;
   List<TimelineItem> _timeline = [];
   bool _timelineLoading = true;
 
@@ -60,7 +62,11 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  int get _navIndex => showProfile ? 1 : 0;
+  int get _navIndex {
+    if (showProfile) return 2;
+    if (showNotifications) return 1;
+    return 0;
+  }
 
   Widget _buildTimeline() {
     if (_timelineLoading) {
@@ -99,20 +105,38 @@ class _MyHomePageState extends State<MyHomePage> {
               children: [
                 Row(
                   children: [
-                    CircleAvatar(
-                      radius: 18,
-                      backgroundImage:
-                          actor?.avatar != null && actor!.avatar.isNotEmpty
-                          ? NetworkImage(actor.avatar)
-                          : null,
-                      backgroundColor: Colors.transparent,
-                      child: (actor == null || actor.avatar.isEmpty)
-                          ? const Icon(
-                              Icons.account_circle,
-                              size: 24,
-                              color: Colors.grey,
-                            )
-                          : null,
+                    GestureDetector(
+                      onTap: () async {
+                        if (actor != null) {
+                          final loadedProfile = await apiService.fetchProfile(
+                            did: actor.did,
+                          );
+                          if (!mounted) return;
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => ProfilePage(
+                                profile: loadedProfile,
+                                showAppBar: true,
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                      child: CircleAvatar(
+                        radius: 18,
+                        backgroundImage:
+                            actor?.avatar != null && actor!.avatar.isNotEmpty
+                            ? NetworkImage(actor.avatar)
+                            : null,
+                        backgroundColor: Colors.transparent,
+                        child: (actor == null || actor.avatar.isEmpty)
+                            ? const Icon(
+                                Icons.account_circle,
+                                size: 24,
+                                color: Colors.grey,
+                              )
+                            : null,
+                      ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -180,13 +204,12 @@ class _MyHomePageState extends State<MyHomePage> {
                     IconButton(
                       icon: Icon(
                         gallery.viewer != null && gallery.viewer!['fav'] != null
-                            ? Icons
-                                  .favorite // filled
-                            : Icons.favorite_border, // outline
+                            ? Icons.favorite
+                            : Icons.favorite_border,
                         color:
                             gallery.viewer != null &&
                                 gallery.viewer!['fav'] != null
-                            ? Color(0xFFEC4899) // Tailwind pink-500
+                            ? Color(0xFFEC4899)
                             : Colors.black54,
                       ),
                       onPressed: () {},
@@ -254,6 +277,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 Navigator.pop(context);
                 setState(() {
                   showProfile = false;
+                  showNotifications = false;
                 });
               },
             ),
@@ -264,6 +288,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 Navigator.pop(context);
                 setState(() {
                   showProfile = true;
+                  showNotifications = false;
                 });
               },
             ),
@@ -277,7 +302,6 @@ class _MyHomePageState extends State<MyHomePage> {
                 );
               },
             ),
-
             // Add more menu items here
             const SizedBox(height: 16),
             Padding(
@@ -287,26 +311,43 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
       ),
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        leading: Builder(
-          builder: (context) => IconButton(
-            icon: const Icon(Icons.menu),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-          ),
-        ),
-        title: Text(widget.title),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Sign Out',
-            onPressed: widget.onSignOut,
-          ),
-        ],
-      ),
+      appBar: showProfile
+          ? null
+          : AppBar(
+              backgroundColor: Colors.white,
+              leading: Builder(
+                builder: (context) => IconButton(
+                  icon: const Icon(Icons.menu),
+                  onPressed: () => Scaffold.of(context).openDrawer(),
+                ),
+              ),
+              title: Text(
+                showNotifications ? 'Notifications' : widget.title,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.logout),
+                  tooltip: 'Sign Out',
+                  onPressed: widget.onSignOut,
+                ),
+              ],
+            ),
       body: Stack(
         children: [
-          if (!showProfile) _buildTimeline(),
+          if (!showProfile && !showNotifications) _buildTimeline(),
+          if (showNotifications)
+            Positioned.fill(
+              child: Material(
+                color: Theme.of(
+                  context,
+                ).scaffoldBackgroundColor.withOpacity(0.98),
+                child: SafeArea(child: Stack(children: [NotificationsPage()])),
+              ),
+            ),
           if (showProfile)
             Positioned.fill(
               child: Material(
@@ -315,7 +356,12 @@ class _MyHomePageState extends State<MyHomePage> {
                 ).scaffoldBackgroundColor.withOpacity(0.98),
                 child: SafeArea(
                   child: Stack(
-                    children: [ProfilePage(profile: apiService.currentUser)],
+                    children: [
+                      ProfilePage(
+                        profile: apiService.currentUser,
+                        showAppBar: false,
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -325,48 +371,40 @@ class _MyHomePageState extends State<MyHomePage> {
       bottomNavigationBar: BottomNavigationBar(
         items: <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-            icon: _navIndex == 0
-                ? const Icon(Icons.home)
-                : const Icon(Icons.home_outlined),
+            icon: Icon(_navIndex == 0 ? Icons.home : Icons.home_outlined),
             label: '',
           ),
           BottomNavigationBarItem(
-            icon: GestureDetector(
-              onTap: () {
-                setState(() {
-                  showProfile = true;
-                });
-              },
-              child: apiService.currentUser?.avatar != null
-                  ? Padding(
-                      padding: const EdgeInsets.only(top: 6, bottom: 6),
-                      child: Container(
-                        width: 38,
-                        height: 38,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: _navIndex == 1
-                                ? Colors.lightBlue
-                                : Colors.transparent,
-                            width: 3,
-                          ),
-                        ),
-                        child: CircleAvatar(
-                          radius: 16,
-                          backgroundImage: NetworkImage(
-                            apiService.currentUser!.avatar,
-                          ),
-                          backgroundColor: Colors.transparent,
-                        ),
+            icon: const Icon(Icons.notifications_none),
+            label: '',
+          ),
+          BottomNavigationBarItem(
+            icon: apiService.currentUser?.avatar != null
+                ? Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: _navIndex == 2
+                            ? Colors.lightBlue
+                            : Colors.transparent,
+                        width: 3,
                       ),
-                    )
-                  : Icon(
-                      _navIndex == 1
-                          ? Icons.account_circle
-                          : Icons.account_circle_outlined,
                     ),
-            ),
+                    child: CircleAvatar(
+                      radius: 12,
+                      backgroundImage: NetworkImage(
+                        apiService.currentUser!.avatar,
+                      ),
+                      backgroundColor: Colors.transparent,
+                    ),
+                  )
+                : Icon(
+                    _navIndex == 2
+                        ? Icons.account_circle
+                        : Icons.account_circle_outlined,
+                  ),
             label: '',
           ),
         ],
@@ -375,15 +413,28 @@ class _MyHomePageState extends State<MyHomePage> {
         onTap: (index) {
           if (index == 1) {
             setState(() {
-              showProfile = true;
+              showNotifications = true;
+              showProfile = false;
             });
             return;
           }
-          setState(() {
-            showProfile = false;
-          });
+          if (index == 2) {
+            setState(() {
+              showProfile = true;
+              showNotifications = false;
+            });
+            return;
+          }
+          if (index == 0) {
+            setState(() {
+              showProfile = false;
+              showNotifications = false;
+            });
+            return;
+          }
         },
         type: BottomNavigationBarType.fixed,
+        iconSize: 24, // Default icon size
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {},

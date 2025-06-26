@@ -4,10 +4,12 @@ import 'dart:convert';
 import 'profile.dart';
 import 'gallery.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'notification.dart' as grain;
 
 class ApiService {
   String? _accessToken;
   Profile? currentUser;
+  Profile? loadedProfile;
   List<Gallery> galleries = [];
 
   String get _apiUrl => dotenv.env['API_URL'] ?? 'http://localhost:8080';
@@ -16,8 +18,8 @@ class ApiService {
     _accessToken = token;
   }
 
-  Future<void> fetchProfile({required String did}) async {
-    if (_accessToken == null) return;
+  Future<Profile?> fetchProfile({required String did}) async {
+    if (_accessToken == null) return null;
     appLogger.i('Fetching profile for actor: $did with token: $_accessToken');
 
     final response = await http.get(
@@ -26,9 +28,10 @@ class ApiService {
     );
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      currentUser = Profile.fromJson(data);
+      loadedProfile = Profile.fromJson(data);
+      return loadedProfile;
     } else {
-      throw Exception('Failed to load profile: ${response.statusCode}');
+      throw Exception('Failed to load profile: \\${response.statusCode}');
     }
   }
 
@@ -125,6 +128,32 @@ class ApiService {
       return json.decode(response.body) as Map<String, dynamic>;
     } else {
       throw Exception('Failed to load gallery thread: ${response.statusCode}');
+    }
+  }
+
+  Future<List<grain.Notification>> getNotifications() async {
+    if (_accessToken == null) return [];
+    appLogger.i('Fetching notifications with token: $_accessToken');
+
+    final response = await http.get(
+      Uri.parse('$_apiUrl/xrpc/social.grain.notification.getNotifications'),
+      headers: {'Authorization': 'Bearer $_accessToken'},
+    );
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final items = data['notifications'] as List<dynamic>?;
+      if (items != null) {
+        return items
+            .map(
+              (item) =>
+                  grain.Notification.fromJson(item as Map<String, dynamic>),
+            )
+            .toList();
+      } else {
+        return [];
+      }
+    } else {
+      throw Exception('Failed to load notifications: \\${response.statusCode}');
     }
   }
 }
