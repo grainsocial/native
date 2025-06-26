@@ -252,6 +252,19 @@ class _MyHomePageState extends State<MyHomePage> {
               title: const Text('Home'),
               onTap: () {
                 Navigator.pop(context);
+                setState(() {
+                  showProfile = false;
+                });
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.person),
+              title: const Text('Profile'),
+              onTap: () {
+                Navigator.pop(context);
+                setState(() {
+                  showProfile = true;
+                });
               },
             ),
             ListTile(
