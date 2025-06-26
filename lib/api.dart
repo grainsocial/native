@@ -15,10 +15,10 @@ class ApiService {
     _accessToken = token;
   }
 
-  Future<void> fetchProfile() async {
+  Future<void> fetchProfile({required String did}) async {
     if (_accessToken == null) return;
     final response = await http.get(
-      Uri.parse('$_apiUrl/xrpc/social.grain.actor.getProfile'),
+      Uri.parse('$_apiUrl/xrpc/social.grain.actor.getProfile?actor=$did'),
       headers: {'Authorization': 'Bearer $_accessToken'},
     );
     if (response.statusCode == 200) {
@@ -29,10 +29,12 @@ class ApiService {
     }
   }
 
-  Future<List<Gallery>> fetchActorGalleries() async {
+  Future<List<Gallery>> fetchActorGalleries({required String did}) async {
     if (_accessToken == null) return [];
     final response = await http.get(
-      Uri.parse('$_apiUrl/xrpc/social.grain.gallery.getActorGalleries'),
+      Uri.parse(
+        '$_apiUrl/xrpc/social.grain.gallery.getActorGalleries?actor=$did',
+      ),
       headers: {'Authorization': 'Bearer $_accessToken'},
     );
     if (response.statusCode == 200) {
@@ -46,6 +48,68 @@ class ApiService {
       return galleries;
     } else {
       throw Exception('Failed to load galleries: ${response.statusCode}');
+    }
+  }
+
+  Future<void> fetchCurrentUser() async {
+    if (_accessToken == null) return;
+    final response = await http.get(
+      Uri.parse('$_apiUrl/oauth/session'),
+      headers: {'Authorization': 'Bearer $_accessToken'},
+    );
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      currentUser = Profile.fromJson(data);
+    } else {
+      throw Exception('Failed to fetch current user: \\${response.statusCode}');
+    }
+  }
+
+  Future<List<Gallery>> getTimeline() async {
+    if (_accessToken == null) return [];
+    final response = await http.get(
+      Uri.parse('$_apiUrl/xrpc/social.grain.feed.getTimeline'),
+      headers: {'Authorization': 'Bearer $_accessToken'},
+    );
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final items = data['feed'] as List<dynamic>?;
+      if (items != null) {
+        return items
+            .map((item) => Gallery.fromJson(item as Map<String, dynamic>))
+            .toList();
+      } else {
+        return [];
+      }
+    } else {
+      throw Exception('Failed to load timeline: ${response.statusCode}');
+    }
+  }
+
+  Future<Gallery?> getGallery({required String uri}) async {
+    if (_accessToken == null) return null;
+    final response = await http.get(
+      Uri.parse('$_apiUrl/xrpc/social.grain.gallery.getGallery?uri=$uri'),
+      headers: {'Authorization': 'Bearer $_accessToken'},
+    );
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return Gallery.fromJson(data);
+    } else {
+      throw Exception('Failed to load gallery: ${response.statusCode}');
+    }
+  }
+
+  Future<Map<String, dynamic>> getGalleryThread({required String uri}) async {
+    if (_accessToken == null) throw Exception('No access token');
+    final response = await http.get(
+      Uri.parse('$_apiUrl/xrpc/social.grain.gallery.getGalleryThread?uri=$uri'),
+      headers: {'Authorization': 'Bearer $_accessToken'},
+    );
+    if (response.statusCode == 200) {
+      return json.decode(response.body) as Map<String, dynamic>;
+    } else {
+      throw Exception('Failed to load gallery thread: ${response.statusCode}');
     }
   }
 }

@@ -1,9 +1,16 @@
+import 'profile.dart';
+
 class Gallery {
   final String uri;
   final String cid;
   final String title;
   final String description;
   final List<GalleryPhoto> items;
+  final Profile? creator;
+  final String? createdAt;
+  final int? favCount;
+  final int? commentCount;
+  final Map<String, dynamic>? viewer;
 
   Gallery({
     required this.uri,
@@ -11,6 +18,11 @@ class Gallery {
     required this.title,
     required this.description,
     required this.items,
+    this.creator,
+    this.createdAt,
+    this.favCount,
+    this.commentCount,
+    this.viewer,
   });
 
   factory Gallery.fromJson(Map<String, dynamic> json) {
@@ -22,6 +34,13 @@ class Gallery {
       items: (json['items'] as List<dynamic>? ?? [])
           .map((item) => GalleryPhoto.fromJson(item as Map<String, dynamic>))
           .toList(),
+      creator: json['creator'] != null
+          ? Profile.fromJson(json['creator'])
+          : null,
+      createdAt: json['createdAt'],
+      favCount: json['favCount'],
+      commentCount: json['commentCount'],
+      viewer: json['viewer'],
     );
   }
 }
