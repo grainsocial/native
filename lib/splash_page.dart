@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
+import 'package:grain/app_logger.dart';
 import 'package:grain/main.dart';
 
 class SplashPage extends StatefulWidget {
@@ -31,6 +32,11 @@ class _SplashPageState extends State<SplashPage> {
       );
       final uri = Uri.parse(redirectedUrl);
       final token = uri.queryParameters['token'];
+
+      appLogger.i('Redirected URL: $redirectedUrl');
+      appLogger.i('User signed in with handle: $handle');
+      appLogger.i('Token: $token');
+
       if (token == null) {
         throw Exception('Token not found in redirect URL');
       }

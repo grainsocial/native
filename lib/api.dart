@@ -1,3 +1,4 @@
+import 'package:grain/app_logger.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'profile.dart';
@@ -17,6 +18,8 @@ class ApiService {
 
   Future<void> fetchProfile({required String did}) async {
     if (_accessToken == null) return;
+    appLogger.i('Fetching profile for actor: $did with token: $_accessToken');
+
     final response = await http.get(
       Uri.parse('$_apiUrl/xrpc/social.grain.actor.getProfile?actor=$did'),
       headers: {'Authorization': 'Bearer $_accessToken'},
@@ -31,6 +34,8 @@ class ApiService {
 
   Future<List<Gallery>> fetchActorGalleries({required String did}) async {
     if (_accessToken == null) return [];
+    appLogger.i('Fetching galleries for actor: $did with token: $_accessToken');
+
     final response = await http.get(
       Uri.parse(
         '$_apiUrl/xrpc/social.grain.gallery.getActorGalleries?actor=$did',
@@ -53,6 +58,8 @@ class ApiService {
 
   Future<void> fetchCurrentUser() async {
     if (_accessToken == null) return;
+    appLogger.i('Fetching current user with token: $_accessToken');
+
     final response = await http.get(
       Uri.parse('$_apiUrl/oauth/session'),
       headers: {'Authorization': 'Bearer $_accessToken'},
@@ -67,6 +74,8 @@ class ApiService {
 
   Future<List<Gallery>> getTimeline() async {
     if (_accessToken == null) return [];
+    appLogger.i('Fetching timeline with token: $_accessToken');
+
     final response = await http.get(
       Uri.parse('$_apiUrl/xrpc/social.grain.feed.getTimeline'),
       headers: {'Authorization': 'Bearer $_accessToken'},
@@ -88,6 +97,8 @@ class ApiService {
 
   Future<Gallery?> getGallery({required String uri}) async {
     if (_accessToken == null) return null;
+    appLogger.i('Fetching gallery for URI: $uri with token: $_accessToken');
+
     final response = await http.get(
       Uri.parse('$_apiUrl/xrpc/social.grain.gallery.getGallery?uri=$uri'),
       headers: {'Authorization': 'Bearer $_accessToken'},
@@ -102,6 +113,10 @@ class ApiService {
 
   Future<Map<String, dynamic>> getGalleryThread({required String uri}) async {
     if (_accessToken == null) throw Exception('No access token');
+    appLogger.i(
+      'Fetching gallery thread for URI: $uri with token: $_accessToken',
+    );
+
     final response = await http.get(
       Uri.parse('$_apiUrl/xrpc/social.grain.gallery.getGalleryThread?uri=$uri'),
       headers: {'Authorization': 'Bearer $_accessToken'},

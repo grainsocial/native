@@ -5,6 +5,7 @@ import 'package:grain/gallery_page.dart';
 import 'package:grain/comments_page.dart';
 import 'profile_page.dart';
 import 'utils.dart';
+import 'log_page.dart';
 
 class TimelineItem {
   final Gallery gallery;
@@ -205,7 +206,8 @@ class _MyHomePageState extends State<MyHomePage> {
                       onPressed: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (context) => CommentsPage(galleryUri: gallery.uri),
+                            builder: (context) =>
+                                CommentsPage(galleryUri: gallery.uri),
                           ),
                         );
                       },
@@ -231,8 +233,48 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.inversePrimary,
+              ),
+              child: Text(
+                'Menu',
+                style: TextStyle(color: Colors.white, fontSize: 24),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.home),
+              title: const Text('Home'),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.list_alt),
+              title: const Text('Logs'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => const LogPage()),
+                );
+              },
+            ),
+            // Add more menu items here
+          ],
+        ),
+      ),
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+        ),
         title: Text(widget.title),
         actions: [
           IconButton(

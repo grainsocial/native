@@ -101,7 +101,7 @@ class _CommentsList extends StatelessWidget {
           if (repliesByParent[comment.uri] != null)
             ...repliesByParent[comment.uri]!
                 .map((reply) => _buildCommentTree(reply, repliesByParent, depth + 1))
-                .toList(),
+                ,
         ],
       ),
     );

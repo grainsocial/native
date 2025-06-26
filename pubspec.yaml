@@ -59,6 +59,7 @@ dependencies:
   http: ^1.4.0
   flutter_dotenv: ^5.2.1
   google_fonts: ^6.2.1
+  logger: ^2.6.0
 
 dependency_overrides:
   atproto_oauth:
