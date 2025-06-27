@@ -167,8 +167,11 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                   child: ListView.separated(
                     padding: EdgeInsets.zero,
                     itemCount: timeline.length,
-                    separatorBuilder: (context, index) =>
-                        Divider(color: Colors.grey[200], thickness: 1, height: 1),
+                    separatorBuilder: (context, index) => Divider(
+                      color: Colors.grey[200],
+                      thickness: 1,
+                      height: 1,
+                    ),
                     itemBuilder: (context, index) {
                       final item = timeline[index];
                       final gallery = item.gallery;
@@ -221,7 +224,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                                           ? NetworkImage(actor.avatar)
                                           : null,
                                       backgroundColor: Colors.transparent,
-                                      child: (actor == null || actor.avatar.isEmpty)
+                                      child:
+                                          (actor == null ||
+                                              actor.avatar.isEmpty)
                                           ? const Icon(
                                               Icons.account_circle,
                                               size: 24,
@@ -249,9 +254,12 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                                             overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
-                                        if (actor != null && actor.handle.isNotEmpty)
+                                        if (actor != null &&
+                                            actor.handle.isNotEmpty)
                                           Padding(
-                                            padding: const EdgeInsets.only(left: 6),
+                                            padding: const EdgeInsets.only(
+                                              left: 6,
+                                            ),
                                             child: Text(
                                               '@${actor.handle}',
                                               style: TextStyle(
@@ -289,7 +297,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                                 ),
                                 child: Text(
                                   gallery.title,
-                                  style: const TextStyle(fontWeight: FontWeight.w600),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
                             if (gallery.description.isNotEmpty)
@@ -350,8 +360,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                                     onTap: () {
                                       Navigator.of(context).push(
                                         MaterialPageRoute(
-                                          builder: (context) =>
-                                              CommentsPage(galleryUri: gallery.uri),
+                                          builder: (context) => CommentsPage(
+                                            galleryUri: gallery.uri,
+                                          ),
                                         ),
                                       );
                                     },
@@ -421,228 +432,227 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             hasScrollBody: false,
             child: Center(
               child: Text(
-                following ? 'No following timeline items.' : 'No timeline items.',
+                following
+                    ? 'No following timeline items.'
+                    : 'No timeline items.',
               ),
             ),
           ),
         if (timeline.isNotEmpty)
           SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final item = timeline[index];
-                final gallery = item.gallery;
-                final actor = gallery.creator;
-                final createdAt = gallery.createdAt;
-                return GestureDetector(
-                  onTap: () {
-                    if (gallery.uri.isNotEmpty) {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => GalleryPage(
-                            uri: gallery.uri,
-                            currentUserDid: apiService.currentUser?.did,
-                          ),
-                        ),
-                      );
-                    }
-                  },
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 8,
-                          horizontal: 8,
-                        ),
-                        child: Row(
-                          children: [
-                            GestureDetector(
-                              onTap: () async {
-                                if (actor != null) {
-                                  final loadedProfile = await apiService
-                                      .fetchProfile(did: actor.did);
-                                  if (!mounted) return;
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (context) => ProfilePage(
-                                        profile: loadedProfile,
-                                        showAppBar: true,
-                                      ),
-                                    ),
-                                  );
-                                }
-                              },
-                              child: CircleAvatar(
-                                radius: 18,
-                                backgroundImage:
-                                    actor?.avatar != null &&
-                                            actor!.avatar.isNotEmpty
-                                        ? NetworkImage(actor.avatar)
-                                        : null,
-                                backgroundColor: Colors.transparent,
-                                child: (actor == null || actor.avatar.isEmpty)
-                                    ? const Icon(
-                                        Icons.account_circle,
-                                        size: 24,
-                                        color: Colors.grey,
-                                      )
-                                    : null,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Row(
-                                children: [
-                                  Flexible(
-                                    child: Text(
-                                      actor != null &&
-                                              actor.displayName.isNotEmpty
-                                          ? actor.displayName
-                                          : (actor != null
-                                                ? '@${actor.handle}'
-                                                : ''),
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 16,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  if (actor != null && actor.handle.isNotEmpty)
-                                    Padding(
-                                      padding: const EdgeInsets.only(left: 6),
-                                      child: Text(
-                                        '@${actor.handle}',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.grey[800],
-                                          fontWeight: FontWeight.normal,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                        maxLines: 1,
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                            Text(
-                              formatRelativeTime(createdAt ?? ''),
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ],
+            delegate: SliverChildBuilderDelegate((context, index) {
+              final item = timeline[index];
+              final gallery = item.gallery;
+              final actor = gallery.creator;
+              final createdAt = gallery.createdAt;
+              return GestureDetector(
+                onTap: () {
+                  if (gallery.uri.isNotEmpty) {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => GalleryPage(
+                          uri: gallery.uri,
+                          currentUserDid: apiService.currentUser?.did,
                         ),
                       ),
-                      if (gallery.items.isNotEmpty)
-                        GalleryPreview(gallery: gallery)
-                      else
-                        const SizedBox.shrink(),
-                      if (gallery.title.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(
-                            top: 8,
-                            left: 8,
-                            right: 8,
-                          ),
-                          child: Text(
-                            gallery.title,
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      if (gallery.description.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(
-                            top: 4,
-                            left: 8,
-                            right: 8,
-                          ),
-                          child: Text(
-                            gallery.description,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: Colors.black54,
-                            ),
-                          ),
-                        ),
-                      const SizedBox(height: 8),
-                      Padding(
-                        padding: const EdgeInsets.only(
-                          top: 12,
-                          bottom: 12,
-                          left: 12,
-                          right: 12,
-                        ),
-                        child: Row(
-                          children: [
-                            GestureDetector(
-                              child: Padding(
-                                padding: const EdgeInsets.only(right: 12),
-                                child: Icon(
-                                  size: 18,
-                                  gallery.viewer != null &&
-                                          gallery.viewer!['fav'] != null
-                                      ? FontAwesomeIcons.solidHeart
-                                      : FontAwesomeIcons.heart,
-                                  color:
-                                      gallery.viewer != null &&
-                                              gallery.viewer!['fav'] != null
-                                          ? Color(0xFFEC4899)
-                                          : Colors.black54,
-                                ),
-                              ),
-                              onTap: () {},
-                            ),
-                            if (gallery.favCount != null)
-                              Padding(
-                                padding: const EdgeInsets.only(right: 12),
-                                child: Text(
-                                  gallery.favCount.toString(),
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.black54,
-                                  ),
-                                ),
-                              ),
-                            GestureDetector(
-                              onTap: () {
+                    );
+                  }
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 8,
+                        horizontal: 8,
+                      ),
+                      child: Row(
+                        children: [
+                          GestureDetector(
+                            onTap: () async {
+                              if (actor != null) {
+                                final loadedProfile = await apiService
+                                    .fetchProfile(did: actor.did);
+                                if (!mounted) return;
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
-                                    builder: (context) =>
-                                        CommentsPage(galleryUri: gallery.uri),
+                                    builder: (context) => ProfilePage(
+                                      profile: loadedProfile,
+                                      showAppBar: true,
+                                    ),
                                   ),
                                 );
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.only(
-                                  left: 12,
-                                  right: 12,
+                              }
+                            },
+                            child: CircleAvatar(
+                              radius: 18,
+                              backgroundImage:
+                                  actor?.avatar != null &&
+                                      actor!.avatar.isNotEmpty
+                                  ? NetworkImage(actor.avatar)
+                                  : null,
+                              backgroundColor: Colors.transparent,
+                              child: (actor == null || actor.avatar.isEmpty)
+                                  ? const Icon(
+                                      Icons.account_circle,
+                                      size: 24,
+                                      color: Colors.grey,
+                                    )
+                                  : null,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    actor != null &&
+                                            actor.displayName.isNotEmpty
+                                        ? actor.displayName
+                                        : (actor != null
+                                              ? '@${actor.handle}'
+                                              : ''),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 16,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
-                                child: Icon(
-                                  FontAwesomeIcons.comment,
-                                  size: 18,
-                                  color: Colors.black54,
-                                ),
+                                if (actor != null && actor.handle.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 6),
+                                    child: Text(
+                                      '@${actor.handle}',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey[800],
+                                        fontWeight: FontWeight.normal,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          Text(
+                            formatRelativeTime(createdAt ?? ''),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (gallery.items.isNotEmpty)
+                      GalleryPreview(gallery: gallery)
+                    else
+                      const SizedBox.shrink(),
+                    if (gallery.title.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          top: 8,
+                          left: 8,
+                          right: 8,
+                        ),
+                        child: Text(
+                          gallery.title,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    if (gallery.description.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          top: 4,
+                          left: 8,
+                          right: 8,
+                        ),
+                        child: Text(
+                          gallery.description,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 8),
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        top: 12,
+                        bottom: 12,
+                        left: 12,
+                        right: 12,
+                      ),
+                      child: Row(
+                        children: [
+                          GestureDetector(
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 12),
+                              child: Icon(
+                                size: 18,
+                                gallery.viewer != null &&
+                                        gallery.viewer!['fav'] != null
+                                    ? FontAwesomeIcons.solidHeart
+                                    : FontAwesomeIcons.heart,
+                                color:
+                                    gallery.viewer != null &&
+                                        gallery.viewer!['fav'] != null
+                                    ? Color(0xFFEC4899)
+                                    : Colors.black54,
                               ),
                             ),
-                            if (gallery.commentCount != null)
-                              Text(
-                                gallery.commentCount.toString(),
+                            onTap: () {},
+                          ),
+                          if (gallery.favCount != null)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 12),
+                              child: Text(
+                                gallery.favCount.toString(),
                                 style: const TextStyle(
                                   fontSize: 14,
                                   color: Colors.black54,
                                 ),
                               ),
-                          ],
-                        ),
+                            ),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      CommentsPage(galleryUri: gallery.uri),
+                                ),
+                              );
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                left: 12,
+                                right: 12,
+                              ),
+                              child: Icon(
+                                FontAwesomeIcons.comment,
+                                size: 18,
+                                color: Colors.black54,
+                              ),
+                            ),
+                          ),
+                          if (gallery.commentCount != null)
+                            Text(
+                              gallery.commentCount.toString(),
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Colors.black54,
+                              ),
+                            ),
+                        ],
                       ),
-                    ],
-                  ),
-                );
-              },
-              childCount: timeline.length,
-            ),
+                    ),
+                  ],
+                ),
+              );
+            }, childCount: timeline.length),
           ),
       ],
     );
@@ -792,6 +802,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
           ),
         ),
         body: NestedScrollView(
+          floatHeaderSlivers:
+              true, // Ensures SliverAppBar snaps instantly on scroll up
           headerSliverBuilder: (context, innerBoxIsScrolled) => [
             SliverOverlapAbsorber(
               handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
@@ -858,8 +870,14 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             controller: _tabController,
             physics: const NeverScrollableScrollPhysics(),
             children: [
-              Builder(builder: (context) => _buildTimelineSliver(context, following: false)),
-              Builder(builder: (context) => _buildTimelineSliver(context, following: true)),
+              Builder(
+                builder: (context) =>
+                    _buildTimelineSliver(context, following: false),
+              ),
+              Builder(
+                builder: (context) =>
+                    _buildTimelineSliver(context, following: true),
+              ),
             ],
           ),
         ),
