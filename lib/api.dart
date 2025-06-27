@@ -2,9 +2,9 @@ import 'package:grain/app_logger.dart';
 import 'package:grain/main.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'profile.dart';
-import 'gallery.dart';
-import 'notification.dart' as grain;
+import 'models/profile.dart';
+import 'models/gallery.dart';
+import 'models/notification.dart' as grain;
 
 class ApiService {
   String? _accessToken;
@@ -175,6 +175,31 @@ class ApiService {
         'Failed to load notifications: status ${response.statusCode}, body: ${response.body}',
       );
       throw Exception('Failed to load notifications: \\${response.statusCode}');
+    }
+  }
+
+  Future<List<Profile>> searchActors(String query) async {
+    if (_accessToken == null) return [];
+    appLogger.i('Searching actors for query: $query with token: $_accessToken');
+
+    final response = await http.get(
+      Uri.parse('$_apiUrl/xrpc/social.grain.actor.searchActors?q=$query'),
+      headers: {'Authorization': 'Bearer $_accessToken'},
+    );
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final items = data['actors'] as List<dynamic>?;
+      if (items != null) {
+        appLogger.i('Found ${items.length} actors for query: $query');
+        return items.map((item) => Profile.fromJson(item)).toList();
+      } else {
+        return [];
+      }
+    } else {
+      appLogger.e(
+        'Failed to search actors: status ${response.statusCode}, body: ${response.body}',
+      );
+      throw Exception('Failed to search actors: ${response.statusCode}');
     }
   }
 }

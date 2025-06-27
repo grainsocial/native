@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:grain/api.dart';
-import 'package:grain/comment.dart';
-import 'package:grain/gallery.dart';
+import 'package:grain/models/comment.dart';
+import 'package:grain/models/gallery.dart';
 import 'package:grain/utils.dart';
 
 class CommentsPage extends StatefulWidget {
@@ -49,26 +49,31 @@ class _CommentsPageState extends State<CommentsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Comments')),
+      appBar: AppBar(
+        title: const Text(
+          'Comments',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        ),
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error
           ? const Center(child: Text('Failed to load comments.'))
           : ListView(
-        padding: const EdgeInsets.all(12),
-        children: [
-          if (_gallery != null)
-            Text(
-              _gallery!.title,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
+              padding: const EdgeInsets.all(12),
+              children: [
+                if (_gallery != null)
+                  Text(
+                    _gallery!.title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+                const SizedBox(height: 12),
+                _CommentsList(comments: _comments),
+              ],
             ),
-          const SizedBox(height: 12),
-          _CommentsList(comments: _comments),
-        ],
-      ),
     );
   }
 }
@@ -91,7 +96,11 @@ class _CommentsList extends StatelessWidget {
     return comments.where((c) => c.replyTo == null).toList();
   }
 
-  Widget _buildCommentTree(Comment comment, Map<String, List<Comment>> repliesByParent, int depth) {
+  Widget _buildCommentTree(
+    Comment comment,
+    Map<String, List<Comment>> repliesByParent,
+    int depth,
+  ) {
     return Padding(
       padding: EdgeInsets.only(left: depth * 18.0),
       child: Column(
@@ -99,9 +108,9 @@ class _CommentsList extends StatelessWidget {
         children: [
           _CommentTile(comment: comment),
           if (repliesByParent[comment.uri] != null)
-            ...repliesByParent[comment.uri]!
-                .map((reply) => _buildCommentTree(reply, repliesByParent, depth + 1))
-                ,
+            ...repliesByParent[comment.uri]!.map(
+              (reply) => _buildCommentTree(reply, repliesByParent, depth + 1),
+            ),
         ],
       ),
     );
@@ -161,8 +170,8 @@ class _CommentTile extends StatelessWidget {
                       ),
                       child: AspectRatio(
                         aspectRatio:
-                        (comment.focus!.width > 0 &&
-                            comment.focus!.height > 0)
+                            (comment.focus!.width > 0 &&
+                                comment.focus!.height > 0)
                             ? comment.focus!.width / comment.focus!.height
                             : 1.0,
                         child: ClipRRect(

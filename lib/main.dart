@@ -4,8 +4,8 @@ import 'package:grain/api.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:grain/app_logger.dart';
-import 'package:grain/splash_page.dart';
-import 'package:grain/home_page.dart';
+import 'package:grain/screens/splash_page.dart';
+import 'package:grain/screens/home_page.dart';
 
 class AppConfig {
   static late final String apiUrl;

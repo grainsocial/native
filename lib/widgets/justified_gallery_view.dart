@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:grain/gallery.dart';
+import 'package:grain/models/gallery.dart';
 
 class JustifiedGalleryView extends StatelessWidget {
   final List<GalleryPhoto> items;

@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:grain/api.dart';
-import 'package:grain/gallery.dart';
-import 'package:grain/gallery_page.dart';
-import 'package:grain/comments_page.dart';
+import 'package:grain/models/gallery.dart';
+import 'gallery_page.dart';
+import 'comments_page.dart';
 import 'profile_page.dart';
-import 'utils.dart';
+import 'package:grain/utils.dart';
 import 'log_page.dart';
-import 'app_version_text.dart';
+import 'package:grain/widgets/app_version_text.dart';
 import 'notifications_page.dart';
+import 'explore_page.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class TimelineItem {
   final Gallery gallery;
@@ -35,6 +37,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   bool showProfile = false;
   bool showNotifications = false;
+  bool showExplore = false;
   List<TimelineItem> _timeline = [];
   bool _timelineLoading = true;
 
@@ -63,8 +66,9 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   int get _navIndex {
-    if (showProfile) return 2;
-    if (showNotifications) return 1;
+    if (showProfile) return 3;
+    if (showNotifications) return 2;
+    if (showExplore) return 1;
     return 0;
   }
 
@@ -262,38 +266,121 @@ class _MyHomePageState extends State<MyHomePage> {
           padding: EdgeInsets.zero,
           children: [
             DrawerHeader(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.inversePrimary,
-              ),
-              child: Text(
-                'Menu',
-                style: TextStyle(color: Colors.white, fontSize: 24),
+              decoration: BoxDecoration(color: Colors.white),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircleAvatar(
+                    radius: 22, // Smaller avatar
+                    backgroundImage:
+                        apiService.currentUser?.avatar != null &&
+                            apiService.currentUser!.avatar.isNotEmpty
+                        ? NetworkImage(apiService.currentUser!.avatar)
+                        : null,
+                    backgroundColor: Colors.white,
+                    child:
+                        (apiService.currentUser == null ||
+                            apiService.currentUser!.avatar.isEmpty)
+                        ? const Icon(
+                            Icons.account_circle,
+                            size: 32,
+                            color: Colors.grey,
+                          )
+                        : null,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    apiService.currentUser?.displayName ?? '',
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 15, // Smaller text
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (apiService.currentUser?.handle != null)
+                    Text(
+                      '@${apiService.currentUser!.handle}',
+                      style: const TextStyle(
+                        color: Colors.black54,
+                        fontSize: 11, // Smaller text
+                      ),
+                    ),
+                  const SizedBox(height: 6),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Text(
+                        (apiService.currentUser?.followersCount ?? 0)
+                            .toString(),
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Text(
+                        'Followers',
+                        style: TextStyle(color: Colors.black54, fontSize: 10),
+                      ),
+                      const SizedBox(width: 16),
+                      Text(
+                        (apiService.currentUser?.followsCount ?? 0).toString(),
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Text(
+                        'Following',
+                        style: TextStyle(color: Colors.black54, fontSize: 10),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
             ListTile(
-              leading: const Icon(Icons.home),
+              leading: const Icon(FontAwesomeIcons.house),
               title: const Text('Home'),
               onTap: () {
                 Navigator.pop(context);
                 setState(() {
                   showProfile = false;
                   showNotifications = false;
+                  showExplore = false;
                 });
               },
             ),
             ListTile(
-              leading: const Icon(Icons.person),
+              leading: const Icon(FontAwesomeIcons.magnifyingGlass),
+              title: const Text('Explore'),
+              onTap: () {
+                Navigator.pop(context);
+                setState(() {
+                  showExplore = true;
+                  showProfile = false;
+                  showNotifications = false;
+                });
+              },
+            ),
+            ListTile(
+              leading: const Icon(FontAwesomeIcons.user),
               title: const Text('Profile'),
               onTap: () {
                 Navigator.pop(context);
                 setState(() {
                   showProfile = true;
                   showNotifications = false;
+                  showExplore = false;
                 });
               },
             ),
             ListTile(
-              leading: const Icon(Icons.list_alt),
+              leading: const Icon(FontAwesomeIcons.list),
               title: const Text('Logs'),
               onTap: () {
                 Navigator.pop(context);
@@ -322,7 +409,11 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ),
               title: Text(
-                showNotifications ? 'Notifications' : widget.title,
+                showNotifications
+                    ? 'Notifications'
+                    : showExplore
+                    ? 'Explore'
+                    : widget.title,
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -338,7 +429,17 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
       body: Stack(
         children: [
-          if (!showProfile && !showNotifications) _buildTimeline(),
+          if (!showProfile && !showNotifications && !showExplore)
+            _buildTimeline(),
+          if (showExplore)
+            Positioned.fill(
+              child: Material(
+                color: Theme.of(
+                  context,
+                ).scaffoldBackgroundColor.withOpacity(0.98),
+                child: SafeArea(child: Stack(children: [ExplorePage()])),
+              ),
+            ),
           if (showNotifications)
             Positioned.fill(
               child: Material(
@@ -371,39 +472,56 @@ class _MyHomePageState extends State<MyHomePage> {
       bottomNavigationBar: BottomNavigationBar(
         items: <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-            icon: Icon(_navIndex == 0 ? Icons.home : Icons.home_outlined),
+            icon: Transform.translate(
+              offset: const Offset(0, 10),
+              child: FaIcon(FontAwesomeIcons.house),
+            ),
             label: '',
           ),
           BottomNavigationBarItem(
-            icon: const Icon(Icons.notifications_none),
+            icon: Transform.translate(
+              offset: const Offset(0, 10),
+              child: const FaIcon(FontAwesomeIcons.magnifyingGlass),
+            ),
+            label: '',
+          ),
+          BottomNavigationBarItem(
+            icon: Transform.translate(
+              offset: const Offset(0, 10),
+              child: const FaIcon(FontAwesomeIcons.solidBell),
+            ),
             label: '',
           ),
           BottomNavigationBarItem(
             icon: apiService.currentUser?.avatar != null
-                ? Container(
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: _navIndex == 2
-                            ? Colors.lightBlue
-                            : Colors.transparent,
-                        width: 3,
+                ? Transform.translate(
+                    offset: const Offset(0, 10),
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: _navIndex == 3
+                              ? Colors.lightBlue
+                              : Colors.transparent,
+                          width: 3,
+                        ),
                       ),
-                    ),
-                    child: CircleAvatar(
-                      radius: 12,
-                      backgroundImage: NetworkImage(
-                        apiService.currentUser!.avatar,
+                      child: ClipOval(
+                        child: Image.network(
+                          apiService.currentUser!.avatar,
+                          fit: BoxFit.cover,
+                          width: 24,
+                          height: 24,
+                        ),
                       ),
-                      backgroundColor: Colors.transparent,
                     ),
                   )
-                : Icon(
-                    _navIndex == 2
-                        ? Icons.account_circle
-                        : Icons.account_circle_outlined,
+                : FaIcon(
+                    _navIndex == 3
+                        ? FontAwesomeIcons.solidUser
+                        : FontAwesomeIcons.user,
                   ),
             label: '',
           ),
@@ -411,16 +529,26 @@ class _MyHomePageState extends State<MyHomePage> {
         currentIndex: _navIndex,
         selectedItemColor: Colors.lightBlue,
         onTap: (index) {
-          if (index == 1) {
+          if (index == 2) {
             setState(() {
               showNotifications = true;
               showProfile = false;
+              showExplore = false;
             });
             return;
           }
-          if (index == 2) {
+          if (index == 3) {
             setState(() {
               showProfile = true;
+              showNotifications = false;
+              showExplore = false;
+            });
+            return;
+          }
+          if (index == 1) {
+            setState(() {
+              showExplore = true;
+              showProfile = false;
               showNotifications = false;
             });
             return;
@@ -429,6 +557,7 @@ class _MyHomePageState extends State<MyHomePage> {
             setState(() {
               showProfile = false;
               showNotifications = false;
+              showExplore = false;
             });
             return;
           }

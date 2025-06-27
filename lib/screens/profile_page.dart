@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:grain/gallery.dart';
+import 'package:grain/models/gallery.dart';
 import 'package:grain/api.dart';
-import 'package:grain/gallery_page.dart';
+import 'gallery_page.dart';
 
 class ProfilePage extends StatefulWidget {
   final dynamic profile;

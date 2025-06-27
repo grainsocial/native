@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'api.dart';
-import 'notification.dart' as grain;
-import 'utils.dart';
+import 'package:grain/api.dart';
+import 'package:grain/models/notification.dart' as grain;
+import 'package:grain/utils.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:grain/gallery.dart';
+import 'package:grain/models/gallery.dart';
 import 'package:grain/api.dart';
-import 'package:grain/justified_gallery_view.dart';
-import 'package:grain/comments_page.dart';
-import 'utils.dart';
+import 'package:grain/widgets/justified_gallery_view.dart';
+import 'package:grain/utils.dart';
+import './comments_page.dart';
 
 class GalleryPage extends StatefulWidget {
   final String uri;
@@ -62,7 +62,10 @@ class _GalleryPageState extends State<GalleryPage> {
         .toList();
     return Scaffold(
       appBar: AppBar(
-        title: Text(gallery.title.isNotEmpty ? gallery.title : 'Gallery'),
+        title: Text(
+          gallery.title.isNotEmpty ? gallery.title : 'Gallery',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
