@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:grain/api.dart';
 import 'package:grain/models/gallery.dart';
+import 'package:grain/widgets/gallery_preview.dart';
 import 'gallery_page.dart';
 import 'comments_page.dart';
 import 'profile_page.dart';
@@ -80,7 +81,6 @@ class _MyHomePageState extends State<MyHomePage> {
       return const Center(child: Text('No timeline items.'));
     }
     return ListView.separated(
-      physics: const SlowScrollPhysics(speedFactor: 1.5),
       itemCount: _timeline.length,
       separatorBuilder: (context, index) =>
           Divider(color: Colors.grey[200], thickness: 1, height: 1),
@@ -182,7 +182,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                if (gallery.items.isNotEmpty) _GalleryPreview(gallery: gallery),
+                if (gallery.items.isNotEmpty) GalleryPreview(gallery: gallery),
                 if (gallery.title.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
@@ -203,52 +203,67 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                   ),
                 const SizedBox(height: 8),
-                Row(
-                  children: [
-                    IconButton(
-                      icon: Icon(
-                        gallery.viewer != null && gallery.viewer!['fav'] != null
-                            ? Icons.favorite
-                            : Icons.favorite_border,
-                        color:
+                Padding(
+                  padding: const EdgeInsets.only(top: 8, bottom: 8),
+                  child: Row(
+                    children: [
+                      GestureDetector(
+                        child: Padding(
+                          padding: const EdgeInsets.only(right: 12),
+                          child: Icon(
+                            size: 18,
                             gallery.viewer != null &&
-                                gallery.viewer!['fav'] != null
-                            ? Color(0xFFEC4899)
-                            : Colors.black54,
+                                    gallery.viewer!['fav'] != null
+                                ? FontAwesomeIcons.solidHeart
+                                : FontAwesomeIcons.heart,
+                            color:
+                                gallery.viewer != null &&
+                                    gallery.viewer!['fav'] != null
+                                ? Color(0xFFEC4899)
+                                : Colors.black54,
+                          ),
+                        ),
+                        onTap: () {},
                       ),
-                      onPressed: () {},
-                    ),
-                    if (gallery.favCount != null)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 12),
-                        child: Text(
-                          gallery.favCount.toString(),
+                      if (gallery.favCount != null)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 12),
+                          child: Text(
+                            gallery.favCount.toString(),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.black54,
+                            ),
+                          ),
+                        ),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  CommentsPage(galleryUri: gallery.uri),
+                            ),
+                          );
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 12, right: 12),
+                          child: Icon(
+                            FontAwesomeIcons.comment,
+                            size: 18,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ),
+                      if (gallery.commentCount != null)
+                        Text(
+                          gallery.commentCount.toString(),
                           style: const TextStyle(
                             fontSize: 14,
                             color: Colors.black54,
                           ),
                         ),
-                      ),
-                    IconButton(
-                      icon: const Icon(Icons.comment_outlined),
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                CommentsPage(galleryUri: gallery.uri),
-                          ),
-                        );
-                      },
-                    ),
-                    if (gallery.commentCount != null)
-                      Text(
-                        gallery.commentCount.toString(),
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.black54,
-                        ),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -571,121 +586,5 @@ class _MyHomePageState extends State<MyHomePage> {
         child: const Icon(Icons.add),
       ),
     );
-  }
-}
-
-class _GalleryPreview extends StatelessWidget {
-  final Gallery gallery;
-
-  const _GalleryPreview({required this.gallery});
-
-  @override
-  Widget build(BuildContext context) {
-    final photos = gallery.items
-        .where((item) => item.thumb.isNotEmpty)
-        .toList();
-    return AspectRatio(
-      aspectRatio: 3 / 2,
-      child: Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: photos.isNotEmpty
-                ? Image.network(
-                    photos[0].thumb,
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: double.infinity,
-                  )
-                : Container(color: Colors.grey[300]),
-          ),
-          const SizedBox(width: 2),
-          Expanded(
-            flex: 1,
-            child: Column(
-              children: [
-                Expanded(
-                  child: photos.length > 1
-                      ? Image.network(
-                          photos[1].thumb,
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          height: double.infinity,
-                        )
-                      : Container(color: Colors.grey[200]),
-                ),
-                const SizedBox(height: 2),
-                Expanded(
-                  child: photos.length > 2
-                      ? Image.network(
-                          photos[2].thumb,
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          height: double.infinity,
-                        )
-                      : Container(color: Colors.grey[200]),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class GalleryThumbnail extends StatelessWidget {
-  final Gallery gallery;
-
-  const GalleryThumbnail({super.key, required this.gallery});
-
-  @override
-  Widget build(BuildContext context) {
-    if (gallery.items.isEmpty) {
-      return Container(color: Colors.grey[300]);
-    }
-    final firstItem = gallery.items[0];
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: Image.network(
-        firstItem.thumb,
-        fit: BoxFit.cover,
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
-          return Center(
-            child: CircularProgressIndicator(
-              value: loadingProgress.expectedTotalBytes != null
-                  ? loadingProgress.cumulativeBytesLoaded /
-                        (loadingProgress.expectedTotalBytes ?? 1)
-                  : null,
-            ),
-          );
-        },
-        errorBuilder: (context, error, stackTrace) {
-          return Container(
-            color: Colors.grey[300],
-            child: const Icon(Icons.broken_image, color: Colors.grey),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class SlowScrollPhysics extends ScrollPhysics {
-  final double speedFactor;
-  const SlowScrollPhysics({this.speedFactor = 1.5, super.parent});
-
-  @override
-  SlowScrollPhysics applyTo(ScrollPhysics? ancestor) {
-    return SlowScrollPhysics(
-      speedFactor: speedFactor,
-      parent: buildParent(ancestor),
-    );
-  }
-
-  @override
-  double applyPhysicsToUserOffset(ScrollMetrics position, double offset) {
-    return super.applyPhysicsToUserOffset(position, offset / speedFactor);
   }
 }
