@@ -29,17 +29,46 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   bool showProfile = false;
   bool showNotifications = false;
   bool showExplore = false;
   List<TimelineItem> _timeline = [];
   bool _timelineLoading = true;
+  int _tabIndex = 0; // 0 = Timeline, 1 = Following
+  TabController? _tabController;
 
   @override
   void initState() {
     super.initState();
     _fetchTimeline();
+    _initTabController();
+  }
+
+  void _initTabController() {
+    _tabController?.dispose();
+    _tabController = TabController(length: 2, vsync: this, initialIndex: _tabIndex);
+    _tabController!.addListener(() {
+      if (_tabController!.index != _tabIndex) {
+        setState(() {
+          _tabIndex = _tabController!.index;
+        });
+      }
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant MyHomePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_tabController == null || _tabController!.length != 2) {
+      _initTabController();
+    }
+  }
+
+  @override
+  void dispose() {
+    _tabController?.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchTimeline() async {
@@ -273,6 +302,352 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    // Home page: show tabs
+    if (!showProfile && !showNotifications && !showExplore) {
+      if (_tabController == null) _initTabController();
+      return Scaffold(
+        drawer: Drawer(
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              DrawerHeader(
+                decoration: BoxDecoration(color: Colors.white),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircleAvatar(
+                      radius: 22, // Smaller avatar
+                      backgroundImage:
+                          apiService.currentUser?.avatar != null &&
+                                  apiService.currentUser!.avatar.isNotEmpty
+                              ? NetworkImage(apiService.currentUser!.avatar)
+                              : null,
+                      backgroundColor: Colors.white,
+                      child: (apiService.currentUser == null ||
+                              apiService.currentUser!.avatar.isEmpty)
+                          ? const Icon(
+                              Icons.account_circle,
+                              size: 32,
+                              color: Colors.grey,
+                            )
+                          : null,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      apiService.currentUser?.displayName ?? '',
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 15, // Smaller text
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    if (apiService.currentUser?.handle != null)
+                      Text(
+                        '@${apiService.currentUser!.handle}',
+                        style: const TextStyle(
+                          color: Colors.black54,
+                          fontSize: 11, // Smaller text
+                        ),
+                      ),
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Text(
+                          (apiService.currentUser?.followersCount ?? 0)
+                              .toString(),
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        const Text(
+                          'Followers',
+                          style: TextStyle(color: Colors.black54, fontSize: 10),
+                        ),
+                        const SizedBox(width: 16),
+                        Text(
+                          (apiService.currentUser?.followsCount ?? 0).toString(),
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        const Text(
+                          'Following',
+                          style: TextStyle(color: Colors.black54, fontSize: 10),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              ListTile(
+                leading: const Icon(FontAwesomeIcons.house),
+                title: const Text('Home'),
+                onTap: () {
+                  Navigator.pop(context);
+                  setState(() {
+                    showProfile = false;
+                    showNotifications = false;
+                    showExplore = false;
+                  });
+                },
+              ),
+              ListTile(
+                leading: const Icon(FontAwesomeIcons.magnifyingGlass),
+                title: const Text('Explore'),
+                onTap: () {
+                  Navigator.pop(context);
+                  setState(() {
+                    showExplore = true;
+                    showProfile = false;
+                    showNotifications = false;
+                  });
+                },
+              ),
+              ListTile(
+                leading: const Icon(FontAwesomeIcons.user),
+                title: const Text('Profile'),
+                onTap: () {
+                  Navigator.pop(context);
+                  setState(() {
+                    showProfile = true;
+                    showNotifications = false;
+                    showExplore = false;
+                  });
+                },
+              ),
+              ListTile(
+                leading: const Icon(FontAwesomeIcons.list),
+                title: const Text('Logs'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const LogPage()),
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16.0),
+                child: Center(child: AppVersionText()),
+              ),
+            ],
+          ),
+        ),
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(49),
+            child: Container(
+              color: Colors.white,
+              child: TabBar(
+                controller: _tabController,
+                indicator: UnderlineTabIndicator(
+                  borderSide: const BorderSide(
+                    color: Color(0xFF0EA5E9),
+                    width: 3,
+                  ),
+                  insets: EdgeInsets.zero,
+                ),
+                indicatorSize: TabBarIndicatorSize.tab,
+                labelColor: const Color(0xFF0EA5E9),
+                unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
+                labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                tabs: const [
+                  Tab(text: 'Timeline'),
+                  Tab(text: 'Following'),
+                ],
+              ),
+            ),
+          ),
+          leading: Builder(
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.menu),
+              onPressed: () => Scaffold.of(context).openDrawer(),
+            ),
+          ),
+          title: Text(
+            widget.title,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.logout),
+              tooltip: 'Sign Out',
+              onPressed: widget.onSignOut,
+            ),
+          ],
+        ),
+        body: TabBarView(
+          controller: _tabController,
+          physics: const NeverScrollableScrollPhysics(),
+          children: [
+            _buildTimeline(),
+            const Center(child: Text('Following timeline coming soon!')),
+          ],
+        ),
+        bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border(
+              top: BorderSide(color: Theme.of(context).dividerColor, width: 1),
+            ),
+          ),
+          height: 42 + MediaQuery.of(context).padding.bottom, // Ultra-slim
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    setState(() {
+                      showProfile = false;
+                      showNotifications = false;
+                      showExplore = false;
+                    });
+                  },
+                  child: SizedBox(
+                    height: 42 + MediaQuery.of(context).padding.bottom,
+                    child: Transform.translate(
+                      offset: const Offset(0, -10),
+                      child: Center(
+                        child: FaIcon(
+                          FontAwesomeIcons.house,
+                          size: 20,
+                          color: _navIndex == 0
+                              ? const Color(0xFF0EA5E9)
+                              : Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    setState(() {
+                      showExplore = true;
+                      showProfile = false;
+                      showNotifications = false;
+                    });
+                  },
+                  child: SizedBox(
+                    height: 42 + MediaQuery.of(context).padding.bottom,
+                    child: Transform.translate(
+                      offset: const Offset(0, -10),
+                      child: Center(
+                        child: FaIcon(
+                          FontAwesomeIcons.magnifyingGlass,
+                          size: 20,
+                          color: _navIndex == 1
+                              ? const Color(0xFF0EA5E9)
+                              : Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    setState(() {
+                      showNotifications = true;
+                      showProfile = false;
+                      showExplore = false;
+                    });
+                  },
+                  child: SizedBox(
+                    height: 42 + MediaQuery.of(context).padding.bottom,
+                    child: Transform.translate(
+                      offset: const Offset(0, -10),
+                      child: Center(
+                        child: FaIcon(
+                          FontAwesomeIcons.solidBell,
+                          size: 20,
+                          color: _navIndex == 2
+                              ? const Color(0xFF0EA5E9)
+                              : Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    setState(() {
+                      showProfile = true;
+                      showNotifications = false;
+                      showExplore = false;
+                    });
+                  },
+                  child: SizedBox(
+                    height: 42 + MediaQuery.of(context).padding.bottom,
+                    child: Transform.translate(
+                      offset: const Offset(0, -10),
+                      child: Center(
+                        child: apiService.currentUser?.avatar != null
+                            ? Container(
+                                width: 28,
+                                height: 28,
+                                alignment: Alignment.center,
+                                decoration: _navIndex == 3
+                                    ? BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: const Color(0xFF0EA5E9),
+                                          width: 2.2,
+                                        ),
+                                      )
+                                    : null,
+                                child: CircleAvatar(
+                                  radius: 12,
+                                  backgroundImage: NetworkImage(
+                                    apiService.currentUser!.avatar,
+                                  ),
+                                  backgroundColor: Colors.transparent,
+                                ),
+                              )
+                            : FaIcon(
+                                _navIndex == 3
+                                    ? FontAwesomeIcons.solidUser
+                                    : FontAwesomeIcons.user,
+                                size: 16,
+                                color: _navIndex == 3
+                                    ? const Color(0xFF0EA5E9)
+                                    : Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                              ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ), // End of bottomNavigationBar
+      ); // End of Home page Scaffold
+    }
+    // Explore, Notifications, Profile: no tabs, no TabController
     return Scaffold(
       drawer: Drawer(
         child: ListView(
@@ -402,7 +777,6 @@ class _MyHomePageState extends State<MyHomePage> {
                 );
               },
             ),
-            // Add more menu items here
             const SizedBox(height: 16),
             Padding(
               padding: const EdgeInsets.only(bottom: 16.0),
@@ -411,33 +785,22 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
       ),
-      appBar: showProfile
-          ? null
-          : AppBar(
+      appBar: (showExplore || showNotifications)
+          ? AppBar(
               backgroundColor: Colors.white,
               surfaceTintColor: Colors.white,
-              bottom: PreferredSize(
-                preferredSize: const Size.fromHeight(1),
-                child: Container(
-                  color: Theme.of(context).dividerColor,
-                  height: 1,
+              elevation: 0.5,
+              title: Text(
+                showExplore ? 'Explore' : 'Notifications',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
               leading: Builder(
                 builder: (context) => IconButton(
                   icon: const Icon(Icons.menu),
                   onPressed: () => Scaffold.of(context).openDrawer(),
-                ),
-              ),
-              title: Text(
-                showNotifications
-                    ? 'Notifications'
-                    : showExplore
-                    ? 'Explore'
-                    : widget.title,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
                 ),
               ),
               actions: [
@@ -447,35 +810,28 @@ class _MyHomePageState extends State<MyHomePage> {
                   onPressed: widget.onSignOut,
                 ),
               ],
-            ),
+            )
+          : null,
       body: Stack(
         children: [
-          if (!showProfile && !showNotifications && !showExplore)
-            _buildTimeline(),
           if (showExplore)
             Positioned.fill(
               child: Material(
-                color: Theme.of(
-                  context,
-                ).scaffoldBackgroundColor.withOpacity(0.98),
+                color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.98),
                 child: SafeArea(child: Stack(children: [ExplorePage()])),
               ),
             ),
           if (showNotifications)
             Positioned.fill(
               child: Material(
-                color: Theme.of(
-                  context,
-                ).scaffoldBackgroundColor.withOpacity(0.98),
+                color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.98),
                 child: SafeArea(child: Stack(children: [NotificationsPage()])),
               ),
             ),
           if (showProfile)
             Positioned.fill(
               child: Material(
-                color: Theme.of(
-                  context,
-                ).scaffoldBackgroundColor.withOpacity(0.98),
+                color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.98),
                 child: SafeArea(
                   child: Stack(
                     children: [
@@ -638,11 +994,6 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
       ),
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: () {},
-      //   tooltip: 'Action',
-      //   child: const Icon(Icons.add),
-      // ),
-    );
+    ); // End of fallback Scaffold
   }
 }

@@ -18,6 +18,7 @@ class _CommentsPageState extends State<CommentsPage> {
   bool _error = false;
   Gallery? _gallery;
   List<Comment> _comments = [];
+  GalleryPhoto? _selectedPhoto;
 
   @override
   void initState() {
@@ -49,45 +50,65 @@ class _CommentsPageState extends State<CommentsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(color: Theme.of(context).dividerColor, height: 1),
-        ),
-        title: const Text(
-          'Comments',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        ),
-      ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error
-          ? const Center(child: Text('Failed to load comments.'))
-          : ListView(
-              padding: const EdgeInsets.all(12),
-              children: [
-                if (_gallery != null)
-                  Text(
-                    _gallery!.title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                  ),
-                const SizedBox(height: 12),
-                _CommentsList(comments: _comments),
-              ],
+    return Stack(
+      children: [
+        Scaffold(
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            surfaceTintColor: Colors.white,
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(1),
+              child: Container(color: Theme.of(context).dividerColor, height: 1),
             ),
+            title: const Text(
+              'Comments',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+          ),
+          body: _loading
+              ? const Center(child: CircularProgressIndicator())
+              : _error
+                  ? const Center(child: Text('Failed to load comments.'))
+                  : ListView(
+                      padding: const EdgeInsets.all(12),
+                      children: [
+                        if (_gallery != null)
+                          Text(
+                            _gallery!.title,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          ),
+                        const SizedBox(height: 12),
+                        _CommentsList(
+                          comments: _comments,
+                          onPhotoTap: (photo) {
+                            setState(() {
+                              _selectedPhoto = photo;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+        ),
+        if (_selectedPhoto != null)
+          Positioned.fill(
+            child: GalleryPhotoView(
+              photos: [_selectedPhoto!],
+              initialIndex: 0,
+              onClose: () => setState(() => _selectedPhoto = null),
+            ),
+          ),
+      ],
     );
   }
 }
 
 class _CommentsList extends StatelessWidget {
   final List<Comment> comments;
-  const _CommentsList({required this.comments});
+  final void Function(GalleryPhoto photo) onPhotoTap;
+  const _CommentsList({required this.comments, required this.onPhotoTap});
 
   Map<String, List<Comment>> _groupReplies(List<Comment> comments) {
     final repliesByParent = <String, List<Comment>>{};
@@ -113,7 +134,7 @@ class _CommentsList extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _CommentTile(comment: comment),
+          _CommentTile(comment: comment, onPhotoTap: onPhotoTap),
           if (repliesByParent[comment.uri] != null)
             ...repliesByParent[comment.uri]!.map(
               (reply) => _buildCommentTree(reply, repliesByParent, depth + 1),
@@ -139,7 +160,8 @@ class _CommentsList extends StatelessWidget {
 
 class _CommentTile extends StatelessWidget {
   final Comment comment;
-  const _CommentTile({required this.comment});
+  final void Function(GalleryPhoto photo)? onPhotoTap;
+  const _CommentTile({required this.comment, this.onPhotoTap});
 
   @override
   Widget build(BuildContext context) {
@@ -179,18 +201,13 @@ class _CommentTile extends StatelessWidget {
                         aspectRatio:
                             (comment.focus!.width > 0 &&
                                 comment.focus!.height > 0)
-                            ? comment.focus!.width / comment.focus!.height
-                            : 1.0,
+                                ? comment.focus!.width / comment.focus!.height
+                                : 1.0,
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
                           child: GestureDetector(
-                            onTap: () {
-                              showDialog(
-                                context: context,
-                                barrierColor: Colors.black.withOpacity(0.85),
-                                builder: (context) => GalleryPhotoView(
-                                  photos: [
-                                    GalleryPhoto(
+                            onTap: onPhotoTap != null
+                                ? () => onPhotoTap!(GalleryPhoto(
                                       uri: comment.focus!.uri,
                                       cid: comment.focus!.cid,
                                       thumb: comment.focus!.thumb,
@@ -198,13 +215,8 @@ class _CommentTile extends StatelessWidget {
                                       alt: comment.focus!.alt,
                                       width: comment.focus!.width,
                                       height: comment.focus!.height,
-                                    ),
-                                  ],
-                                  initialIndex: 0,
-                                  onClose: () => Navigator.of(context).pop(),
-                                ),
-                              );
-                            },
+                                    ))
+                                : null,
                             child: Image.network(
                               comment.focus!.thumb.isNotEmpty
                                   ? comment.focus!.thumb

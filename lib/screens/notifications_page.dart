@@ -28,11 +28,13 @@ class _NotificationsPageState extends State<NotificationsPage> {
     });
     try {
       final notifications = await apiService.getNotifications();
+      if (!mounted) return;
       setState(() {
         _notifications = notifications;
         _loading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = true;
         _loading = false;
