@@ -56,7 +56,6 @@ class _NotificationsPageState extends State<NotificationsPage> {
         message = 'commented on your gallery';
         createdAt = record['createdAt'] as String?;
         break;
-      case 'gallery-mention':
       case 'gallery-comment-mention':
         message = 'mentioned you in a gallery';
         createdAt = record['createdAt'] as String?;
@@ -107,7 +106,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
               itemCount: _notifications.length,
               separatorBuilder: (context, index) => Divider(
                 height: 1,
-                color: Theme.of(context).dividerColor, // Use theme divider color
+                color: Theme.of(
+                  context,
+                ).dividerColor, // Use theme divider color
               ),
               itemBuilder: (context, index) {
                 final notification = _notifications[index];

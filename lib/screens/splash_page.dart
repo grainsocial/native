@@ -35,7 +35,6 @@ class _SplashPageState extends State<SplashPage> {
 
       appLogger.i('Redirected URL: $redirectedUrl');
       appLogger.i('User signed in with handle: $handle');
-      appLogger.i('Token: $token');
 
       if (token == null) {
         throw Exception('Token not found in redirect URL');

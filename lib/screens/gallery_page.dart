@@ -5,6 +5,8 @@ import 'package:grain/widgets/justified_gallery_view.dart';
 import './comments_page.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:grain/widgets/gallery_photo_view.dart';
+import 'package:at_uri/at_uri.dart';
+import 'package:share_plus/share_plus.dart';
 
 class GalleryPage extends StatefulWidget {
   final String uri;
@@ -266,7 +268,19 @@ class _GalleryPageState extends State<GalleryPage> {
                       Expanded(
                         child: InkWell(
                           borderRadius: BorderRadius.circular(12),
-                          onTap: () {},
+                          onTap: () {
+                            // Parse the gallery URI to get handle and rkey
+                            final atUri = AtUri.parse(gallery.uri);
+                            final handle = gallery.creator?.handle ?? '';
+                            final galleryRkey = atUri.rkey;
+                            final url =
+                                'https://grain.social/profile/$handle/gallery/$galleryRkey';
+                            final shareText =
+                                "Check out this gallery on @grain.social \n$url";
+                            SharePlus.instance.share(
+                              ShareParams(text: shareText),
+                            );
+                          },
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 8),
                             decoration: BoxDecoration(

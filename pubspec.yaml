@@ -36,54 +36,14 @@ dependencies:
   cupertino_icons: ^1.0.8
   # atproto_oauth: ^0.1.0
   flutter_web_auth_2: ^4.1.0
-  atproto:
-    git:
-      url: https://github.com/JetA2/atproto.dart.git
-      ref: main # or the branch/commit you want
-      path: packages/atproto
-  atproto_oauth:
-    git:
-      url: https://github.com/JetA2/atproto.dart.git
-      ref: main # or the branch/commit you want
-      path: packages/atproto_oauth
-  atproto_core:
-    git:
-      url: https://github.com/JetA2/atproto.dart.git
-      ref: main # or the branch/commit you want
-      path: packages/atproto_core
-  xrpc:
-    git:
-      url: https://github.com/JetA2/atproto.dart.git
-      ref: main # or the branch/commit you want
-      path: packages/xrpc
   http: ^1.4.0
   flutter_dotenv: ^5.2.1
   google_fonts: ^6.2.1
   logger: ^2.6.0
   package_info_plus: ^8.3.0
   font_awesome_flutter: ^10.8.0
-
-dependency_overrides:
-  atproto_oauth:
-    git:
-      url: https://github.com/JetA2/atproto.dart.git
-      ref: main
-      path: packages/atproto_oauth
-  atproto:
-    git:
-      url: https://github.com/JetA2/atproto.dart.git
-      ref: main # or the branch/commit you want
-      path: packages/atproto
-  atproto_core:
-    git:
-      url: https://github.com/JetA2/atproto.dart.git
-      ref: main # or the branch/commit you want
-      path: packages/atproto_core
-  xrpc:
-    git:
-      url: https://github.com/JetA2/atproto.dart.git
-      ref: main # or the branch/commit you want
-      path: packages/xrpc
+  at_uri: ^0.4.0
+  share_plus: ^11.0.0
 
 dev_dependencies:
   flutter_test:

@@ -34,7 +34,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   bool showNotifications = false;
   bool showExplore = false;
   List<TimelineItem> _timeline = [];
+  List<TimelineItem> _followingTimeline = [];
   bool _timelineLoading = true;
+  bool _followingTimelineLoading = false;
   int _tabIndex = 0; // 0 = Timeline, 1 = Following
   TabController? _tabController;
 
@@ -45,14 +47,67 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     _initTabController();
   }
 
+  Future<void> _fetchTimeline({String? algorithm}) async {
+    if (algorithm == "following") {
+      setState(() {
+        _followingTimelineLoading = true;
+      });
+      try {
+        final galleries = await apiService.getTimeline(algorithm: algorithm);
+        setState(() {
+          _followingTimeline = galleries
+              .map((g) => TimelineItem.fromGallery(g))
+              .toList();
+          _followingTimelineLoading = false;
+        });
+      } catch (e) {
+        setState(() {
+          _followingTimeline = [];
+          _followingTimelineLoading = false;
+        });
+      }
+    } else {
+      setState(() {
+        _timelineLoading = true;
+      });
+      try {
+        final galleries = await apiService.getTimeline(algorithm: algorithm);
+        setState(() {
+          _timeline = galleries
+              .map((g) => TimelineItem.fromGallery(g))
+              .toList();
+          _timelineLoading = false;
+        });
+      } catch (e) {
+        setState(() {
+          _timeline = [];
+          _timelineLoading = false;
+        });
+      }
+    }
+  }
+
+  void _onTabChanged(int index) {
+    setState(() {
+      _tabIndex = index;
+    });
+    if (index == 1) {
+      _fetchTimeline(algorithm: "following");
+    } else {
+      _fetchTimeline();
+    }
+  }
+
   void _initTabController() {
     _tabController?.dispose();
-    _tabController = TabController(length: 2, vsync: this, initialIndex: _tabIndex);
+    _tabController = TabController(
+      length: 2,
+      vsync: this,
+      initialIndex: _tabIndex,
+    );
     _tabController!.addListener(() {
       if (_tabController!.index != _tabIndex) {
-        setState(() {
-          _tabIndex = _tabController!.index;
-        });
+        _onTabChanged(_tabController!.index);
       }
     });
   }
@@ -71,24 +126,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  Future<void> _fetchTimeline() async {
-    setState(() {
-      _timelineLoading = true;
-    });
-    try {
-      final galleries = await apiService.getTimeline();
-      setState(() {
-        _timeline = galleries.map((g) => TimelineItem.fromGallery(g)).toList();
-        _timelineLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _timeline = [];
-        _timelineLoading = false;
-      });
-    }
-  }
-
   int get _navIndex {
     if (showProfile) return 3;
     if (showNotifications) return 2;
@@ -96,207 +133,518 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     return 0;
   }
 
-  Widget _buildTimeline() {
-    if (_timelineLoading) {
-      return const Center(child: CircularProgressIndicator());
+  Widget _buildTimeline({bool following = false}) {
+    final loading = following ? _followingTimelineLoading : _timelineLoading;
+    final timeline = following ? _followingTimeline : _timeline;
+    if (timeline.isEmpty && !loading) {
+      return Center(
+        child: Text(
+          following ? 'No following timeline items.' : 'No timeline items.',
+        ),
+      );
     }
-    if (_timeline.isEmpty) {
-      return const Center(child: Text('No timeline items.'));
-    }
-    return ListView.separated(
-      itemCount: _timeline.length,
-      separatorBuilder: (context, index) =>
-          Divider(color: Colors.grey[200], thickness: 1, height: 1),
-      itemBuilder: (context, index) {
-        final item = _timeline[index];
-        final gallery = item.gallery;
-        final actor = gallery.creator;
-        final createdAt = gallery.createdAt;
-        return GestureDetector(
-          onTap: () {
-            if (gallery.uri.isNotEmpty) {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => GalleryPage(
-                    uri: gallery.uri,
-                    currentUserDid: apiService.currentUser?.did,
-                  ),
-                ),
-              );
-            }
-          },
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-                child: Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () async {
-                        if (actor != null) {
-                          final loadedProfile = await apiService.fetchProfile(
-                            did: actor.did,
-                          );
-                          if (!mounted) return;
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => ProfilePage(
-                                profile: loadedProfile,
-                                showAppBar: true,
-                              ),
-                            ),
-                          );
-                        }
-                      },
-                      child: CircleAvatar(
-                        radius: 18,
-                        backgroundImage:
-                            actor?.avatar != null && actor!.avatar.isNotEmpty
-                            ? NetworkImage(actor.avatar)
-                            : null,
-                        backgroundColor: Colors.transparent,
-                        child: (actor == null || actor.avatar.isEmpty)
-                            ? const Icon(
-                                Icons.account_circle,
-                                size: 24,
-                                color: Colors.grey,
-                              )
-                            : null,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              actor != null && actor.displayName.isNotEmpty
-                                  ? actor.displayName
-                                  : (actor != null ? '@${actor.handle}' : ''),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 16,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          if (actor != null && actor.handle.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(left: 6),
-                              child: Text(
-                                '@${actor.handle}',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey[800],
-                                  fontWeight: FontWeight.normal,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    Text(
-                      formatRelativeTime(createdAt ?? ''),
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                  ],
-                ),
+    return Column(
+      children: [
+        if (loading)
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 10),
+            child: SizedBox(
+              height: 24,
+              width: 24,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Color(0xFF0ea5e9), // Tailwind sky-500,
               ),
-              if (gallery.items.isNotEmpty)
-                GalleryPreview(gallery: gallery)
-              else
-                const SizedBox.shrink(),
-              if (gallery.title.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8, left: 8, right: 8),
-                  child: Text(
-                    gallery.title,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                ),
-              if (gallery.description.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4, left: 8, right: 8),
-                  child: Text(
-                    gallery.description,
-                    style: const TextStyle(fontSize: 13, color: Colors.black54),
-                  ),
-                ),
-              const SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.only(
-                  top: 12,
-                  bottom: 12,
-                  left: 12,
-                  right: 12,
-                ),
-                child: Row(
-                  children: [
-                    GestureDetector(
-                      child: Padding(
-                        padding: const EdgeInsets.only(right: 12),
-                        child: Icon(
-                          size: 18,
-                          gallery.viewer != null &&
-                                  gallery.viewer!['fav'] != null
-                              ? FontAwesomeIcons.solidHeart
-                              : FontAwesomeIcons.heart,
-                          color:
-                              gallery.viewer != null &&
-                                  gallery.viewer!['fav'] != null
-                              ? Color(0xFFEC4899)
-                              : Colors.black54,
-                        ),
-                      ),
-                      onTap: () {},
-                    ),
-                    if (gallery.favCount != null)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 12),
-                        child: Text(
-                          gallery.favCount.toString(),
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.black54,
-                          ),
-                        ),
-                      ),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                CommentsPage(galleryUri: gallery.uri),
-                          ),
-                        );
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 12, right: 12),
-                        child: Icon(
-                          FontAwesomeIcons.comment,
-                          size: 18,
-                          color: Colors.black54,
-                        ),
-                      ),
-                    ),
-                    if (gallery.commentCount != null)
-                      Text(
-                        gallery.commentCount.toString(),
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.black54,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
-        );
-      },
+        if (timeline.isNotEmpty)
+          Expanded(
+            child: Builder(
+              builder: (context) {
+                return MediaQuery.removePadding(
+                  context: context,
+                  removeTop: true,
+                  child: ListView.separated(
+                    padding: EdgeInsets.zero,
+                    itemCount: timeline.length,
+                    separatorBuilder: (context, index) =>
+                        Divider(color: Colors.grey[200], thickness: 1, height: 1),
+                    itemBuilder: (context, index) {
+                      final item = timeline[index];
+                      final gallery = item.gallery;
+                      final actor = gallery.creator;
+                      final createdAt = gallery.createdAt;
+                      return GestureDetector(
+                        onTap: () {
+                          if (gallery.uri.isNotEmpty) {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => GalleryPage(
+                                  uri: gallery.uri,
+                                  currentUserDid: apiService.currentUser?.did,
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 8,
+                                horizontal: 8,
+                              ),
+                              child: Row(
+                                children: [
+                                  GestureDetector(
+                                    onTap: () async {
+                                      if (actor != null) {
+                                        final loadedProfile = await apiService
+                                            .fetchProfile(did: actor.did);
+                                        if (!mounted) return;
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (context) => ProfilePage(
+                                              profile: loadedProfile,
+                                              showAppBar: true,
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    },
+                                    child: CircleAvatar(
+                                      radius: 18,
+                                      backgroundImage:
+                                          actor?.avatar != null &&
+                                              actor!.avatar.isNotEmpty
+                                          ? NetworkImage(actor.avatar)
+                                          : null,
+                                      backgroundColor: Colors.transparent,
+                                      child: (actor == null || actor.avatar.isEmpty)
+                                          ? const Icon(
+                                              Icons.account_circle,
+                                              size: 24,
+                                              color: Colors.grey,
+                                            )
+                                          : null,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Row(
+                                      children: [
+                                        Flexible(
+                                          child: Text(
+                                            actor != null &&
+                                                    actor.displayName.isNotEmpty
+                                                ? actor.displayName
+                                                : (actor != null
+                                                      ? '@${actor.handle}'
+                                                      : ''),
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 16,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        if (actor != null && actor.handle.isNotEmpty)
+                                          Padding(
+                                            padding: const EdgeInsets.only(left: 6),
+                                            child: Text(
+                                              '@${actor.handle}',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.grey[800],
+                                                fontWeight: FontWeight.normal,
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                  Text(
+                                    formatRelativeTime(createdAt ?? ''),
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (gallery.items.isNotEmpty)
+                              GalleryPreview(gallery: gallery)
+                            else
+                              const SizedBox.shrink(),
+                            if (gallery.title.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                  top: 8,
+                                  left: 8,
+                                  right: 8,
+                                ),
+                                child: Text(
+                                  gallery.title,
+                                  style: const TextStyle(fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                            if (gallery.description.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                  top: 4,
+                                  left: 8,
+                                  right: 8,
+                                ),
+                                child: Text(
+                                  gallery.description,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.black54,
+                                  ),
+                                ),
+                              ),
+                            const SizedBox(height: 8),
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                top: 12,
+                                bottom: 12,
+                                left: 12,
+                                right: 12,
+                              ),
+                              child: Row(
+                                children: [
+                                  GestureDetector(
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(right: 12),
+                                      child: Icon(
+                                        size: 18,
+                                        gallery.viewer != null &&
+                                                gallery.viewer!['fav'] != null
+                                            ? FontAwesomeIcons.solidHeart
+                                            : FontAwesomeIcons.heart,
+                                        color:
+                                            gallery.viewer != null &&
+                                                gallery.viewer!['fav'] != null
+                                            ? Color(0xFFEC4899)
+                                            : Colors.black54,
+                                      ),
+                                    ),
+                                    onTap: () {},
+                                  ),
+                                  if (gallery.favCount != null)
+                                    Padding(
+                                      padding: const EdgeInsets.only(right: 12),
+                                      child: Text(
+                                        gallery.favCount.toString(),
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.black54,
+                                        ),
+                                      ),
+                                    ),
+                                  GestureDetector(
+                                    onTap: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              CommentsPage(galleryUri: gallery.uri),
+                                        ),
+                                      );
+                                    },
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(
+                                        left: 12,
+                                        right: 12,
+                                      ),
+                                      child: Icon(
+                                        FontAwesomeIcons.comment,
+                                        size: 18,
+                                        color: Colors.black54,
+                                      ),
+                                    ),
+                                  ),
+                                  if (gallery.commentCount != null)
+                                    Text(
+                                      gallery.commentCount.toString(),
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.black54,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ), // closes Column
+                      ); // closes GestureDetector
+                    }, // closes itemBuilder
+                  ), // closes ListView.separated
+                ); // closes MediaQuery.removePadding
+              }, // closes Builder
+            ), // closes Expanded
+          ),
+      ],
+    ); // closes Column in _buildTimeline
+  }
+
+  Widget _buildTimelineSliver(BuildContext context, {bool following = false}) {
+    final loading = following ? _followingTimelineLoading : _timelineLoading;
+    final timeline = following ? _followingTimeline : _timeline;
+    return CustomScrollView(
+      key: PageStorageKey(following ? 'following' : 'timeline'),
+      slivers: [
+        SliverOverlapInjector(
+          handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+        ),
+        if (loading)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: Center(
+                child: SizedBox(
+                  height: 24,
+                  width: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Color(0xFF0ea5e9),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        if (timeline.isEmpty && !loading)
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(
+              child: Text(
+                following ? 'No following timeline items.' : 'No timeline items.',
+              ),
+            ),
+          ),
+        if (timeline.isNotEmpty)
+          SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                final item = timeline[index];
+                final gallery = item.gallery;
+                final actor = gallery.creator;
+                final createdAt = gallery.createdAt;
+                return GestureDetector(
+                  onTap: () {
+                    if (gallery.uri.isNotEmpty) {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => GalleryPage(
+                            uri: gallery.uri,
+                            currentUserDid: apiService.currentUser?.did,
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 8,
+                          horizontal: 8,
+                        ),
+                        child: Row(
+                          children: [
+                            GestureDetector(
+                              onTap: () async {
+                                if (actor != null) {
+                                  final loadedProfile = await apiService
+                                      .fetchProfile(did: actor.did);
+                                  if (!mounted) return;
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (context) => ProfilePage(
+                                        profile: loadedProfile,
+                                        showAppBar: true,
+                                      ),
+                                    ),
+                                  );
+                                }
+                              },
+                              child: CircleAvatar(
+                                radius: 18,
+                                backgroundImage:
+                                    actor?.avatar != null &&
+                                            actor!.avatar.isNotEmpty
+                                        ? NetworkImage(actor.avatar)
+                                        : null,
+                                backgroundColor: Colors.transparent,
+                                child: (actor == null || actor.avatar.isEmpty)
+                                    ? const Icon(
+                                        Icons.account_circle,
+                                        size: 24,
+                                        color: Colors.grey,
+                                      )
+                                    : null,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      actor != null &&
+                                              actor.displayName.isNotEmpty
+                                          ? actor.displayName
+                                          : (actor != null
+                                                ? '@${actor.handle}'
+                                                : ''),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 16,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  if (actor != null && actor.handle.isNotEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.only(left: 6),
+                                      child: Text(
+                                        '@${actor.handle}',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey[800],
+                                          fontWeight: FontWeight.normal,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 1,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                            Text(
+                              formatRelativeTime(createdAt ?? ''),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (gallery.items.isNotEmpty)
+                        GalleryPreview(gallery: gallery)
+                      else
+                        const SizedBox.shrink(),
+                      if (gallery.title.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            top: 8,
+                            left: 8,
+                            right: 8,
+                          ),
+                          child: Text(
+                            gallery.title,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      if (gallery.description.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            top: 4,
+                            left: 8,
+                            right: 8,
+                          ),
+                          child: Text(
+                            gallery.description,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Colors.black54,
+                            ),
+                          ),
+                        ),
+                      const SizedBox(height: 8),
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          top: 12,
+                          bottom: 12,
+                          left: 12,
+                          right: 12,
+                        ),
+                        child: Row(
+                          children: [
+                            GestureDetector(
+                              child: Padding(
+                                padding: const EdgeInsets.only(right: 12),
+                                child: Icon(
+                                  size: 18,
+                                  gallery.viewer != null &&
+                                          gallery.viewer!['fav'] != null
+                                      ? FontAwesomeIcons.solidHeart
+                                      : FontAwesomeIcons.heart,
+                                  color:
+                                      gallery.viewer != null &&
+                                              gallery.viewer!['fav'] != null
+                                          ? Color(0xFFEC4899)
+                                          : Colors.black54,
+                                ),
+                              ),
+                              onTap: () {},
+                            ),
+                            if (gallery.favCount != null)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 12),
+                                child: Text(
+                                  gallery.favCount.toString(),
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.black54,
+                                  ),
+                                ),
+                              ),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        CommentsPage(galleryUri: gallery.uri),
+                                  ),
+                                );
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.only(
+                                  left: 12,
+                                  right: 12,
+                                ),
+                                child: Icon(
+                                  FontAwesomeIcons.comment,
+                                  size: 18,
+                                  color: Colors.black54,
+                                ),
+                              ),
+                            ),
+                            if (gallery.commentCount != null)
+                              Text(
+                                gallery.commentCount.toString(),
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.black54,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+              childCount: timeline.length,
+            ),
+          ),
+      ],
     );
   }
 
@@ -320,11 +668,12 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                       radius: 22, // Smaller avatar
                       backgroundImage:
                           apiService.currentUser?.avatar != null &&
-                                  apiService.currentUser!.avatar.isNotEmpty
-                              ? NetworkImage(apiService.currentUser!.avatar)
-                              : null,
+                              apiService.currentUser!.avatar.isNotEmpty
+                          ? NetworkImage(apiService.currentUser!.avatar)
+                          : null,
                       backgroundColor: Colors.white,
-                      child: (apiService.currentUser == null ||
+                      child:
+                          (apiService.currentUser == null ||
                               apiService.currentUser!.avatar.isEmpty)
                           ? const Icon(
                               Icons.account_circle,
@@ -370,7 +719,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                         ),
                         const SizedBox(width: 16),
                         Text(
-                          (apiService.currentUser?.followsCount ?? 0).toString(),
+                          (apiService.currentUser?.followsCount ?? 0)
+                              .toString(),
                           style: const TextStyle(
                             color: Colors.black,
                             fontWeight: FontWeight.bold,
@@ -441,61 +791,77 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             ],
           ),
         ),
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.white,
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(49),
-            child: Container(
-              color: Colors.white,
-              child: TabBar(
-                controller: _tabController,
-                indicator: UnderlineTabIndicator(
-                  borderSide: const BorderSide(
-                    color: Color(0xFF0EA5E9),
-                    width: 3,
+        body: NestedScrollView(
+          headerSliverBuilder: (context, innerBoxIsScrolled) => [
+            SliverOverlapAbsorber(
+              handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+              sliver: SliverAppBar(
+                backgroundColor: Colors.white,
+                surfaceTintColor: Colors.white,
+                floating: true,
+                snap: true,
+                pinned: true,
+                elevation: 0.5,
+                title: Text(
+                  widget.title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
                   ),
-                  insets: EdgeInsets.zero,
                 ),
-                indicatorSize: TabBarIndicatorSize.tab,
-                labelColor: const Color(0xFF0EA5E9),
-                unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
-                labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
-                tabs: const [
-                  Tab(text: 'Timeline'),
-                  Tab(text: 'Following'),
+                leading: Builder(
+                  builder: (context) => IconButton(
+                    icon: const Icon(Icons.menu),
+                    onPressed: () => Scaffold.of(context).openDrawer(),
+                  ),
+                ),
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.logout),
+                    tooltip: 'Sign Out',
+                    onPressed: widget.onSignOut,
+                  ),
                 ],
+                bottom: PreferredSize(
+                  preferredSize: const Size.fromHeight(49),
+                  child: Container(
+                    color: Colors.white,
+                    child: TabBar(
+                      controller: _tabController,
+                      indicator: UnderlineTabIndicator(
+                        borderSide: const BorderSide(
+                          color: Color(0xFF0EA5E9),
+                          width: 3,
+                        ),
+                        insets: EdgeInsets.zero,
+                      ),
+                      indicatorSize: TabBarIndicatorSize.tab,
+                      labelColor: const Color(0xFF0EA5E9),
+                      unselectedLabelColor: Theme.of(
+                        context,
+                      ).colorScheme.onSurfaceVariant,
+                      labelStyle: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
+                      tabs: const [
+                        Tab(text: 'Timeline'),
+                        Tab(text: 'Following'),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
-          ),
-          leading: Builder(
-            builder: (context) => IconButton(
-              icon: const Icon(Icons.menu),
-              onPressed: () => Scaffold.of(context).openDrawer(),
-            ),
-          ),
-          title: Text(
-            widget.title,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.logout),
-              tooltip: 'Sign Out',
-              onPressed: widget.onSignOut,
-            ),
           ],
-        ),
-        body: TabBarView(
-          controller: _tabController,
-          physics: const NeverScrollableScrollPhysics(),
-          children: [
-            _buildTimeline(),
-            const Center(child: Text('Following timeline coming soon!')),
-          ],
+          body: TabBarView(
+            controller: _tabController,
+            physics: const NeverScrollableScrollPhysics(),
+            children: [
+              Builder(builder: (context) => _buildTimelineSliver(context, following: false)),
+              Builder(builder: (context) => _buildTimelineSliver(context, following: true)),
+            ],
+          ),
         ),
         bottomNavigationBar: Container(
           decoration: BoxDecoration(
@@ -817,21 +1183,27 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
           if (showExplore)
             Positioned.fill(
               child: Material(
-                color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.98),
+                color: Theme.of(
+                  context,
+                ).scaffoldBackgroundColor.withOpacity(0.98),
                 child: SafeArea(child: Stack(children: [ExplorePage()])),
               ),
             ),
           if (showNotifications)
             Positioned.fill(
               child: Material(
-                color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.98),
+                color: Theme.of(
+                  context,
+                ).scaffoldBackgroundColor.withOpacity(0.98),
                 child: SafeArea(child: Stack(children: [NotificationsPage()])),
               ),
             ),
           if (showProfile)
             Positioned.fill(
               child: Material(
-                color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.98),
+                color: Theme.of(
+                  context,
+                ).scaffoldBackgroundColor.withOpacity(0.98),
                 child: SafeArea(
                   child: Stack(
                     children: [

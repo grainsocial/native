@@ -20,7 +20,7 @@ class ApiService {
 
   Future<Profile?> fetchProfile({required String did}) async {
     if (_accessToken == null) return null;
-    appLogger.i('Fetching profile for actor: $did with token: $_accessToken');
+    appLogger.i('Fetching profile for actor: $did');
 
     final response = await http.get(
       Uri.parse('$_apiUrl/xrpc/social.grain.actor.getProfile?actor=$did'),
@@ -40,7 +40,7 @@ class ApiService {
 
   Future<List<Gallery>> fetchActorGalleries({required String did}) async {
     if (_accessToken == null) return [];
-    appLogger.i('Fetching galleries for actor: $did with token: $_accessToken');
+    appLogger.i('Fetching galleries for actor: $did');
 
     final response = await http.get(
       Uri.parse(
@@ -67,7 +67,7 @@ class ApiService {
 
   Future<void> fetchCurrentUser() async {
     if (_accessToken == null) return;
-    appLogger.i('Fetching current user with token: $_accessToken');
+    appLogger.i('Fetching current user');
 
     final response = await http.get(
       Uri.parse('$_apiUrl/oauth/session'),
@@ -84,12 +84,17 @@ class ApiService {
     }
   }
 
-  Future<List<Gallery>> getTimeline() async {
+  Future<List<Gallery>> getTimeline({String? algorithm}) async {
     if (_accessToken == null) return [];
-    appLogger.i('Fetching timeline with token: $_accessToken');
+    appLogger.i('Fetching timeline');
+
+    final uri = Uri.parse('$_apiUrl/xrpc/social.grain.feed.getTimeline')
+        .replace(
+          queryParameters: algorithm != null ? {'algorithm': algorithm} : null,
+        );
 
     final response = await http.get(
-      Uri.parse('$_apiUrl/xrpc/social.grain.feed.getTimeline'),
+      uri,
       headers: {'Authorization': 'Bearer $_accessToken'},
     );
     if (response.statusCode == 200) {
@@ -104,7 +109,7 @@ class ApiService {
       }
     } else {
       appLogger.e(
-        'Failed to load timeline: status ${response.statusCode}, body: ${response.body}',
+        'Failed to load timeline: status [${response.statusCode}, body: ${response.body}',
       );
       throw Exception('Failed to load timeline: ${response.statusCode}');
     }
@@ -112,7 +117,7 @@ class ApiService {
 
   Future<Gallery?> getGallery({required String uri}) async {
     if (_accessToken == null) return null;
-    appLogger.i('Fetching gallery for URI: $uri with token: $_accessToken');
+    appLogger.i('Fetching gallery for URI: $uri');
 
     final response = await http.get(
       Uri.parse('$_apiUrl/xrpc/social.grain.gallery.getGallery?uri=$uri'),
@@ -131,9 +136,7 @@ class ApiService {
 
   Future<Map<String, dynamic>> getGalleryThread({required String uri}) async {
     if (_accessToken == null) throw Exception('No access token');
-    appLogger.i(
-      'Fetching gallery thread for URI: $uri with token: $_accessToken',
-    );
+    appLogger.i('Fetching gallery thread for URI: $uri');
 
     final response = await http.get(
       Uri.parse('$_apiUrl/xrpc/social.grain.gallery.getGalleryThread?uri=$uri'),
@@ -151,7 +154,7 @@ class ApiService {
 
   Future<List<grain.Notification>> getNotifications() async {
     if (_accessToken == null) return [];
-    appLogger.i('Fetching notifications with token: $_accessToken');
+    appLogger.i('Fetching notifications');
 
     final response = await http.get(
       Uri.parse('$_apiUrl/xrpc/social.grain.notification.getNotifications'),
@@ -180,7 +183,7 @@ class ApiService {
 
   Future<List<Profile>> searchActors(String query) async {
     if (_accessToken == null) return [];
-    appLogger.i('Searching actors for query: $query with token: $_accessToken');
+    appLogger.i('Searching actors for query: $query');
 
     final response = await http.get(
       Uri.parse('$_apiUrl/xrpc/social.grain.actor.searchActors?q=$query'),
