@@ -4,97 +4,201 @@ import 'package:grain/api.dart';
 import 'package:grain/models/profile.dart';
 import 'profile_page.dart';
 
-class ExplorePage extends StatelessWidget {
+class ExplorePage extends StatefulWidget {
   const ExplorePage({super.key});
 
-  Future<List<Profile>> _delayedSearch(String query) async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    return apiService.searchActors(query);
+  @override
+  State<ExplorePage> createState() => _ExplorePageState();
+}
+
+class _ExplorePageState extends State<ExplorePage>
+    with SingleTickerProviderStateMixin {
+  final TextEditingController _controller = TextEditingController();
+  List<Profile> _results = [];
+  bool _loading = false;
+  bool _searched = false;
+  Timer? _debounce;
+  TabController? _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this); // 2 tabs: All, People
+  }
+
+  void _onSearchChanged(String value) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    if (value.isEmpty) {
+      setState(() {
+        _results = [];
+        _searched = false;
+        _loading = false;
+      });
+      return;
+    }
+    setState(() {
+      _loading = true;
+      _searched = true;
+    });
+    _debounce = Timer(const Duration(milliseconds: 500), () async {
+      try {
+        final results = await apiService.searchActors(value);
+        if (mounted) {
+          setState(() {
+            _results = results;
+            _loading = false;
+          });
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _results = [];
+            _loading = false;
+          });
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _debounce?.cancel();
+    _tabController?.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: SearchAnchor.bar(
-        barHintText: 'Search for users',
-        barShape: WidgetStateProperty.all(
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-        barElevation: WidgetStateProperty.all(0),
-        suggestionsBuilder: (context, controller) {
-          if (controller.text.isEmpty) {
-            return [];
-          }
-          return [
-            FutureBuilder<List<Profile>>(
-              future: _delayedSearch(controller.text),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const ListTile(
-                    title: Text('Searching...'),
-                    leading: SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  );
-                }
-                if (snapshot.hasError) {
-                  return const ListTile(title: Text('Error searching users'));
-                }
-                final results = snapshot.data ?? [];
-                if (results.isEmpty) {
-                  return const ListTile(title: Text('No users found'));
-                }
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: results.map((profile) {
-                    return ListTile(
-                      leading: profile.avatar.isNotEmpty
-                          ? CircleAvatar(
-                              backgroundImage: NetworkImage(profile.avatar),
-                              radius: 16,
-                            )
-                          : const CircleAvatar(
-                              radius: 16,
-                              child: Icon(
-                                Icons.account_circle,
-                                color: Colors.grey,
-                              ),
-                            ),
-                      title: Text(
-                        profile.displayName.isNotEmpty
-                            ? profile.displayName
-                            : '@${profile.handle}',
-                      ),
-                      subtitle: profile.handle.isNotEmpty
-                          ? Text('@${profile.handle}')
-                          : null,
-                      onTap: () async {
-                        // Navigate to the profile page for the selected user
-                        final loadedProfile = await apiService.fetchProfile(
-                          did: profile.did,
-                        );
-                        if (context.mounted) {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => ProfilePage(
-                                profile: loadedProfile,
-                                showAppBar: true,
-                              ),
-                            ),
-                          );
-                        }
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: TextField(
+            controller: _controller,
+            decoration: InputDecoration(
+              hintText: 'Search for users',
+              filled: true,
+              fillColor: Colors.grey[200], // light grey background
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(
+                  color: Color(0xFF0ea5e9), // Tailwind sky-500
+                  width: 2,
+                ),
+              ),
+              suffixIcon: _controller.text.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        _controller.clear();
+                        setState(() {
+                          _results = [];
+                          _searched = false;
+                        });
                       },
-                    );
-                  }).toList(),
-                );
-              },
+                    )
+                  : null,
             ),
-          ];
-        },
-      ),
+            onChanged: _onSearchChanged,
+          ),
+        ),
+        if (_tabController != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: TabBar(
+              controller: _tabController,
+              tabs: const [
+                Tab(text: 'All'),
+                Tab(text: 'People'),
+              ],
+              labelColor: Colors.black,
+              unselectedLabelColor: Colors.black54,
+              indicator: const UnderlineTabIndicator(
+                borderSide: BorderSide(
+                  color: Color(0xFF0ea5e9), // Tailwind sky-500
+                  width: 3,
+                ),
+                insets: EdgeInsets.symmetric(horizontal: 0), // full width
+              ),
+              indicatorSize: TabBarIndicatorSize.tab,
+            ),
+          ),
+        Expanded(
+          child: (_tabController != null)
+              ? TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildResultsList(_results),
+                    _buildResultsList(_results), // You can filter differently for 'People' tab
+                  ],
+                )
+              : Container(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildResultsList(List<Profile> results) {
+    if (_loading) {
+      return const ListTile(
+        title: Text('Searching...'),
+        leading: SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      );
+    } else if (_searched && results.isEmpty) {
+      return const ListTile(title: Text('No users found'));
+    }
+    return ListView.separated(
+      itemCount: results.length,
+      separatorBuilder: (context, index) => const Divider(height: 1, thickness: 1),
+      itemBuilder: (context, index) {
+        final profile = results[index];
+        return ListTile(
+          leading: profile.avatar.isNotEmpty
+              ? CircleAvatar(
+                  backgroundImage: NetworkImage(profile.avatar),
+                  radius: 16,
+                )
+              : const CircleAvatar(
+                  radius: 16,
+                  child: Icon(
+                    Icons.account_circle,
+                    color: Colors.grey,
+                  ),
+                ),
+          title: Text(
+            profile.displayName.isNotEmpty
+                ? profile.displayName
+                : '@${profile.handle}',
+          ),
+          subtitle: profile.handle.isNotEmpty
+              ? Text('@${profile.handle}')
+              : null,
+          onTap: () async {
+            final loadedProfile = await apiService.fetchProfile(
+              did: profile.did,
+            );
+            if (context.mounted) {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => ProfilePage(
+                    profile: loadedProfile,
+                    showAppBar: true,
+                  ),
+                ),
+              );
+            }
+          },
+        );
+      },
     );
   }
 }
