@@ -11,19 +11,16 @@ class ExplorePage extends StatefulWidget {
   State<ExplorePage> createState() => _ExplorePageState();
 }
 
-class _ExplorePageState extends State<ExplorePage>
-    with SingleTickerProviderStateMixin {
+class _ExplorePageState extends State<ExplorePage> {
   final TextEditingController _controller = TextEditingController();
   List<Profile> _results = [];
   bool _loading = false;
   bool _searched = false;
   Timer? _debounce;
-  TabController? _tabController;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this); // 2 tabs: All, People
   }
 
   void _onSearchChanged(String value) {
@@ -64,7 +61,6 @@ class _ExplorePageState extends State<ExplorePage>
   void dispose() {
     _controller.dispose();
     _debounce?.cancel();
-    _tabController?.dispose();
     super.dispose();
   }
 
@@ -79,7 +75,7 @@ class _ExplorePageState extends State<ExplorePage>
             decoration: InputDecoration(
               hintText: 'Search for users',
               filled: true,
-              fillColor: Colors.grey[200], // light grey background
+              fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide.none,
@@ -107,38 +103,22 @@ class _ExplorePageState extends State<ExplorePage>
             onChanged: _onSearchChanged,
           ),
         ),
-        if (_tabController != null)
+        if (_controller.text.isNotEmpty)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: TabBar(
-              controller: _tabController,
-              tabs: const [
-                Tab(text: 'All'),
-                Tab(text: 'People'),
-              ],
-              labelColor: Colors.black,
-              unselectedLabelColor: Colors.black54,
-              indicator: const UnderlineTabIndicator(
-                borderSide: BorderSide(
-                  color: Color(0xFF0ea5e9), // Tailwind sky-500
-                  width: 3,
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Search for "${_controller.text}"',
+                style: TextStyle(
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 16,
                 ),
-                insets: EdgeInsets.symmetric(horizontal: 0), // full width
               ),
-              indicatorSize: TabBarIndicatorSize.tab,
             ),
           ),
-        Expanded(
-          child: (_tabController != null)
-              ? TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _buildResultsList(_results),
-                    _buildResultsList(_results), // You can filter differently for 'People' tab
-                  ],
-                )
-              : Container(),
-        ),
+        Expanded(child: _buildResultsList(_results)),
       ],
     );
   }
@@ -158,7 +138,8 @@ class _ExplorePageState extends State<ExplorePage>
     }
     return ListView.separated(
       itemCount: results.length,
-      separatorBuilder: (context, index) => const Divider(height: 1, thickness: 1),
+      separatorBuilder: (context, index) =>
+          const Divider(height: 1, thickness: 1),
       itemBuilder: (context, index) {
         final profile = results[index];
         return ListTile(
@@ -169,10 +150,7 @@ class _ExplorePageState extends State<ExplorePage>
                 )
               : const CircleAvatar(
                   radius: 16,
-                  child: Icon(
-                    Icons.account_circle,
-                    color: Colors.grey,
-                  ),
+                  child: Icon(Icons.account_circle, color: Colors.grey),
                 ),
           title: Text(
             profile.displayName.isNotEmpty
@@ -189,10 +167,8 @@ class _ExplorePageState extends State<ExplorePage>
             if (context.mounted) {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (context) => ProfilePage(
-                    profile: loadedProfile,
-                    showAppBar: true,
-                  ),
+                  builder: (context) =>
+                      ProfilePage(profile: loadedProfile, showAppBar: true),
                 ),
               );
             }

@@ -10,7 +10,7 @@ class JustifiedGalleryView extends StatelessWidget {
   const JustifiedGalleryView({
     super.key,
     required this.items,
-    this.spacing = 4,
+    this.spacing = 2, // Reduced from 4 to 2 for tighter, profile-like spacing
     this.maxRowHeight = 220,
     this.onImageTap,
   });
@@ -20,57 +20,54 @@ class JustifiedGalleryView extends StatelessWidget {
     if (items.isEmpty) {
       return const Center(child: Text('No photos in this gallery.'));
     }
-    final screenWidth =
-        MediaQuery.of(context).size.width - 32; // 16px padding each side
+    final screenWidth = MediaQuery.of(context).size.width;
     final rows = _computeRows(items, screenWidth, spacing, maxRowHeight);
-    int globalIndex = 0;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        for (final row in rows) ...[
-          Padding(
-            padding: EdgeInsets.only(bottom: spacing),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                for (int i = 0; i < row.length; i++)
-                  Padding(
-                    padding: EdgeInsets.only(
-                      right: i == row.length - 1 ? 0 : spacing,
-                    ),
-                    child: GestureDetector(
-                      onTap: onImageTap != null
-                          ? () => onImageTap!(globalIndex + i)
-                          : null,
-                      child: SizedBox(
-                        width: row[i].displayWidth,
-                        height: row[i].displayHeight,
-                        child: ClipRRect(
-                          child: Image.network(
-                            row[i].thumb,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                Container(
-                                  color: Colors.grey[300],
-                                  child: const Icon(
-                                    Icons.broken_image,
-                                    color: Colors.grey,
-                                  ),
-                                ),
+    final List<Widget> rowWidgets = [];
+    for (final row in rows) {
+      rowWidgets.add(
+        Padding(
+          padding: EdgeInsets.only(bottom: spacing),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              for (int i = 0; i < row.length; i++)
+                Padding(
+                  padding: EdgeInsets.only(
+                    right: i == row.length - 1 ? 0 : spacing,
+                  ),
+                  child: GestureDetector(
+                    onTap: onImageTap != null
+                        ? () => onImageTap!(row[i].originalIndex)
+                        : null,
+                    child: SizedBox(
+                      width: row[i].displayWidth,
+                      height: row[i].displayHeight,
+                      child: ClipRRect(
+                        child: Image.network(
+                          row[i].thumb,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(
+                            color: Colors.grey[300],
+                            child: const Icon(
+                              Icons.broken_image,
+                              color: Colors.grey,
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
-              ],
-            ),
+                ),
+            ],
           ),
-          // increment globalIndex after each row (not as a widget)
-        ],
-      ],
+        ),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: rowWidgets,
     );
-    // increment globalIndex after each row
-    // (do this after the widget, not inside the widget list)
   }
 }
 
@@ -78,10 +75,13 @@ class _JustifiedImage {
   final String thumb;
   final double displayWidth;
   final double displayHeight;
+  final int originalIndex;
+
   _JustifiedImage({
     required this.thumb,
     required this.displayWidth,
     required this.displayHeight,
+    required this.originalIndex,
   });
 }
 
@@ -102,8 +102,9 @@ List<List<_JustifiedImage>> _computeRows(
     currentRow.add(
       _JustifiedImage(
         thumb: item.thumb,
-        displayWidth: imgW.toDouble(),
-        displayHeight: imgH.toDouble(),
+        displayWidth: 0, // placeholder, will be set later
+        displayHeight: 0, // placeholder, will be set later
+        originalIndex: i,
       ),
     );
     aspectSum += aspect;
@@ -114,12 +115,13 @@ List<List<_JustifiedImage>> _computeRows(
     if (estRowHeight < maxRowHeight || i == items.length - 1) {
       final rowHeight = estRowHeight.clamp(80.0, maxRowHeight);
       for (var j = 0; j < currentRow.length; j++) {
-        final img = currentRow[j];
-        final width = rowHeight * (img.displayWidth / img.displayHeight);
+        final img = items[i - currentRow.length + 1 + j];
+        final width = rowHeight * (img.width / img.height);
         currentRow[j] = _JustifiedImage(
           thumb: img.thumb,
           displayWidth: width,
           displayHeight: rowHeight.toDouble(),
+          originalIndex: i - currentRow.length + 1 + j,
         );
       }
       rows.add(List<_JustifiedImage>.from(currentRow));

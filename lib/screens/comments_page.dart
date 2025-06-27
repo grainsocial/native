@@ -3,6 +3,7 @@ import 'package:grain/api.dart';
 import 'package:grain/models/comment.dart';
 import 'package:grain/models/gallery.dart';
 import 'package:grain/utils.dart';
+import 'package:grain/widgets/gallery_photo_view.dart';
 
 class CommentsPage extends StatefulWidget {
   final String galleryUri;
@@ -50,6 +51,12 @@ class _CommentsPageState extends State<CommentsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(color: Theme.of(context).dividerColor, height: 1),
+        ),
         title: const Text(
           'Comments',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
@@ -176,11 +183,34 @@ class _CommentTile extends StatelessWidget {
                             : 1.0,
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            comment.focus!.thumb.isNotEmpty
-                                ? comment.focus!.thumb
-                                : comment.focus!.fullsize,
-                            fit: BoxFit.cover,
+                          child: GestureDetector(
+                            onTap: () {
+                              showDialog(
+                                context: context,
+                                barrierColor: Colors.black.withOpacity(0.85),
+                                builder: (context) => GalleryPhotoView(
+                                  photos: [
+                                    GalleryPhoto(
+                                      uri: comment.focus!.uri,
+                                      cid: comment.focus!.cid,
+                                      thumb: comment.focus!.thumb,
+                                      fullsize: comment.focus!.fullsize,
+                                      alt: comment.focus!.alt,
+                                      width: comment.focus!.width,
+                                      height: comment.focus!.height,
+                                    ),
+                                  ],
+                                  initialIndex: 0,
+                                  onClose: () => Navigator.of(context).pop(),
+                                ),
+                              );
+                            },
+                            child: Image.network(
+                              comment.focus!.thumb.isNotEmpty
+                                  ? comment.focus!.thumb
+                                  : comment.focus!.fullsize,
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         ),
                       ),

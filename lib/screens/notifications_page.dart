@@ -95,7 +95,6 @@ class _NotificationsPageState extends State<NotificationsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: AppBar(title: const Text('Notifications')),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error
@@ -104,7 +103,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
           ? const Center(child: Text('No notifications yet.'))
           : ListView.separated(
               itemCount: _notifications.length,
-              separatorBuilder: (context, index) => const Divider(height: 1),
+              separatorBuilder: (context, index) => Divider(
+                height: 1,
+                color: Theme.of(context).dividerColor, // Use theme divider color
+              ),
               itemBuilder: (context, index) {
                 final notification = _notifications[index];
                 return _buildNotificationTile(notification);

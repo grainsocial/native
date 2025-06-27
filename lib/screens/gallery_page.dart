@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:grain/models/gallery.dart';
 import 'package:grain/api.dart';
 import 'package:grain/widgets/justified_gallery_view.dart';
-import 'package:grain/utils.dart';
 import './comments_page.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:grain/widgets/gallery_photo_view.dart';
 
 class GalleryPage extends StatefulWidget {
   final String uri;
@@ -18,6 +19,8 @@ class _GalleryPageState extends State<GalleryPage> {
   Gallery? _gallery;
   bool _loading = true;
   bool _error = false;
+  GalleryPhoto? _selectedPhoto;
+  int? _selectedPhotoIndex;
 
   @override
   void initState() {
@@ -60,146 +63,279 @@ class _GalleryPageState extends State<GalleryPage> {
     final galleryItems = gallery.items
         .where((item) => item.thumb.isNotEmpty)
         .toList();
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          gallery.title.isNotEmpty ? gallery.title : 'Gallery',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        ),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: ListView(
-          children: [
-            // Gallery info
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CircleAvatar(
-                  radius: 28,
-                  backgroundImage:
-                      gallery.creator?.avatar != null &&
-                          gallery.creator!.avatar.isNotEmpty
-                      ? NetworkImage(gallery.creator!.avatar)
-                      : null,
-                  child:
-                      (gallery.creator == null ||
-                          gallery.creator!.avatar.isEmpty)
-                      ? const Icon(
-                          Icons.account_circle,
-                          size: 32,
-                          color: Colors.grey,
-                        )
-                      : null,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        gallery.creator?.displayName ?? '',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                        ),
+
+    // The Stack is now OUTSIDE the Scaffold!
+    return Stack(
+      children: [
+        Scaffold(
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            surfaceTintColor: Colors.white,
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(1),
+              child: Container(
+                color: Theme.of(context).dividerColor,
+                height: 1,
+              ),
+            ),
+            title: const Text(
+              'Gallery',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+            iconTheme: const IconThemeData(color: Colors.black87),
+            titleTextStyle: const TextStyle(
+              color: Colors.black87,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          body: ListView(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 10),
+                    Text(
+                      gallery.title.isNotEmpty ? gallery.title : 'Gallery',
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w600,
                       ),
-                      Text(
-                        '@${gallery.creator?.handle ?? ''}',
-                        style: const TextStyle(
-                          color: Colors.grey,
-                          fontSize: 15,
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        CircleAvatar(
+                          radius: 18,
+                          backgroundImage:
+                              gallery.creator?.avatar != null &&
+                                  gallery.creator!.avatar.isNotEmpty
+                              ? NetworkImage(gallery.creator!.avatar)
+                              : null,
+                          child:
+                              (gallery.creator == null ||
+                                  gallery.creator!.avatar.isEmpty)
+                              ? const Icon(
+                                  Icons.account_circle,
+                                  size: 24,
+                                  color: Colors.grey,
+                                )
+                              : null,
                         ),
-                      ),
-                      if ((gallery.createdAt ?? '').isNotEmpty)
-                        Text(
-                          formatRelativeTime(gallery.createdAt ?? ''),
-                          style: const TextStyle(
-                            color: Colors.grey,
-                            fontSize: 13,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                gallery.creator?.displayName ?? '',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              if ((gallery.creator?.displayName ?? '')
+                                      .isNotEmpty &&
+                                  (gallery.creator?.handle ?? '').isNotEmpty)
+                                const SizedBox(width: 8),
+                              Text(
+                                '@${gallery.creator?.handle ?? ''}',
+                                style: const TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 15,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              if (gallery.description.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                  ).copyWith(bottom: 8),
+                  child: Text(
+                    gallery.description,
+                    style: const TextStyle(fontSize: 15, color: Colors.black87),
+                  ),
+                ),
+              if (isLoggedIn)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Row(
+                    children: [
+                      // Favorite button
+                      Expanded(
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(12),
+                          onTap: () {},
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                FaIcon(
+                                  gallery.viewer != null &&
+                                          gallery.viewer!['fav'] != null
+                                      ? FontAwesomeIcons.solidHeart
+                                      : FontAwesomeIcons.heart,
+                                  color:
+                                      gallery.viewer != null &&
+                                          gallery.viewer!['fav'] != null
+                                      ? const Color(0xFFEC4899)
+                                      : Colors.black54,
+                                  size: 20,
+                                ),
+                                if (gallery.favCount != null) ...[
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    gallery.favCount.toString(),
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.black87,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Comment button
+                      Expanded(
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(12),
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    CommentsPage(galleryUri: gallery.uri),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const FaIcon(
+                                  FontAwesomeIcons.comment,
+                                  color: Colors.black54,
+                                  size: 20,
+                                ),
+                                if (gallery.commentCount != null) ...[
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    gallery.commentCount.toString(),
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.black87,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Share button
+                      Expanded(
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(12),
+                          onTap: () {},
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Center(
+                              child: FaIcon(
+                                FontAwesomeIcons.arrowUpFromBracket,
+                                color: Colors.black54,
+                                size: 20,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
+                  ),
+                ),
+              const SizedBox(height: 8),
+              // Gallery items grid (edge-to-edge)
+              if (galleryItems.isNotEmpty)
+                JustifiedGalleryView(
+                  items: galleryItems,
+                  onImageTap: (index) {
+                    if (index >= 0 && index < galleryItems.length) {
+                      setState(() {
+                        _selectedPhoto = galleryItems[index];
+                        _selectedPhotoIndex = index;
+                      });
+                    }
+                  },
+                ),
+              if (galleryItems.isEmpty)
+                const Center(child: Text('No photos in this gallery.')),
+            ],
+          ),
+        ),
+        if (_selectedPhoto != null && _selectedPhotoIndex != null)
+          Positioned.fill(
+            child: Stack(
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedPhoto = null;
+                      _selectedPhotoIndex = null;
+                    });
+                  },
+                  child: Container(color: Colors.black.withOpacity(0.85)),
+                ),
+                Center(
+                  child: GalleryPhotoView(
+                    photos: galleryItems,
+                    initialIndex: _selectedPhotoIndex!,
+                    onClose: () {
+                      setState(() {
+                        _selectedPhoto = null;
+                        _selectedPhotoIndex = null;
+                      });
+                    },
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            if (gallery.description.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Text(
-                  gallery.description,
-                  style: const TextStyle(fontSize: 15, color: Colors.black87),
-                ),
-              ),
-            // Action buttons
-            if (isLoggedIn)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  if (isCreator)
-                    ElevatedButton.icon(
-                      onPressed: () {},
-                      icon: const Icon(Icons.edit),
-                      label: const Text('Edit'),
-                    ),
-                  IconButton(
-                    icon: Icon(
-                      gallery.viewer != null && gallery.viewer!['fav'] != null
-                          ? Icons
-                                .favorite // filled
-                          : Icons.favorite_border, // outline
-                      color:
-                          gallery.viewer != null &&
-                              gallery.viewer!['fav'] != null
-                          ? Color(0xFFEC4899) // Tailwind pink-500
-                          : Colors.black54,
-                    ),
-                    onPressed: () {},
-                  ),
-                  if (gallery.favCount != null)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 12),
-                      child: Text(
-                        gallery.favCount.toString(),
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.black54,
-                        ),
-                      ),
-                    ),
-                  IconButton(
-                    icon: const Icon(Icons.comment_outlined),
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              CommentsPage(galleryUri: gallery.uri),
-                        ),
-                      );
-                    },
-                  ),
-                  if (gallery.commentCount != null)
-                    Text(
-                      gallery.commentCount.toString(),
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.black54,
-                      ),
-                    ),
-                  IconButton(icon: const Icon(Icons.share), onPressed: () {}),
-                ],
-              ),
-            const SizedBox(height: 8),
-            // Gallery items grid
-            if (galleryItems.isNotEmpty)
-              JustifiedGalleryView(items: galleryItems),
-            if (galleryItems.isEmpty)
-              const Center(child: Text('No photos in this gallery.')),
-          ],
-        ),
-      ),
+          ),
+      ],
     );
   }
 }

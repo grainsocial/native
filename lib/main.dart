@@ -53,16 +53,12 @@ class _MyAppState extends State<MyApp> {
     apiService.setToken(accessToken);
     // Fetch current user profile from /oauth/session after login
     await apiService.fetchCurrentUser();
-    setState(() {
-      displayName = apiService.currentUser?.displayName;
-    });
   }
 
   void handleSignOut() {
     setState(() {
       isSignedIn = false;
       session = null;
-      displayName = null;
     });
   }
 
@@ -72,14 +68,12 @@ class _MyAppState extends State<MyApp> {
       title: 'Grain',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.lightBlue),
-        textTheme: GoogleFonts.interTextTheme(),
+        scaffoldBackgroundColor: Colors.white,
+        dividerColor: const Color(0xFFF4F4F5),
+        // textTheme: GoogleFonts.interTextTheme(),
       ),
       home: isSignedIn
-          ? MyHomePage(
-              title: 'Grain',
-              onSignOut: handleSignOut,
-              displayName: displayName,
-            )
+          ? MyHomePage(title: 'Grain', onSignOut: handleSignOut)
           : SplashPage(onSignIn: handleSignIn),
     );
   }
