@@ -169,14 +169,19 @@ class _ExplorePageState extends State<ExplorePage> {
               ? Text('@${profile.handle}')
               : null,
           onTap: () async {
-            final loadedProfile = await apiService.fetchProfile(
-              did: profile.did,
-            );
+            FocusScope.of(
+              context,
+            ).unfocus(); // Dismiss keyboard and prevent onChanged
+            _debounce?.cancel(); // Cancel any pending search
+            setState(() {
+              _searched = false;
+              _loading = false;
+            });
             if (context.mounted) {
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (context) =>
-                      ProfilePage(profile: loadedProfile, showAppBar: true),
+                      ProfilePage(did: profile.did, showAppBar: true),
                 ),
               );
             }
