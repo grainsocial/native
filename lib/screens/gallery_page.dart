@@ -8,6 +8,7 @@ import 'package:grain/widgets/gallery_photo_view.dart';
 import 'package:at_uri/at_uri.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:grain/widgets/app_image.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class GalleryPage extends StatefulWidget {
   final String uri;
@@ -42,6 +43,19 @@ class _GalleryPageState extends State<GalleryPage> {
         _gallery = gallery;
         _loading = false;
       });
+      // Pre-cache thumbnails and fullsize images in the background
+      if (gallery != null) {
+        Future.microtask(() {
+          for (final item in gallery.items) {
+            if (item.thumb.isNotEmpty) {
+              precacheImage(CachedNetworkImageProvider(item.thumb), context);
+            }
+            if (item.fullsize.isNotEmpty) {
+              precacheImage(CachedNetworkImageProvider(item.fullsize), context);
+            }
+          }
+        });
+      }
     } catch (e) {
       setState(() {
         _error = true;
@@ -68,7 +82,6 @@ class _GalleryPageState extends State<GalleryPage> {
       );
     }
     final gallery = _gallery!;
-    final isCreator = widget.currentUserDid == gallery.creator?.did;
     final isLoggedIn = widget.currentUserDid != null;
     final galleryItems = gallery.items
         .where((item) => item.thumb.isNotEmpty)
