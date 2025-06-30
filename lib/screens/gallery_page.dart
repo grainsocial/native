@@ -7,6 +7,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:grain/widgets/gallery_photo_view.dart';
 import 'package:at_uri/at_uri.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:grain/widgets/app_image.dart';
 
 class GalleryPage extends StatefulWidget {
   final String uri;
@@ -119,7 +120,7 @@ class _GalleryPageState extends State<GalleryPage> {
                           backgroundImage:
                               gallery.creator?.avatar != null &&
                                   gallery.creator!.avatar.isNotEmpty
-                              ? NetworkImage(gallery.creator!.avatar)
+                              ? null
                               : null,
                           child:
                               (gallery.creator == null ||
@@ -129,7 +130,14 @@ class _GalleryPageState extends State<GalleryPage> {
                                   size: 24,
                                   color: Colors.grey,
                                 )
-                              : null,
+                              : ClipOval(
+                                  child: AppImage(
+                                    url: gallery.creator!.avatar,
+                                    width: 36,
+                                    height: 36,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(

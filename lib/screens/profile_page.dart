@@ -147,10 +147,12 @@ class _ProfilePageState extends State<ProfilePage>
                               if (profile.avatar != null)
                                 Align(
                                   alignment: Alignment.centerLeft,
-                                  child: CircleAvatar(
-                                    radius: 32,
-                                    backgroundImage: NetworkImage(
-                                      profile.avatar,
+                                  child: ClipOval(
+                                    child: AppImage(
+                                      url: profile.avatar,
+                                      width: 64,
+                                      height: 64,
+                                      fit: BoxFit.cover,
                                     ),
                                   ),
                                 )

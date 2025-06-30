@@ -62,7 +62,7 @@ class _GalleryPhotoViewState extends State<GalleryPhotoView> {
                         child: const Center(
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Color(0xFF0EA5E9),
+                            color: Colors.white,
                           ),
                         ),
                       ),

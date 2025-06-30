@@ -9,6 +9,7 @@ import 'explore_page.dart';
 import 'log_page.dart';
 import 'notifications_page.dart';
 import 'profile_page.dart';
+import 'package:grain/widgets/app_image.dart';
 
 class TimelineItem {
   final Gallery gallery;
@@ -193,18 +194,17 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                       backgroundImage:
                           apiService.currentUser?.avatar != null &&
                               apiService.currentUser!.avatar.isNotEmpty
-                          ? NetworkImage(apiService.currentUser!.avatar)
+                          ? null
                           : null,
                       backgroundColor: Colors.white,
-                      child:
-                          (apiService.currentUser == null ||
-                              apiService.currentUser!.avatar.isEmpty)
-                          ? const Icon(
-                              Icons.account_circle,
-                              size: 32,
-                              color: Colors.grey,
-                            )
-                          : null,
+                      child: ClipOval(
+                        child: AppImage(
+                          url: apiService.currentUser!.avatar,
+                          width: 44,
+                          height: 44,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Text(
@@ -446,18 +446,17 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                     backgroundImage:
                         apiService.currentUser?.avatar != null &&
                             apiService.currentUser!.avatar.isNotEmpty
-                        ? NetworkImage(apiService.currentUser!.avatar)
+                        ? null
                         : null,
                     backgroundColor: Colors.white,
-                    child:
-                        (apiService.currentUser == null ||
-                            apiService.currentUser!.avatar.isEmpty)
-                        ? const Icon(
-                            Icons.account_circle,
-                            size: 32,
-                            color: Colors.grey,
-                          )
-                        : null,
+                    child: ClipOval(
+                      child: AppImage(
+                        url: apiService.currentUser!.avatar,
+                        width: 24,
+                        height: 24,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(

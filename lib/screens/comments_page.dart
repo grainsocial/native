@@ -186,9 +186,13 @@ class _CommentTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (author['avatar'] != null)
-            CircleAvatar(
-              radius: 16,
-              backgroundImage: NetworkImage(author['avatar']),
+            ClipOval(
+              child: AppImage(
+                url: author['avatar'],
+                width: 32,
+                height: 32,
+                fit: BoxFit.cover,
+              ),
             )
           else
             const CircleAvatar(radius: 16, child: Icon(Icons.person, size: 16)),

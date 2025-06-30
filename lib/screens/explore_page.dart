@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:grain/api.dart';
 import 'package:grain/models/profile.dart';
+import 'package:grain/widgets/app_image.dart';
 import 'profile_page.dart';
 
 class ExplorePage extends StatefulWidget {
@@ -147,9 +148,13 @@ class _ExplorePageState extends State<ExplorePage> {
         final profile = results[index];
         return ListTile(
           leading: profile.avatar.isNotEmpty
-              ? CircleAvatar(
-                  backgroundImage: NetworkImage(profile.avatar),
-                  radius: 16,
+              ? ClipOval(
+                  child: AppImage(
+                    url: profile.avatar,
+                    width: 32,
+                    height: 32,
+                    fit: BoxFit.cover,
+                  ),
                 )
               : const CircleAvatar(
                   radius: 16,
