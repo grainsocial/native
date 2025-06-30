@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:grain/models/gallery.dart';
+import 'package:grain/widgets/app_image.dart';
 
 class GalleryPhotoView extends StatefulWidget {
   final List<GalleryPhoto> photos;
@@ -53,21 +54,24 @@ class _GalleryPhotoViewState extends State<GalleryPhotoView> {
                   itemCount: widget.photos.length,
                   onPageChanged: (i) => setState(() => _currentIndex = i),
                   itemBuilder: (context, i) => Center(
-                    child: Image.network(
-                      widget.photos[i].fullsize,
+                    child: AppImage(
+                      url: widget.photos[i].fullsize,
                       fit: BoxFit.contain,
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return const Center(
+                      placeholder: Container(
+                        color: Colors.black,
+                        child: const Center(
                           child: CircularProgressIndicator(
-                            color: Colors.white,
+                            strokeWidth: 2,
+                            color: Color(0xFF0EA5E9),
                           ),
-                        );
-                      },
-                      errorBuilder: (context, error, stackTrace) => const Icon(
-                        Icons.broken_image,
-                        color: Colors.white,
-                        size: 64,
+                        ),
+                      ),
+                      errorWidget: Container(
+                        color: Colors.black,
+                        child: const Icon(
+                          Icons.broken_image,
+                          color: Colors.grey,
+                        ),
                       ),
                     ),
                   ),

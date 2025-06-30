@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:grain/widgets/app_image.dart';
 
 class BottomNavBar extends StatelessWidget {
   final int navIndex;
@@ -118,10 +119,13 @@ class BottomNavBar extends StatelessWidget {
                                     ),
                                   )
                                 : null,
-                            child: CircleAvatar(
-                              radius: 12,
-                              backgroundImage: NetworkImage(avatarUrl!),
-                              backgroundColor: Colors.transparent,
+                            child: ClipOval(
+                              child: AppImage(
+                                url: avatarUrl!,
+                                width: 24,
+                                height: 24,
+                                fit: BoxFit.cover,
+                              ),
                             ),
                           )
                         : FaIcon(

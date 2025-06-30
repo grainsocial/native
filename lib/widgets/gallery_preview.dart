@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:grain/models/gallery.dart';
+import 'package:grain/widgets/app_image.dart';
 
 class GalleryPreview extends StatelessWidget {
   final Gallery gallery;
@@ -18,8 +19,8 @@ class GalleryPreview extends StatelessWidget {
           Expanded(
             flex: 2,
             child: photos.isNotEmpty
-                ? Image.network(
-                    photos[0].thumb,
+                ? AppImage(
+                    url: photos[0].thumb,
                     fit: BoxFit.cover,
                     width: double.infinity,
                     height: double.infinity,
@@ -33,8 +34,8 @@ class GalleryPreview extends StatelessWidget {
               children: [
                 Expanded(
                   child: photos.length > 1
-                      ? Image.network(
-                          photos[1].thumb,
+                      ? AppImage(
+                          url: photos[1].thumb,
                           fit: BoxFit.cover,
                           width: double.infinity,
                           height: double.infinity,
@@ -44,8 +45,8 @@ class GalleryPreview extends StatelessWidget {
                 const SizedBox(height: 2),
                 Expanded(
                   child: photos.length > 2
-                      ? Image.network(
-                          photos[2].thumb,
+                      ? AppImage(
+                          url: photos[2].thumb,
                           fit: BoxFit.cover,
                           width: double.infinity,
                           height: double.infinity,

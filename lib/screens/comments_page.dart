@@ -4,6 +4,7 @@ import 'package:grain/models/comment.dart';
 import 'package:grain/models/gallery.dart';
 import 'package:grain/utils.dart';
 import 'package:grain/widgets/gallery_photo_view.dart';
+import 'package:grain/widgets/app_image.dart';
 
 class CommentsPage extends StatefulWidget {
   final String galleryUri;
@@ -232,8 +233,8 @@ class _CommentTile extends StatelessWidget {
                                     ),
                                   )
                                 : null,
-                            child: Image.network(
-                              comment.focus!.thumb.isNotEmpty
+                            child: AppImage(
+                              url: comment.focus!.thumb.isNotEmpty
                                   ? comment.focus!.thumb
                                   : comment.focus!.fullsize,
                               fit: BoxFit.cover,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:grain/models/gallery.dart';
+import 'package:grain/widgets/app_image.dart';
 
 class JustifiedGalleryView extends StatelessWidget {
   final List<GalleryPhoto> items;
@@ -43,18 +44,7 @@ class JustifiedGalleryView extends StatelessWidget {
                       width: row[i].displayWidth,
                       height: row[i].displayHeight,
                       child: ClipRRect(
-                        child: Image.network(
-                          row[i].thumb,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              Container(
-                            color: Colors.grey[300],
-                            child: const Icon(
-                              Icons.broken_image,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ),
+                        child: AppImage(url: row[i].thumb, fit: BoxFit.cover),
                       ),
                     ),
                   ),

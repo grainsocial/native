@@ -7,6 +7,7 @@ import '../screens/comments_page.dart';
 import '../screens/profile_page.dart';
 import 'package:grain/api.dart';
 import 'package:grain/utils.dart';
+import 'package:grain/widgets/app_image.dart';
 
 class TimelineItemWidget extends StatelessWidget {
   final Gallery gallery;
@@ -43,18 +44,21 @@ class TimelineItemWidget extends StatelessWidget {
                     },
                 child: CircleAvatar(
                   radius: 18,
-                  backgroundImage:
-                      actor?.avatar != null && actor!.avatar.isNotEmpty
-                      ? NetworkImage(actor.avatar)
-                      : null,
                   backgroundColor: Colors.transparent,
-                  child: (actor == null || actor.avatar.isEmpty)
-                      ? const Icon(
+                  child: (actor != null && actor.avatar.isNotEmpty)
+                      ? ClipOval(
+                          child: AppImage(
+                            url: actor.avatar,
+                            width: 36,
+                            height: 36,
+                            fit: BoxFit.cover,
+                          ),
+                        )
+                      : const Icon(
                           Icons.account_circle,
                           size: 24,
                           color: Colors.grey,
-                        )
-                      : null,
+                        ),
                 ),
               ),
               const SizedBox(width: 10),

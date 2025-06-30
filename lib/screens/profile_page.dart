@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:grain/models/gallery.dart';
 import 'package:grain/api.dart';
 import 'gallery_page.dart';
+import 'package:grain/widgets/app_image.dart';
 
 class ProfilePage extends StatefulWidget {
   final dynamic profile;
@@ -304,11 +305,9 @@ class _ProfilePageState extends State<ProfilePage>
                                     ),
                                     clipBehavior: Clip.antiAlias,
                                     child: hasPhoto
-                                        ? Image.network(
-                                            gallery.items[0].thumb,
+                                        ? AppImage(
+                                            url: gallery.items[0].thumb,
                                             fit: BoxFit.cover,
-                                            width: double.infinity,
-                                            height: double.infinity,
                                           )
                                         : Center(
                                             child: Text(
@@ -365,11 +364,9 @@ class _ProfilePageState extends State<ProfilePage>
                                     ),
                                     clipBehavior: Clip.antiAlias,
                                     child: hasPhoto
-                                        ? Image.network(
-                                            gallery.items[0].thumb,
+                                        ? AppImage(
+                                            url: gallery.items[0].thumb,
                                             fit: BoxFit.cover,
-                                            width: double.infinity,
-                                            height: double.infinity,
                                           )
                                         : Center(
                                             child: Text(

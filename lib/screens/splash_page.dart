@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:grain/app_logger.dart';
 import 'package:grain/main.dart';
+import 'package:grain/widgets/app_image.dart';
 
 class SplashPage extends StatefulWidget {
   final void Function(dynamic session)? onSignIn;
@@ -55,8 +56,9 @@ class _SplashPageState extends State<SplashPage> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          Image.network(
-            'https://cdn.bsky.app/img/feed_fullsize/plain/did:plc:bcgltzqazw5tb6k2g3ttenbj/bafkreiewhwu3ro5dv7omedphb62db4koa7qtvyzfhiiypg3ru4tvuxkrjy@jpeg',
+          AppImage(
+            url:
+                'https://cdn.bsky.app/img/feed_fullsize/plain/did:plc:bcgltzqazw5tb6k2g3ttenbj/bafkreiewhwu3ro5dv7omedphb62db4koa7qtvyzfhiiypg3ru4tvuxkrjy@jpeg',
             fit: BoxFit.cover,
           ),
           Container(color: Colors.black.withOpacity(0.4)),
