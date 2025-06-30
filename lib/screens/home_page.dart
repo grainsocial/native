@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:grain/api.dart';
 import 'package:grain/models/gallery.dart';
-import 'package:grain/widgets/gallery_preview.dart';
-import 'gallery_page.dart';
-import 'comments_page.dart';
-import 'profile_page.dart';
-import 'package:grain/utils.dart';
-import 'log_page.dart';
+import 'package:grain/widgets/timeline_item.dart';
 import 'package:grain/widgets/app_version_text.dart';
-import 'notifications_page.dart';
-import 'explore_page.dart';
+import 'package:grain/widgets/bottom_nav_bar.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'explore_page.dart';
+import 'log_page.dart';
+import 'notifications_page.dart';
+import 'profile_page.dart';
 
 class TimelineItem {
   final Gallery gallery;
@@ -167,213 +165,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
           SliverList(
             delegate: SliverChildBuilderDelegate((context, index) {
               final item = timeline[index];
-              final gallery = item.gallery;
-              final actor = gallery.creator;
-              final createdAt = gallery.createdAt;
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 8,
-                      horizontal: 8,
-                    ),
-                    child: Row(
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            if (actor != null) {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => ProfilePage(
-                                    did: actor.did,
-                                    showAppBar: true,
-                                  ),
-                                ),
-                              );
-                            }
-                          },
-                          child: CircleAvatar(
-                            radius: 18,
-                            backgroundImage:
-                                actor?.avatar != null &&
-                                    actor!.avatar.isNotEmpty
-                                ? NetworkImage(actor.avatar)
-                                : null,
-                            backgroundColor: Colors.transparent,
-                            child: (actor == null || actor.avatar.isEmpty)
-                                ? const Icon(
-                                    Icons.account_circle,
-                                    size: 24,
-                                    color: Colors.grey,
-                                  )
-                                : null,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Row(
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  actor != null &&
-                                          actor.displayName.isNotEmpty
-                                      ? actor.displayName
-                                      : (actor != null
-                                            ? '@${actor.handle}'
-                                            : ''),
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 16,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              if (actor != null && actor.handle.isNotEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 6),
-                                  child: Text(
-                                    '@${actor.handle}',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.grey[800],
-                                      fontWeight: FontWeight.normal,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 1,
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                        Text(
-                          formatRelativeTime(createdAt ?? ''),
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (gallery.items.isNotEmpty)
-                    GestureDetector(
-                      onTap: () {
-                        if (gallery.uri.isNotEmpty) {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => GalleryPage(
-                                uri: gallery.uri,
-                                currentUserDid: apiService.currentUser?.did,
-                              ),
-                            ),
-                          );
-                        }
-                      },
-                      child: GalleryPreview(gallery: gallery),
-                    )
-                  else
-                    const SizedBox.shrink(),
-                  if (gallery.title.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(
-                        top: 8,
-                        left: 8,
-                        right: 8,
-                      ),
-                      child: Text(
-                        gallery.title,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                  if (gallery.description.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(
-                        top: 4,
-                        left: 8,
-                        right: 8,
-                      ),
-                      child: Text(
-                        gallery.description,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Colors.black54,
-                        ),
-                      ),
-                    ),
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.only(
-                      top: 12,
-                      bottom: 12,
-                      left: 12,
-                      right: 12,
-                    ),
-                    child: Row(
-                      children: [
-                        GestureDetector(
-                          child: Padding(
-                            padding: const EdgeInsets.only(right: 12),
-                            child: Icon(
-                              size: 18,
-                              gallery.viewer != null &&
-                                      gallery.viewer!['fav'] != null
-                                  ? FontAwesomeIcons.solidHeart
-                                  : FontAwesomeIcons.heart,
-                              color:
-                                  gallery.viewer != null &&
-                                      gallery.viewer!['fav'] != null
-                                  ? Color(0xFFEC4899)
-                                  : Colors.black54,
-                            ),
-                          ),
-                          onTap: () {},
-                        ),
-                        if (gallery.favCount != null)
-                          Padding(
-                            padding: const EdgeInsets.only(right: 12),
-                            child: Text(
-                              gallery.favCount.toString(),
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Colors.black54,
-                              ),
-                            ),
-                          ),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    CommentsPage(galleryUri: gallery.uri),
-                              ),
-                            );
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.only(
-                              left: 12,
-                              right: 12,
-                            ),
-                            child: Icon(
-                              FontAwesomeIcons.comment,
-                              size: 18,
-                              color: Colors.black54,
-                            ),
-                          ),
-                        ),
-                        if (gallery.commentCount != null)
-                          Text(
-                            gallery.commentCount.toString(),
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.black54,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
-              );
+              return TimelineItemWidget(gallery: item.gallery);
             }, childCount: timeline.length),
           ),
       ],
@@ -603,155 +395,39 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             ],
           ),
         ),
-        bottomNavigationBar: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              top: BorderSide(color: Theme.of(context).dividerColor, width: 1),
-            ),
-          ),
-          height: 42 + MediaQuery.of(context).padding.bottom, // Ultra-slim
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () {
-                    setState(() {
-                      showProfile = false;
-                      showNotifications = false;
-                      showExplore = false;
-                    });
-                  },
-                  child: SizedBox(
-                    height: 42 + MediaQuery.of(context).padding.bottom,
-                    child: Transform.translate(
-                      offset: const Offset(0, -10),
-                      child: Center(
-                        child: FaIcon(
-                          FontAwesomeIcons.house,
-                          size: 20,
-                          color: _navIndex == 0
-                              ? const Color(0xFF0EA5E9)
-                              : Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () {
-                    setState(() {
-                      showExplore = true;
-                      showProfile = false;
-                      showNotifications = false;
-                    });
-                  },
-                  child: SizedBox(
-                    height: 42 + MediaQuery.of(context).padding.bottom,
-                    child: Transform.translate(
-                      offset: const Offset(0, -10),
-                      child: Center(
-                        child: FaIcon(
-                          FontAwesomeIcons.magnifyingGlass,
-                          size: 20,
-                          color: _navIndex == 1
-                              ? const Color(0xFF0EA5E9)
-                              : Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () {
-                    setState(() {
-                      showNotifications = true;
-                      showProfile = false;
-                      showExplore = false;
-                    });
-                  },
-                  child: SizedBox(
-                    height: 42 + MediaQuery.of(context).padding.bottom,
-                    child: Transform.translate(
-                      offset: const Offset(0, -10),
-                      child: Center(
-                        child: FaIcon(
-                          FontAwesomeIcons.solidBell,
-                          size: 20,
-                          color: _navIndex == 2
-                              ? const Color(0xFF0EA5E9)
-                              : Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () {
-                    setState(() {
-                      showProfile = true;
-                      showNotifications = false;
-                      showExplore = false;
-                    });
-                  },
-                  child: SizedBox(
-                    height: 42 + MediaQuery.of(context).padding.bottom,
-                    child: Transform.translate(
-                      offset: const Offset(0, -10),
-                      child: Center(
-                        child: apiService.currentUser?.avatar != null
-                            ? Container(
-                                width: 28,
-                                height: 28,
-                                alignment: Alignment.center,
-                                decoration: _navIndex == 3
-                                    ? BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: const Color(0xFF0EA5E9),
-                                          width: 2.2,
-                                        ),
-                                      )
-                                    : null,
-                                child: CircleAvatar(
-                                  radius: 12,
-                                  backgroundImage: NetworkImage(
-                                    apiService.currentUser!.avatar,
-                                  ),
-                                  backgroundColor: Colors.transparent,
-                                ),
-                              )
-                            : FaIcon(
-                                _navIndex == 3
-                                    ? FontAwesomeIcons.solidUser
-                                    : FontAwesomeIcons.user,
-                                size: 16,
-                                color: _navIndex == 3
-                                    ? const Color(0xFF0EA5E9)
-                                    : Theme.of(
-                                        context,
-                                      ).colorScheme.onSurfaceVariant,
-                              ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ), // End of bottomNavigationBar
-      ); // End of Home page Scaffold
+        bottomNavigationBar: BottomNavBar(
+          navIndex: _navIndex,
+          onHome: () {
+            setState(() {
+              showProfile = false;
+              showNotifications = false;
+              showExplore = false;
+            });
+          },
+          onExplore: () {
+            setState(() {
+              showProfile = false;
+              showNotifications = false;
+              showExplore = true;
+            });
+          },
+          onNotifications: () {
+            setState(() {
+              showProfile = false;
+              showNotifications = true;
+              showExplore = false;
+            });
+          },
+          onProfile: () {
+            setState(() {
+              showProfile = true;
+              showNotifications = false;
+              showExplore = false;
+            });
+          },
+          avatarUrl: apiService.currentUser?.avatar,
+        ),
+      );
     }
     // Explore, Notifications, Profile: no tabs, no TabController
     return Scaffold(
@@ -958,154 +634,38 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             ),
         ],
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border(
-            top: BorderSide(color: Theme.of(context).dividerColor, width: 1),
-          ),
-        ),
-        height: 42 + MediaQuery.of(context).padding.bottom, // Ultra-slim
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            Expanded(
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () {
-                  setState(() {
-                    showProfile = false;
-                    showNotifications = false;
-                    showExplore = false;
-                  });
-                },
-                child: SizedBox(
-                  height: 42 + MediaQuery.of(context).padding.bottom,
-                  child: Transform.translate(
-                    offset: const Offset(0, -10),
-                    child: Center(
-                      child: FaIcon(
-                        FontAwesomeIcons.house,
-                        size: 20,
-                        color: _navIndex == 0
-                            ? const Color(0xFF0EA5E9)
-                            : Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Expanded(
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () {
-                  setState(() {
-                    showExplore = true;
-                    showProfile = false;
-                    showNotifications = false;
-                  });
-                },
-                child: SizedBox(
-                  height: 42 + MediaQuery.of(context).padding.bottom,
-                  child: Transform.translate(
-                    offset: const Offset(0, -10),
-                    child: Center(
-                      child: FaIcon(
-                        FontAwesomeIcons.magnifyingGlass,
-                        size: 20,
-                        color: _navIndex == 1
-                            ? const Color(0xFF0EA5E9)
-                            : Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Expanded(
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () {
-                  setState(() {
-                    showNotifications = true;
-                    showProfile = false;
-                    showExplore = false;
-                  });
-                },
-                child: SizedBox(
-                  height: 42 + MediaQuery.of(context).padding.bottom,
-                  child: Transform.translate(
-                    offset: const Offset(0, -10),
-                    child: Center(
-                      child: FaIcon(
-                        FontAwesomeIcons.solidBell,
-                        size: 20,
-                        color: _navIndex == 2
-                            ? const Color(0xFF0EA5E9)
-                            : Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Expanded(
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () {
-                  setState(() {
-                    showProfile = true;
-                    showNotifications = false;
-                    showExplore = false;
-                  });
-                },
-                child: SizedBox(
-                  height: 42 + MediaQuery.of(context).padding.bottom,
-                  child: Transform.translate(
-                    offset: const Offset(0, -10),
-                    child: Center(
-                      child: apiService.currentUser?.avatar != null
-                          ? Container(
-                              width: 28,
-                              height: 28,
-                              alignment: Alignment.center,
-                              decoration: _navIndex == 3
-                                  ? BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: const Color(0xFF0EA5E9),
-                                        width: 2.2,
-                                      ),
-                                    )
-                                  : null,
-                              child: CircleAvatar(
-                                radius: 12,
-                                backgroundImage: NetworkImage(
-                                  apiService.currentUser!.avatar,
-                                ),
-                                backgroundColor: Colors.transparent,
-                              ),
-                            )
-                          : FaIcon(
-                              _navIndex == 3
-                                  ? FontAwesomeIcons.solidUser
-                                  : FontAwesomeIcons.user,
-                              size: 16,
-                              color: _navIndex == 3
-                                  ? const Color(0xFF0EA5E9)
-                                  : Theme.of(
-                                      context,
-                                    ).colorScheme.onSurfaceVariant,
-                            ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ), // End of bottomNavigationBar
-    ); // End of fallback Scaffold
+      bottomNavigationBar: BottomNavBar(
+        navIndex: _navIndex,
+        onHome: () {
+          setState(() {
+            showProfile = false;
+            showNotifications = false;
+            showExplore = false;
+          });
+        },
+        onExplore: () {
+          setState(() {
+            showProfile = false;
+            showNotifications = false;
+            showExplore = true;
+          });
+        },
+        onNotifications: () {
+          setState(() {
+            showProfile = false;
+            showNotifications = true;
+            showExplore = false;
+          });
+        },
+        onProfile: () {
+          setState(() {
+            showProfile = true;
+            showNotifications = false;
+            showExplore = false;
+          });
+        },
+        avatarUrl: apiService.currentUser?.avatar,
+      ),
+    );
   }
 } // End of _MyHomePageState and file
