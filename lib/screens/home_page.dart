@@ -175,6 +175,16 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    if (apiService.currentUser == null) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: Color(0xFF0EA5E9),
+          ),
+        ),
+      );
+    }
     // Home page: show tabs
     if (!showProfile && !showNotifications && !showExplore) {
       if (_tabController == null) _initTabController();
