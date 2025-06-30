@@ -71,7 +71,10 @@ class _CommentsPageState extends State<CommentsPage> {
           ),
           body: _loading
               ? const Center(
-                  child: CircularProgressIndicator(color: Color(0xFF0EA5E9)),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Color(0xFF0EA5E9),
+                  ),
                 ) // Tailwind sky-500)
               : _error
               ? const Center(child: Text('Failed to load comments.'))

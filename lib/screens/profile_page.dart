@@ -104,7 +104,10 @@ class _ProfilePageState extends State<ProfilePage>
       return const Scaffold(
         backgroundColor: Colors.white,
         body: Center(
-          child: CircularProgressIndicator(color: Color(0xFF0EA5E9)),
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: Color(0xFF0EA5E9),
+          ),
         ),
       );
     }
@@ -267,7 +270,14 @@ class _ProfilePageState extends State<ProfilePage>
                   controller: _tabController,
                   children: [
                     // Galleries tab, edge-to-edge grid
-                    _galleries.isEmpty
+                    _galleriesLoading
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Color(0xFF0EA5E9),
+                            ),
+                          )
+                        : _galleries.isEmpty
                         ? const Center(child: Text('No galleries yet'))
                         : GridView.builder(
                             padding: EdgeInsets.zero,
@@ -330,7 +340,14 @@ class _ProfilePageState extends State<ProfilePage>
                           ),
                     // Favs tab
                     if (apiService.currentUser?.did == profile.did)
-                      (_favs.isEmpty
+                      (_favsLoading
+                          ? const Center(
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Color(0xFF0EA5E9),
+                              ),
+                            )
+                          : _favs.isEmpty
                           ? const Center(child: Text('No favorites yet'))
                           : GridView.builder(
                               padding: EdgeInsets.zero,

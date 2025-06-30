@@ -55,7 +55,10 @@ class _GalleryPageState extends State<GalleryPage> {
     if (_loading) {
       return const Scaffold(
         body: Center(
-          child: CircularProgressIndicator(color: Color(0xFF0EA5E9)),
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: Color(0xFF0EA5E9),
+          ),
         ),
       );
     }
