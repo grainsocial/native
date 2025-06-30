@@ -10,6 +10,7 @@ import 'log_page.dart';
 import 'notifications_page.dart';
 import 'profile_page.dart';
 import 'package:grain/widgets/app_image.dart';
+import 'package:grain/screens/create_gallery_page.dart';
 
 class TimelineItem {
   final Gallery gallery;
@@ -178,10 +179,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     if (apiService.currentUser == null) {
       return const Scaffold(
         body: Center(
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: Color(0xFF0EA5E9),
-          ),
+          child: CircularProgressIndicator(strokeWidth: 2, Color(0xFF0EA5E9)),
         ),
       );
     }
@@ -437,6 +435,22 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
           },
           avatarUrl: apiService.currentUser?.avatar,
         ),
+        floatingActionButton:
+            (!showProfile && !showNotifications && !showExplore)
+            ? FloatingActionButton(
+                onPressed: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    builder: (context) => CreateGalleryPage(),
+                  );
+                },
+                backgroundColor: const Color(0xFF0EA5E9),
+                foregroundColor: Colors.white,
+                child: const Icon(Icons.add_a_photo),
+                tooltip: 'Create Gallery',
+              )
+            : null,
       );
     }
     // Explore, Notifications, Profile: no tabs, no TabController
