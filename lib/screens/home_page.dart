@@ -133,275 +133,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     return 0;
   }
 
-  Widget _buildTimeline({bool following = false}) {
-    final loading = following ? _followingTimelineLoading : _timelineLoading;
-    final timeline = following ? _followingTimeline : _timeline;
-    if (timeline.isEmpty && !loading) {
-      return Center(
-        child: Text(
-          following ? 'No following timeline items.' : 'No timeline items.',
-        ),
-      );
-    }
-    return Column(
-      children: [
-        if (loading)
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: 10),
-            child: SizedBox(
-              height: 24,
-              width: 24,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Color(0xFF0ea5e9), // Tailwind sky-500,
-              ),
-            ),
-          ),
-        if (timeline.isNotEmpty)
-          Expanded(
-            child: Builder(
-              builder: (context) {
-                return MediaQuery.removePadding(
-                  context: context,
-                  removeTop: true,
-                  child: ListView.separated(
-                    padding: EdgeInsets.zero,
-                    itemCount: timeline.length,
-                    separatorBuilder: (context, index) => Divider(
-                      color: Colors.grey[200],
-                      thickness: 1,
-                      height: 1,
-                    ),
-                    itemBuilder: (context, index) {
-                      final item = timeline[index];
-                      final gallery = item.gallery;
-                      final actor = gallery.creator;
-                      final createdAt = gallery.createdAt;
-                      return GestureDetector(
-                        onTap: () {
-                          if (gallery.uri.isNotEmpty) {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => GalleryPage(
-                                  uri: gallery.uri,
-                                  currentUserDid: apiService.currentUser?.did,
-                                ),
-                              ),
-                            );
-                          }
-                        },
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 8,
-                                horizontal: 8,
-                              ),
-                              child: Row(
-                                children: [
-                                  GestureDetector(
-                                    onTap: () async {
-                                      if (actor != null) {
-                                        final loadedProfile = await apiService
-                                            .fetchProfile(did: actor.did);
-                                        if (!mounted) return;
-                                        Navigator.of(context).push(
-                                          MaterialPageRoute(
-                                            builder: (context) => ProfilePage(
-                                              profile: loadedProfile,
-                                              showAppBar: true,
-                                            ),
-                                          ),
-                                        );
-                                      }
-                                    },
-                                    child: CircleAvatar(
-                                      radius: 18,
-                                      backgroundImage:
-                                          actor?.avatar != null &&
-                                              actor!.avatar.isNotEmpty
-                                          ? NetworkImage(actor.avatar)
-                                          : null,
-                                      backgroundColor: Colors.transparent,
-                                      child:
-                                          (actor == null ||
-                                              actor.avatar.isEmpty)
-                                          ? const Icon(
-                                              Icons.account_circle,
-                                              size: 24,
-                                              color: Colors.grey,
-                                            )
-                                          : null,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Row(
-                                      children: [
-                                        Flexible(
-                                          child: Text(
-                                            actor != null &&
-                                                    actor.displayName.isNotEmpty
-                                                ? actor.displayName
-                                                : (actor != null
-                                                      ? '@${actor.handle}'
-                                                      : ''),
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 16,
-                                            ),
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                        if (actor != null &&
-                                            actor.handle.isNotEmpty)
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                              left: 6,
-                                            ),
-                                            child: Text(
-                                              '@${actor.handle}',
-                                              style: TextStyle(
-                                                fontSize: 14,
-                                                color: Colors.grey[800],
-                                                fontWeight: FontWeight.normal,
-                                              ),
-                                              overflow: TextOverflow.ellipsis,
-                                              maxLines: 1,
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                  Text(
-                                    formatRelativeTime(createdAt ?? ''),
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            if (gallery.items.isNotEmpty)
-                              GalleryPreview(gallery: gallery)
-                            else
-                              const SizedBox.shrink(),
-                            if (gallery.title.isNotEmpty)
-                              Padding(
-                                padding: const EdgeInsets.only(
-                                  top: 8,
-                                  left: 8,
-                                  right: 8,
-                                ),
-                                child: Text(
-                                  gallery.title,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            if (gallery.description.isNotEmpty)
-                              Padding(
-                                padding: const EdgeInsets.only(
-                                  top: 4,
-                                  left: 8,
-                                  right: 8,
-                                ),
-                                child: Text(
-                                  gallery.description,
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    color: Colors.black54,
-                                  ),
-                                ),
-                              ),
-                            const SizedBox(height: 8),
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                top: 12,
-                                bottom: 12,
-                                left: 12,
-                                right: 12,
-                              ),
-                              child: Row(
-                                children: [
-                                  GestureDetector(
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(right: 12),
-                                      child: Icon(
-                                        size: 18,
-                                        gallery.viewer != null &&
-                                                gallery.viewer!['fav'] != null
-                                            ? FontAwesomeIcons.solidHeart
-                                            : FontAwesomeIcons.heart,
-                                        color:
-                                            gallery.viewer != null &&
-                                                gallery.viewer!['fav'] != null
-                                            ? Color(0xFFEC4899)
-                                            : Colors.black54,
-                                      ),
-                                    ),
-                                    onTap: () {},
-                                  ),
-                                  if (gallery.favCount != null)
-                                    Padding(
-                                      padding: const EdgeInsets.only(right: 12),
-                                      child: Text(
-                                        gallery.favCount.toString(),
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.black54,
-                                        ),
-                                      ),
-                                    ),
-                                  GestureDetector(
-                                    onTap: () {
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder: (context) => CommentsPage(
-                                            galleryUri: gallery.uri,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(
-                                        left: 12,
-                                        right: 12,
-                                      ),
-                                      child: Icon(
-                                        FontAwesomeIcons.comment,
-                                        size: 18,
-                                        color: Colors.black54,
-                                      ),
-                                    ),
-                                  ),
-                                  if (gallery.commentCount != null)
-                                    Text(
-                                      gallery.commentCount.toString(),
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.black54,
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ), // closes Column
-                      ); // closes GestureDetector
-                    }, // closes itemBuilder
-                  ), // closes ListView.separated
-                ); // closes MediaQuery.removePadding
-              }, // closes Builder
-            ), // closes Expanded
-          ),
-      ],
-    ); // closes Column in _buildTimeline
-  }
-
   Widget _buildTimelineSliver(BuildContext context, {bool following = false}) {
     final loading = following ? _followingTimelineLoading : _timelineLoading;
     final timeline = following ? _followingTimeline : _timeline;
@@ -411,19 +142,13 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         SliverOverlapInjector(
           handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
         ),
-        if (loading)
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              child: Center(
-                child: SizedBox(
-                  height: 24,
-                  width: 24,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Color(0xFF0ea5e9),
-                  ),
-                ),
+        if (timeline.isEmpty && loading)
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Color(0xFF0ea5e9),
               ),
             ),
           ),
@@ -445,212 +170,209 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               final gallery = item.gallery;
               final actor = gallery.creator;
               final createdAt = gallery.createdAt;
-              return GestureDetector(
-                onTap: () {
-                  if (gallery.uri.isNotEmpty) {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => GalleryPage(
-                          uri: gallery.uri,
-                          currentUserDid: apiService.currentUser?.did,
-                        ),
-                      ),
-                    );
-                  }
-                },
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 8,
-                        horizontal: 8,
-                      ),
-                      child: Row(
-                        children: [
-                          GestureDetector(
-                            onTap: () async {
-                              if (actor != null) {
-                                final loadedProfile = await apiService
-                                    .fetchProfile(did: actor.did);
-                                if (!mounted) return;
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) => ProfilePage(
-                                      profile: loadedProfile,
-                                      showAppBar: true,
-                                    ),
-                                  ),
-                                );
-                              }
-                            },
-                            child: CircleAvatar(
-                              radius: 18,
-                              backgroundImage:
-                                  actor?.avatar != null &&
-                                      actor!.avatar.isNotEmpty
-                                  ? NetworkImage(actor.avatar)
-                                  : null,
-                              backgroundColor: Colors.transparent,
-                              child: (actor == null || actor.avatar.isEmpty)
-                                  ? const Icon(
-                                      Icons.account_circle,
-                                      size: 24,
-                                      color: Colors.grey,
-                                    )
-                                  : null,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Row(
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    actor != null &&
-                                            actor.displayName.isNotEmpty
-                                        ? actor.displayName
-                                        : (actor != null
-                                              ? '@${actor.handle}'
-                                              : ''),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 16,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                if (actor != null && actor.handle.isNotEmpty)
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 6),
-                                    child: Text(
-                                      '@${actor.handle}',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.grey[800],
-                                        fontWeight: FontWeight.normal,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                      maxLines: 1,
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                          Text(
-                            formatRelativeTime(createdAt ?? ''),
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ],
-                      ),
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 8,
+                      horizontal: 8,
                     ),
-                    if (gallery.items.isNotEmpty)
-                      GalleryPreview(gallery: gallery)
-                    else
-                      const SizedBox.shrink(),
-                    if (gallery.title.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(
-                          top: 8,
-                          left: 8,
-                          right: 8,
-                        ),
-                        child: Text(
-                          gallery.title,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                    if (gallery.description.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(
-                          top: 4,
-                          left: 8,
-                          right: 8,
-                        ),
-                        child: Text(
-                          gallery.description,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: Colors.black54,
-                          ),
-                        ),
-                      ),
-                    const SizedBox(height: 8),
-                    Padding(
-                      padding: const EdgeInsets.only(
-                        top: 12,
-                        bottom: 12,
-                        left: 12,
-                        right: 12,
-                      ),
-                      child: Row(
-                        children: [
-                          GestureDetector(
-                            child: Padding(
-                              padding: const EdgeInsets.only(right: 12),
-                              child: Icon(
-                                size: 18,
-                                gallery.viewer != null &&
-                                        gallery.viewer!['fav'] != null
-                                    ? FontAwesomeIcons.solidHeart
-                                    : FontAwesomeIcons.heart,
-                                color:
-                                    gallery.viewer != null &&
-                                        gallery.viewer!['fav'] != null
-                                    ? Color(0xFFEC4899)
-                                    : Colors.black54,
-                              ),
-                            ),
-                            onTap: () {},
-                          ),
-                          if (gallery.favCount != null)
-                            Padding(
-                              padding: const EdgeInsets.only(right: 12),
-                              child: Text(
-                                gallery.favCount.toString(),
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.black54,
-                                ),
-                              ),
-                            ),
-                          GestureDetector(
-                            onTap: () {
+                    child: Row(
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            if (actor != null) {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (context) =>
-                                      CommentsPage(galleryUri: gallery.uri),
+                                  builder: (context) => ProfilePage(
+                                    did: actor.did,
+                                    showAppBar: true,
+                                  ),
                                 ),
                               );
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.only(
-                                left: 12,
-                                right: 12,
+                            }
+                          },
+                          child: CircleAvatar(
+                            radius: 18,
+                            backgroundImage:
+                                actor?.avatar != null &&
+                                    actor!.avatar.isNotEmpty
+                                ? NetworkImage(actor.avatar)
+                                : null,
+                            backgroundColor: Colors.transparent,
+                            child: (actor == null || actor.avatar.isEmpty)
+                                ? const Icon(
+                                    Icons.account_circle,
+                                    size: 24,
+                                    color: Colors.grey,
+                                  )
+                                : null,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  actor != null &&
+                                          actor.displayName.isNotEmpty
+                                      ? actor.displayName
+                                      : (actor != null
+                                            ? '@${actor.handle}'
+                                            : ''),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 16,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
-                              child: Icon(
-                                FontAwesomeIcons.comment,
-                                size: 18,
-                                color: Colors.black54,
+                              if (actor != null && actor.handle.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 6),
+                                  child: Text(
+                                    '@${actor.handle}',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey[800],
+                                      fontWeight: FontWeight.normal,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        Text(
+                          formatRelativeTime(createdAt ?? ''),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (gallery.items.isNotEmpty)
+                    GestureDetector(
+                      onTap: () {
+                        if (gallery.uri.isNotEmpty) {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => GalleryPage(
+                                uri: gallery.uri,
+                                currentUserDid: apiService.currentUser?.did,
                               ),
                             ),
+                          );
+                        }
+                      },
+                      child: GalleryPreview(gallery: gallery),
+                    )
+                  else
+                    const SizedBox.shrink(),
+                  if (gallery.title.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        top: 8,
+                        left: 8,
+                        right: 8,
+                      ),
+                      child: Text(
+                        gallery.title,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  if (gallery.description.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        top: 4,
+                        left: 8,
+                        right: 8,
+                      ),
+                      child: Text(
+                        gallery.description,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.only(
+                      top: 12,
+                      bottom: 12,
+                      left: 12,
+                      right: 12,
+                    ),
+                    child: Row(
+                      children: [
+                        GestureDetector(
+                          child: Padding(
+                            padding: const EdgeInsets.only(right: 12),
+                            child: Icon(
+                              size: 18,
+                              gallery.viewer != null &&
+                                      gallery.viewer!['fav'] != null
+                                  ? FontAwesomeIcons.solidHeart
+                                  : FontAwesomeIcons.heart,
+                              color:
+                                  gallery.viewer != null &&
+                                      gallery.viewer!['fav'] != null
+                                  ? Color(0xFFEC4899)
+                                  : Colors.black54,
+                            ),
                           ),
-                          if (gallery.commentCount != null)
-                            Text(
-                              gallery.commentCount.toString(),
+                          onTap: () {},
+                        ),
+                        if (gallery.favCount != null)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 12),
+                            child: Text(
+                              gallery.favCount.toString(),
                               style: const TextStyle(
                                 fontSize: 14,
                                 color: Colors.black54,
                               ),
                             ),
-                        ],
-                      ),
+                          ),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    CommentsPage(galleryUri: gallery.uri),
+                              ),
+                            );
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.only(
+                              left: 12,
+                              right: 12,
+                            ),
+                            child: Icon(
+                              FontAwesomeIcons.comment,
+                              size: 18,
+                              color: Colors.black54,
+                            ),
+                          ),
+                        ),
+                        if (gallery.commentCount != null)
+                          Text(
+                            gallery.commentCount.toString(),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.black54,
+                            ),
+                          ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               );
             }, childCount: timeline.length),
           ),
@@ -1226,7 +948,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                   child: Stack(
                     children: [
                       ProfilePage(
-                        profile: apiService.currentUser,
+                        did: apiService.currentUser?.did,
                         showAppBar: false,
                       ),
                     ],
@@ -1383,7 +1105,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             ),
           ],
         ),
-      ),
+      ), // End of bottomNavigationBar
     ); // End of fallback Scaffold
   }
-}
+} // End of _MyHomePageState and file

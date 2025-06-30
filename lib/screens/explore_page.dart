@@ -130,7 +130,10 @@ class _ExplorePageState extends State<ExplorePage> {
         leading: SizedBox(
           width: 20,
           height: 20,
-          child: CircularProgressIndicator(strokeWidth: 2),
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: Color(0xFF0EA5E9),
+          ),
         ),
       );
     } else if (_searched && results.isEmpty) {

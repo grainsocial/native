@@ -58,7 +58,10 @@ class _CommentsPageState extends State<CommentsPage> {
             surfaceTintColor: Colors.white,
             bottom: PreferredSize(
               preferredSize: const Size.fromHeight(1),
-              child: Container(color: Theme.of(context).dividerColor, height: 1),
+              child: Container(
+                color: Theme.of(context).dividerColor,
+                height: 1,
+              ),
             ),
             title: const Text(
               'Comments',
@@ -66,31 +69,33 @@ class _CommentsPageState extends State<CommentsPage> {
             ),
           ),
           body: _loading
-              ? const Center(child: CircularProgressIndicator())
+              ? const Center(
+                  child: CircularProgressIndicator(color: Color(0xFF0EA5E9)),
+                ) // Tailwind sky-500)
               : _error
-                  ? const Center(child: Text('Failed to load comments.'))
-                  : ListView(
-                      padding: const EdgeInsets.all(12),
-                      children: [
-                        if (_gallery != null)
-                          Text(
-                            _gallery!.title,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                            ),
-                          ),
-                        const SizedBox(height: 12),
-                        _CommentsList(
-                          comments: _comments,
-                          onPhotoTap: (photo) {
-                            setState(() {
-                              _selectedPhoto = photo;
-                            });
-                          },
+              ? const Center(child: Text('Failed to load comments.'))
+              : ListView(
+                  padding: const EdgeInsets.all(12),
+                  children: [
+                    if (_gallery != null)
+                      Text(
+                        _gallery!.title,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
                         ),
-                      ],
+                      ),
+                    const SizedBox(height: 12),
+                    _CommentsList(
+                      comments: _comments,
+                      onPhotoTap: (photo) {
+                        setState(() {
+                          _selectedPhoto = photo;
+                        });
+                      },
                     ),
+                  ],
+                ),
         ),
         if (_selectedPhoto != null)
           Positioned.fill(
@@ -148,6 +153,14 @@ class _CommentsList extends StatelessWidget {
   Widget build(BuildContext context) {
     final repliesByParent = _groupReplies(comments);
     final topLevel = _topLevel(comments);
+    if (comments.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 32),
+        child: Center(
+          child: Text('No comments yet', style: TextStyle(color: Colors.grey)),
+        ),
+      );
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -201,13 +214,14 @@ class _CommentTile extends StatelessWidget {
                         aspectRatio:
                             (comment.focus!.width > 0 &&
                                 comment.focus!.height > 0)
-                                ? comment.focus!.width / comment.focus!.height
-                                : 1.0,
+                            ? comment.focus!.width / comment.focus!.height
+                            : 1.0,
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
                           child: GestureDetector(
                             onTap: onPhotoTap != null
-                                ? () => onPhotoTap!(GalleryPhoto(
+                                ? () => onPhotoTap!(
+                                    GalleryPhoto(
                                       uri: comment.focus!.uri,
                                       cid: comment.focus!.cid,
                                       thumb: comment.focus!.thumb,
@@ -215,7 +229,8 @@ class _CommentTile extends StatelessWidget {
                                       alt: comment.focus!.alt,
                                       width: comment.focus!.width,
                                       height: comment.focus!.height,
-                                    ))
+                                    ),
+                                  )
                                 : null,
                             child: Image.network(
                               comment.focus!.thumb.isNotEmpty

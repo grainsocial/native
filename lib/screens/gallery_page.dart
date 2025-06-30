@@ -52,7 +52,11 @@ class _GalleryPageState extends State<GalleryPage> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(color: Color(0xFF0EA5E9)),
+        ),
+      );
     }
     if (_error || _gallery == null) {
       return const Scaffold(

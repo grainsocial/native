@@ -205,6 +205,32 @@ class ApiService {
       throw Exception('Failed to search actors: ${response.statusCode}');
     }
   }
+
+  Future<List<Gallery>> getActorFavs({required String did}) async {
+    if (_accessToken == null) return [];
+    appLogger.i('Fetching favorite galleries for actor: $did');
+
+    final response = await http.get(
+      Uri.parse('$_apiUrl/xrpc/social.grain.actor.getActorFavs?actor=$did'),
+      headers: {'Authorization': 'Bearer $_accessToken'},
+    );
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final items = data['items'] as List<dynamic>?;
+      if (items != null) {
+        return items.map((item) => Gallery.fromJson(item)).toList();
+      } else {
+        return [];
+      }
+    } else {
+      appLogger.e(
+        'Failed to load favorite galleries: status [${response.statusCode}, body: ${response.body}',
+      );
+      throw Exception(
+        'Failed to load favorite galleries: ${response.statusCode}',
+      );
+    }
+  }
 }
 
 final apiService = ApiService();

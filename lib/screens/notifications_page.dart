@@ -56,6 +56,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
         message = 'commented on your gallery';
         createdAt = record['createdAt'] as String?;
         break;
+      case 'gallery-mention':
       case 'gallery-comment-mention':
         message = 'mentioned you in a gallery';
         createdAt = record['createdAt'] as String?;
@@ -97,7 +98,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFF0EA5E9)),
+            )
           : _error
           ? const Center(child: Text('Failed to load notifications.'))
           : _notifications.isEmpty
