@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:grain/api.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:grain/widgets/plain_text_field.dart';
 import 'package:grain/widgets/app_button.dart';
+import 'gallery_page.dart';
 
 class CreateGalleryPage extends StatefulWidget {
   const CreateGalleryPage({super.key});
@@ -35,10 +37,24 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
 
   Future<void> _submit() async {
     setState(() => _submitting = true);
-    // TODO: Implement API call to create gallery
-    await Future.delayed(const Duration(seconds: 2));
+    final galleryUri = await apiService.createGallery(
+      title: _titleController.text.trim(),
+      description: _descController.text.trim(),
+    );
     setState(() => _submitting = false);
-    if (mounted) Navigator.of(context).pop(true);
+    if (mounted && galleryUri != null) {
+      Navigator.of(context).pop();
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => GalleryPage(
+            uri: galleryUri,
+            currentUserDid: apiService.currentUser?.did,
+          ),
+        ),
+      );
+    } else if (mounted) {
+      Navigator.of(context).pop(true);
+    }
   }
 
   @override

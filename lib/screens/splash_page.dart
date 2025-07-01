@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
-import 'package:grain/app_logger.dart';
-import 'package:grain/main.dart';
+import 'package:grain/auth.dart';
 import 'package:grain/widgets/app_image.dart';
 
 class SplashPage extends StatefulWidget {
-  final void Function(dynamic session)? onSignIn;
+  final void Function()? onSignIn;
   const SplashPage({super.key, this.onSignIn});
 
   @override
@@ -20,28 +18,17 @@ class _SplashPageState extends State<SplashPage> {
 
   Future<void> _signInWithBluesky(BuildContext context) async {
     final handle = _handleController.text.trim();
+
     if (handle.isEmpty) return;
     setState(() {
       _signingIn = true;
     });
+
     try {
-      final apiUrl = AppConfig.apiUrl;
-      final redirectedUrl = await FlutterWebAuth2.authenticate(
-        url:
-            '$apiUrl/oauth/login?client=native&handle=${Uri.encodeComponent(handle)}',
-        callbackUrlScheme: 'grainflutter',
-      );
-      final uri = Uri.parse(redirectedUrl);
-      final token = uri.queryParameters['token'];
+      await auth.login(handle);
 
-      appLogger.i('Redirected URL: $redirectedUrl');
-      appLogger.i('User signed in with handle: $handle');
-
-      if (token == null) {
-        throw Exception('Token not found in redirect URL');
-      }
       if (widget.onSignIn != null) {
-        widget.onSignIn!({'accessToken': token});
+        widget.onSignIn!();
       }
     } finally {
       setState(() {

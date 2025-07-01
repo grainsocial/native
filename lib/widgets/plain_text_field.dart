@@ -50,7 +50,10 @@ class PlainTextField extends StatelessWidget {
             decoration: InputDecoration(
               hintText: hintText,
               border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 12,
+              ),
               isDense: true,
             ),
           ),

@@ -48,9 +48,11 @@ class _ProfilePageState extends State<ProfilePage>
 
   void _onTabChanged() async {
     if (_tabController!.index == 1 && _favs.isEmpty && !_favsLoading) {
-      setState(() {
-        _favsLoading = true;
-      });
+      if (mounted) {
+        setState(() {
+          _favsLoading = true;
+        });
+      }
       String? did = (_profile ?? widget.profile)?.did;
       if (did != null && did.isNotEmpty) {
         try {
@@ -70,31 +72,39 @@ class _ProfilePageState extends State<ProfilePage>
           }
         }
       } else {
-        setState(() {
-          _favsLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _favsLoading = false;
+          });
+        }
       }
     }
   }
 
   Future<void> _fetchProfileAndGalleries() async {
-    setState(() {
-      _loading = true;
-    });
+    if (mounted) {
+      setState(() {
+        _loading = true;
+      });
+    }
     String? did = widget.did ?? widget.profile?.did;
     if (did == null || did.isEmpty) {
-      setState(() {
-        _loading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _loading = false;
+        });
+      }
       return;
     }
     final profile = await apiService.fetchProfile(did: did);
     final galleries = await apiService.fetchActorGalleries(did: did);
-    setState(() {
-      _profile = profile;
-      _galleries = galleries;
-      _loading = false;
-    });
+    if (mounted) {
+      setState(() {
+        _profile = profile;
+        _galleries = galleries;
+        _loading = false;
+      });
+    }
   }
 
   @override

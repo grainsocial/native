@@ -29,7 +29,9 @@ class AppButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color primaryColor = const Color(0xFF0EA5E9); // Tailwind sky-500
-    final Color secondaryColor = Theme.of(context).colorScheme.surfaceContainerHighest;
+    final Color secondaryColor = Theme.of(
+      context,
+    ).colorScheme.surfaceContainerHighest;
     final Color secondaryBorder = Colors.grey[300]!;
     final Color secondaryText = Colors.black87;
     final Color primaryText = Colors.white;
@@ -51,10 +53,7 @@ class AppButton extends StatelessWidget {
                 : BorderSide(color: secondaryBorder, width: 1),
           ),
           padding: padding ?? const EdgeInsets.symmetric(horizontal: 16),
-          textStyle: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: fontSize,
-          ),
+          textStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: fontSize),
         ),
         child: loading
             ? SizedBox(
@@ -70,7 +69,11 @@ class AppButton extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   if (icon != null) ...[
-                    Icon(icon, size: 20, color: isPrimary ? Colors.white : primaryColor),
+                    Icon(
+                      icon,
+                      size: 20,
+                      color: isPrimary ? Colors.white : primaryColor,
+                    ),
                     const SizedBox(width: 8),
                   ],
                   Text(label),

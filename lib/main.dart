@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:grain/app_logger.dart';
 import 'package:grain/screens/splash_page.dart';
 import 'package:grain/screens/home_page.dart';
+import 'package:grain/auth.dart';
 
 class AppConfig {
   static late final String apiUrl;
@@ -38,27 +39,20 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   bool isSignedIn = false;
-  dynamic session;
   String? displayName;
 
-  void handleSignIn(dynamic newSession) async {
-    // Accept both Map and object with accessToken property
-    final accessToken = newSession is Map<String, String>
-        ? newSession['accessToken']
-        : newSession.accessToken;
+  void handleSignIn() async {
     setState(() {
       isSignedIn = true;
-      session = newSession;
     });
-    apiService.setToken(accessToken);
     // Fetch current user profile from /oauth/session after login
+    appLogger.i('Fetching current user after sign in');
     await apiService.fetchCurrentUser();
   }
 
   void handleSignOut() {
     setState(() {
       isSignedIn = false;
-      session = null;
     });
   }
 

@@ -179,7 +179,10 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     if (apiService.currentUser == null) {
       return const Scaffold(
         body: Center(
-          child: CircularProgressIndicator(strokeWidth: 2, Color(0xFF0EA5E9)),
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: Color(0xFF0EA5E9),
+          ),
         ),
       );
     }
