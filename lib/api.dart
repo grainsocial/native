@@ -9,6 +9,8 @@ import 'package:xrpc/xrpc.dart' as xrpc;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:grain/dpop_client.dart';
+import 'dart:io';
+import 'package:mime/mime.dart';
 
 class ApiService {
   String? _accessToken;
@@ -131,7 +133,7 @@ class ApiService {
     final record = await xrpc.query(
       service: _apiUrl.replaceFirst(RegExp(r'^https?://'), ''),
       xrpc.NSID.create('notification.grain.social', 'getNotifications'),
-      headers: {'Authorization': "Bearer \\$_accessToken"},
+      headers: {'Authorization': "Bearer $_accessToken"},
       to: (json) =>
           (json['notifications'] as List<dynamic>?)
               ?.map(
@@ -206,17 +208,178 @@ class ApiService {
       method: 'POST',
       url: url,
       accessToken: session.accessToken,
+      headers: {'Content-Type': 'application/json'},
       body: jsonEncode(record),
     );
     if (response.statusCode != 200 && response.statusCode != 201) {
       appLogger.w(
-        'Failed to create gallery: ${response.statusCode} ${response.body}',
+        'Failed to create gallery: \\${response.statusCode} \\${response.body}',
       );
-      throw Exception('Failed to create gallery: ${response.statusCode}');
+      throw Exception('Failed to create gallery: \\${response.statusCode}');
     }
     final result = jsonDecode(response.body) as Map<String, dynamic>;
     appLogger.i('Created gallery result: $result');
-    return result['uri'];
+    final uri = result['uri'] as String?;
+    return uri;
+  }
+
+  /// Polls the gallery until the number of items matches [expectedCount] or timeout.
+  /// Returns the Gallery if successful, or null if timeout.
+  Future<Gallery?> pollGalleryItems({
+    required String galleryUri,
+    required int expectedCount,
+    Duration pollDelay = const Duration(seconds: 2),
+    int maxAttempts = 20,
+  }) async {
+    int attempts = 0;
+    Gallery? gallery;
+    while (attempts < maxAttempts) {
+      gallery = await getGallery(uri: galleryUri);
+      if (gallery != null && gallery.items.length == expectedCount) {
+        appLogger.i(
+          'Gallery $galleryUri has expected number of items: $expectedCount',
+        );
+        return gallery;
+      }
+      await Future.delayed(pollDelay);
+      attempts++;
+    }
+    appLogger.w(
+      'Gallery $galleryUri did not reach expected items count ($expectedCount) after polling.',
+    );
+    return null;
+  }
+
+  /// Uploads a blob (file) to the atproto uploadBlob endpoint using DPoP authentication.
+  /// Returns the blob reference map on success, or null on failure.
+  Future<Map<String, dynamic>?> uploadBlob(File file) async {
+    final session = await auth.getValidSession();
+    if (session == null) {
+      appLogger.w('No valid session for uploadBlob');
+      return null;
+    }
+    final dpopClient = DpopHttpClient(dpopKey: session.dpopJwk);
+    final issuer = session.issuer;
+    final url = Uri.parse('$issuer/xrpc/com.atproto.repo.uploadBlob');
+
+    // Detect MIME type, fallback to application/octet-stream if unknown
+    String? mimeType = lookupMimeType(file.path);
+    final contentType = mimeType ?? 'application/octet-stream';
+
+    appLogger.i('Uploading blob: ${file.path} (MIME: $mimeType)');
+
+    final bytes = await file.readAsBytes();
+
+    final response = await dpopClient.send(
+      method: 'POST',
+      url: url,
+      accessToken: session.accessToken,
+      headers: {'Content-Type': contentType},
+      body: bytes,
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      appLogger.w(
+        'Failed to upload blob: \\${response.statusCode} \\${response.body} (File: \\${file.path}, MIME: \\${mimeType})',
+      );
+      return null;
+    }
+
+    try {
+      final result = jsonDecode(response.body) as Map<String, dynamic>;
+      appLogger.i('Uploaded blob result: $result');
+      return result;
+    } catch (e, st) {
+      appLogger.e('Failed to parse uploadBlob response: $e', stackTrace: st);
+      return null;
+    }
+  }
+
+  Future<String?> createPhoto({
+    required Map<String, dynamic> blob,
+    required int width,
+    required int height,
+    String alt = '',
+  }) async {
+    final session = await auth.getValidSession();
+    if (session == null) {
+      appLogger.w('No valid session for createPhotoRecord');
+      return null;
+    }
+    final dpopClient = DpopHttpClient(dpopKey: session.dpopJwk);
+    final issuer = session.issuer;
+    final did = session.subject;
+    final url = Uri.parse('$issuer/xrpc/com.atproto.repo.createRecord');
+    final record = {
+      'collection': 'social.grain.photo',
+      'repo': did,
+      'record': {
+        'photo': blob['blob'],
+        'aspectRatio': {'width': width, 'height': height},
+        'alt': "",
+        'createdAt': DateTime.now().toUtc().toIso8601String(),
+      },
+    };
+    appLogger.i('Creating photo record: $record');
+    final response = await dpopClient.send(
+      method: 'POST',
+      url: url,
+      accessToken: session.accessToken,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(record),
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      appLogger.w(
+        'Failed to create photo record: \\${response.statusCode} \\${response.body}',
+      );
+      return null;
+    }
+    final result = jsonDecode(response.body) as Map<String, dynamic>;
+    appLogger.i('Created photo record result: $result');
+    return result['uri'] as String?;
+  }
+
+  Future<String?> createGalleryItem({
+    required String galleryUri,
+    required String photoUri,
+    required int position,
+  }) async {
+    final session = await auth.getValidSession();
+    if (session == null) {
+      appLogger.w('No valid session for createGalleryItem');
+      return null;
+    }
+    final dpopClient = DpopHttpClient(dpopKey: session.dpopJwk);
+    final issuer = session.issuer;
+    final did = session.subject;
+    final url = Uri.parse('$issuer/xrpc/com.atproto.repo.createRecord');
+    final record = {
+      'collection': 'social.grain.gallery.item',
+      'repo': did,
+      'record': {
+        'gallery': galleryUri,
+        'item': photoUri,
+        'position': position,
+        'createdAt': DateTime.now().toUtc().toIso8601String(),
+      },
+    };
+    appLogger.i('Creating gallery item: $record');
+    final response = await dpopClient.send(
+      method: 'POST',
+      url: url,
+      accessToken: session.accessToken,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(record),
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      appLogger.w(
+        'Failed to create gallery item: \\${response.statusCode} \\${response.body}',
+      );
+      return null;
+    }
+    final result = jsonDecode(response.body) as Map<String, dynamic>;
+    appLogger.i('Created gallery item result: $result');
+    return result['uri'] as String?;
   }
 }
 

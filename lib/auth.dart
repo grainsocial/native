@@ -5,10 +5,6 @@ import 'package:grain/app_logger.dart';
 import 'package:grain/main.dart';
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:grain/models/atproto_session.dart';
-import 'package:jose/jose.dart';
-import 'package:uuid/uuid.dart';
-import 'package:http/http.dart' as http;
-import 'package:crypto/crypto.dart';
 
 class Auth {
   static const _storage = FlutterSecureStorage();
@@ -64,11 +60,24 @@ class Auth {
   }
 
   Future<AtprotoSession?> getValidSession() async {
-    final session = await _loadSession();
+    var session = await _loadSession();
     if (session == null || isSessionExpired(session)) {
-      appLogger.w('Session is expired or not found');
-      // Try refresh or return null
-      return null;
+      appLogger.w('Session is expired or not found, attempting refresh');
+      // Try to refresh session by calling fetchSession
+      try {
+        final refreshed = await apiService.fetchSession();
+        if (refreshed != null && !isSessionExpired(refreshed)) {
+          await _saveSession(refreshed);
+          appLogger.i('Session refreshed and saved');
+          return refreshed;
+        } else {
+          appLogger.w('Session refresh failed or still expired');
+          return null;
+        }
+      } catch (e) {
+        appLogger.e('Error refreshing session: $e');
+        return null;
+      }
     }
     return session;
   }

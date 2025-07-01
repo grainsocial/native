@@ -110,10 +110,10 @@ class DpopHttpClient {
       ath: ath,
     );
 
+    // Compose headers, allowing override of Content-Type for raw uploads
     final requestHeaders = <String, String>{
       'Authorization': 'DPoP $accessToken',
       'DPoP': proof,
-      'Content-Type': 'application/json',
       if (headers != null) ...headers,
     };
 
@@ -129,7 +129,7 @@ class DpopHttpClient {
         response = await http.put(url, headers: requestHeaders, body: body);
         break;
       case 'DELETE':
-        response = await http.delete(url, headers: requestHeaders);
+        response = await http.delete(url, headers: requestHeaders, body: body);
         break;
       default:
         throw UnsupportedError('Unsupported HTTP method: $method');

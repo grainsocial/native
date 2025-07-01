@@ -6,7 +6,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:grain/app_logger.dart';
 import 'package:grain/screens/splash_page.dart';
 import 'package:grain/screens/home_page.dart';
-import 'package:grain/auth.dart';
 
 class AppConfig {
   static late final String apiUrl;

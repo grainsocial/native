@@ -440,20 +440,21 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         ),
         floatingActionButton:
             (!showProfile && !showNotifications && !showExplore)
-            ? FloatingActionButton(
-                onPressed: () {
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    builder: (context) => CreateGalleryPage(),
-                  );
-                },
-                backgroundColor: const Color(0xFF0EA5E9),
-                foregroundColor: Colors.white,
-                child: const Icon(Icons.add_a_photo),
-                tooltip: 'Create Gallery',
-              )
-            : null,
+                ? FloatingActionButton(
+                    shape: const CircleBorder(),
+                    onPressed: () {
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        builder: (context) => CreateGalleryPage(),
+                      );
+                    },
+                    backgroundColor: const Color(0xFF0EA5E9),
+                    foregroundColor: Colors.white,
+                    child: const Icon(Icons.add_a_photo),
+                    tooltip: 'Create Gallery',
+                  )
+                : null,
       );
     }
     // Explore, Notifications, Profile: no tabs, no TabController

@@ -1,10 +1,14 @@
+import 'dart:async';
 import 'dart:io';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:grain/api.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:grain/widgets/plain_text_field.dart';
 import 'package:grain/widgets/app_button.dart';
 import 'gallery_page.dart';
+import 'package:grain/photo_manip.dart';
+import 'package:flutter/foundation.dart';
 
 class CreateGalleryPage extends StatefulWidget {
   const CreateGalleryPage({super.key});
@@ -35,12 +39,58 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
     });
   }
 
+  Future<Map<String, int>> _getImageDimensions(XFile xfile) async {
+    final bytes = await xfile.readAsBytes();
+    final completer = Completer<Map<String, int>>();
+    ui.decodeImageFromList(bytes, (image) {
+      completer.complete({'width': image.width, 'height': image.height});
+    });
+    return completer.future;
+  }
+
   Future<void> _submit() async {
     setState(() => _submitting = true);
+    final List<String> photoUris = [];
+    for (final xfile in _images) {
+      final file = File(xfile.path);
+      // Use compute to run resizeImage in a background isolate
+      final resizedResult = await compute<File, ResizeResult>(
+        (f) => resizeImage(file: f),
+        file,
+      );
+      final blobResult = await apiService.uploadBlob(resizedResult.file);
+      if (blobResult != null) {
+        final dims = await _getImageDimensions(xfile);
+        final photoUri = await apiService.createPhoto(
+          blob: blobResult,
+          width: dims['width']!,
+          height: dims['height']!,
+        );
+        if (photoUri != null) {
+          photoUris.add(photoUri);
+        }
+      }
+    }
     final galleryUri = await apiService.createGallery(
       title: _titleController.text.trim(),
       description: _descController.text.trim(),
     );
+    // Link photos to gallery as gallery items
+    if (galleryUri != null) {
+      for (int i = 0; i < photoUris.length; i++) {
+        await apiService.createGalleryItem(
+          galleryUri: galleryUri,
+          photoUri: photoUris[i],
+          position: i,
+        );
+      }
+    }
+    if (galleryUri != null) {
+      await apiService.pollGalleryItems(
+        galleryUri: galleryUri,
+        expectedCount: photoUris.length,
+      );
+    }
     setState(() => _submitting = false);
     if (mounted && galleryUri != null) {
       Navigator.of(context).pop();
