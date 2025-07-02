@@ -5,6 +5,7 @@ import 'package:grain/models/gallery.dart';
 import 'package:grain/screens/create_gallery_page.dart';
 import 'package:grain/screens/profile_page.dart';
 import 'package:grain/widgets/app_image.dart';
+import 'package:grain/widgets/faceted_text.dart';
 import 'package:grain/widgets/gallery_action_buttons.dart';
 import 'package:grain/widgets/gallery_photo_view.dart';
 import 'package:grain/widgets/justified_gallery_view.dart';
@@ -214,9 +215,27 @@ class _GalleryPageState extends State<GalleryPage> {
               if (gallery.description.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8).copyWith(bottom: 8),
-                  child: Text(
-                    gallery.description,
+                  child: FacetedText(
+                    text: gallery.description,
+                    facets: gallery.facets,
                     style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface),
+                    linkStyle: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    onMentionTap: (did) {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => ProfilePage(did: did, showAppBar: true),
+                        ),
+                      );
+                    },
+                    onLinkTap: (url) {
+                      // TODO: Implement or use your WebViewPage
+                    },
+                    onTagTap: (tag) {
+                      // TODO: Implement hashtag navigation
+                    },
                   ),
                 ),
               if (isLoggedIn)

@@ -41,6 +41,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.4.0"
+  bluesky_text:
+    dependency: "direct main"
+    description:
+      name: bluesky_text
+      sha256: a10835d17e9cfc1739ea09a5c6fc86c287aa59074c60961601f7a0cf663b1ed4
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.7.2"
   boolean_selector:
     dependency: transitive
     description:

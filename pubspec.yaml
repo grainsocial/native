@@ -54,6 +54,7 @@ dependencies:
   xrpc: ^0.6.1
   mime: ^1.0.6
   image: ^4.5.4
+  bluesky_text: ^0.7.2
 
 dev_dependencies:
   flutter_test:

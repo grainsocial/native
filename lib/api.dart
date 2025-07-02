@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:at_uri/at_uri.dart';
 import 'package:grain/app_logger.dart';
 import 'package:grain/dpop_client.dart';
 import 'package:grain/main.dart';
@@ -9,6 +10,7 @@ import 'package:http/http.dart' as http;
 import 'package:mime/mime.dart';
 
 import './auth.dart';
+import 'models/comment.dart';
 import 'models/gallery.dart';
 import 'models/notification.dart' as grain;
 import 'models/profile.dart';
@@ -130,17 +132,22 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> getGalleryThread({required String uri}) async {
+  Future<GalleryThread?> getGalleryThread({required String uri}) async {
     appLogger.i('Fetching gallery thread for uri: $uri');
     final response = await http.get(
       Uri.parse('$_apiUrl/xrpc/social.grain.gallery.getGalleryThread?uri=$uri'),
       headers: {'Content-Type': 'application/json'},
     );
     if (response.statusCode != 200) {
-      appLogger.w('Failed to fetch gallery thread: ${response.statusCode} ${response.body}');
-      return {};
+      appLogger.w('Failed to fetch gallery thread: \\${response.statusCode} \\${response.body}');
+      return null;
     }
-    return jsonDecode(response.body) as Map<String, dynamic>;
+    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final gallery = Gallery.fromJson(json['gallery']);
+    final comments = (json['comments'] as List<dynamic>? ?? [])
+        .map((c) => Comment.fromJson(c as Map<String, dynamic>))
+        .toList();
+    return GalleryThread(gallery: gallery, comments: comments);
   }
 
   Future<List<grain.Notification>> getNotifications() async {
@@ -255,6 +262,31 @@ class ApiService {
     }
     appLogger.w(
       'Gallery $galleryUri did not reach expected items count ($expectedCount) after polling.',
+    );
+    return null;
+  }
+
+  /// Polls the gallery thread until the number of comments matches [expectedCount] or timeout.
+  /// Returns the thread map if successful, or null if timeout.
+  Future<GalleryThread?> pollGalleryThreadComments({
+    required String galleryUri,
+    required int expectedCount,
+    Duration pollDelay = const Duration(seconds: 2),
+    int maxAttempts = 20,
+  }) async {
+    int attempts = 0;
+    GalleryThread? thread;
+    while (attempts < maxAttempts) {
+      thread = await getGalleryThread(uri: galleryUri);
+      if (thread != null && thread.comments.length == expectedCount) {
+        appLogger.i('Gallery thread $galleryUri has expected number of comments: $expectedCount');
+        return thread;
+      }
+      await Future.delayed(pollDelay);
+      attempts++;
+    }
+    appLogger.w(
+      'Gallery thread $galleryUri did not reach expected comments count ($expectedCount) after polling.',
     );
     return null;
   }
@@ -386,6 +418,103 @@ class ApiService {
     appLogger.i('Created gallery item result: $result');
     return result['uri'] as String?;
   }
+
+  Future<String?> createComment({
+    required String text,
+    List<Map<String, dynamic>>? facets,
+    required String subject,
+    Map<String, dynamic>? focus,
+    String? replyTo,
+  }) async {
+    final session = await auth.getValidSession();
+    if (session == null) {
+      appLogger.w('No valid session for createComment');
+      return null;
+    }
+    final dpopClient = DpopHttpClient(dpopKey: session.dpopJwk);
+    final issuer = session.issuer;
+    final did = session.subject;
+    final url = Uri.parse('$issuer/xrpc/com.atproto.repo.createRecord');
+    final record = {
+      'collection': 'social.grain.comment',
+      'repo': did,
+      'record': {
+        'text': text,
+        if (facets != null) 'facets': facets,
+        'subject': subject,
+        if (focus != null) 'focus': focus,
+        if (replyTo != null) 'replyTo': replyTo,
+        'createdAt': DateTime.now().toUtc().toIso8601String(),
+      },
+    };
+    appLogger.i('Creating comment: $record');
+    final response = await dpopClient.send(
+      method: 'POST',
+      url: url,
+      accessToken: session.accessToken,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(record),
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      appLogger.w('Failed to create comment: \\${response.statusCode} \\${response.body}');
+      return null;
+    }
+    final result = jsonDecode(response.body) as Map<String, dynamic>;
+    appLogger.i('Created comment result: $result');
+    return result['uri'] as String?;
+  }
+
+  /// Deletes a record by its URI using DPoP authentication.
+  /// Returns true on success, false on failure.
+  Future<bool> deleteRecord(String uri) async {
+    final session = await auth.getValidSession();
+    if (session == null) {
+      appLogger.w('No valid session for deleteRecord');
+      return false;
+    }
+    final dpopClient = DpopHttpClient(dpopKey: session.dpopJwk);
+    final issuer = session.issuer;
+    final url = Uri.parse('$issuer/xrpc/com.atproto.repo.deleteRecord');
+    final repo = session.subject;
+    if (repo.isEmpty) {
+      appLogger.w('No repo (DID) available from session for deleteRecord');
+      return false;
+    }
+    String? collection;
+    String? rkey;
+    try {
+      final atUri = AtUri.parse(uri);
+      collection = atUri.collection.toString();
+      rkey = atUri.rkey;
+    } catch (e) {
+      appLogger.w('Failed to parse collection from uri: $uri');
+    }
+    if (collection == null || collection.isEmpty) {
+      appLogger.w('No collection found in uri: $uri');
+      return false;
+    }
+    final payload = {'uri': uri, 'repo': repo, 'collection': collection, 'rkey': rkey};
+    appLogger.i('Deleting record: $payload');
+    final response = await dpopClient.send(
+      method: 'POST',
+      url: url,
+      accessToken: session.accessToken,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(payload),
+    );
+    if (response.statusCode != 200 && response.statusCode != 204) {
+      appLogger.w('Failed to delete record: \\${response.statusCode} \\${response.body}');
+      return false;
+    }
+    appLogger.i('Deleted record $uri');
+    return true;
+  }
 }
 
 final apiService = ApiService();
+
+class GalleryThread {
+  final Gallery gallery;
+  final List<Comment> comments;
+  GalleryThread({required this.gallery, required this.comments});
+}

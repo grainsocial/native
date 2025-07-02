@@ -1,8 +1,10 @@
+import 'package:bluesky_text/bluesky_text.dart';
 import 'package:flutter/material.dart';
 import 'package:grain/api.dart';
 import 'package:grain/app_theme.dart';
 import 'package:grain/models/gallery.dart';
 import 'package:grain/widgets/app_image.dart';
+import 'package:grain/widgets/faceted_text.dart';
 
 import 'gallery_page.dart';
 
@@ -24,6 +26,14 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
   TabController? _tabController;
   bool _favsLoading = false;
   bool _galleriesLoading = false;
+  List<Map<String, dynamic>>? _descriptionFacets;
+
+  Future<List<Map<String, dynamic>>> _extractFacets(String text) async {
+    final blueskyText = BlueskyText(text);
+    final entities = blueskyText.entities;
+    final facets = await entities.toFacets();
+    return List<Map<String, dynamic>>.from(facets);
+  }
 
   @override
   void initState() {
@@ -94,10 +104,20 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
     }
     final profile = await apiService.fetchProfile(did: did);
     final galleries = await apiService.fetchActorGalleries(did: did);
+    List<Map<String, dynamic>>? descriptionFacets;
+    if ((profile?.description ?? '').isNotEmpty) {
+      try {
+        final desc = profile != null ? profile.description : '';
+        descriptionFacets = await _extractFacets(desc);
+      } catch (_) {
+        descriptionFacets = null;
+      }
+    }
     if (mounted) {
       setState(() {
         _profile = profile;
         _galleries = galleries;
+        _descriptionFacets = descriptionFacets;
         _loading = false;
       });
     }
@@ -211,7 +231,28 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                               ),
                               if ((profile.description ?? '').isNotEmpty) ...[
                                 const SizedBox(height: 16),
-                                Text(profile.description, textAlign: TextAlign.left),
+                                FacetedText(
+                                  text: profile.description,
+                                  facets: _descriptionFacets,
+                                  onMentionTap: (didOrHandle) {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            ProfilePage(did: didOrHandle, showAppBar: true),
+                                      ),
+                                    );
+                                  },
+                                  onLinkTap: (url) {
+                                    // TODO: Implement WebViewPage navigation
+                                  },
+                                  onTagTap: (tag) {
+                                    // TODO: Implement hashtag navigation
+                                  },
+                                  linkStyle: TextStyle(
+                                    color: Theme.of(context).colorScheme.primary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                               ],
                               const SizedBox(height: 24),
                             ],
@@ -254,8 +295,24 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                             ),
                           )
                         : _galleries.isEmpty
-                        ? const Center(child: Text('No galleries yet'))
+                        ? GridView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            padding: EdgeInsets.zero,
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 3,
+                              childAspectRatio: 3 / 4,
+                              crossAxisSpacing: 2,
+                              mainAxisSpacing: 2,
+                            ),
+                            itemCount: 12, // Enough to fill the screen
+                            itemBuilder: (context, index) {
+                              return Container(color: theme.colorScheme.surfaceContainerHighest);
+                            },
+                          )
                         : GridView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
                             padding: EdgeInsets.zero,
                             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 3,
@@ -316,8 +373,24 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                               ),
                             )
                           : _favs.isEmpty
-                          ? const Center(child: Text('No favorites yet'))
+                          ? GridView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              padding: EdgeInsets.zero,
+                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 3,
+                                childAspectRatio: 3 / 4,
+                                crossAxisSpacing: 2,
+                                mainAxisSpacing: 2,
+                              ),
+                              itemCount: 12, // Enough to fill the screen
+                              itemBuilder: (context, index) {
+                                return Container(color: theme.colorScheme.surfaceContainerHighest);
+                              },
+                            )
                           : GridView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
                               padding: EdgeInsets.zero,
                               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: 3,

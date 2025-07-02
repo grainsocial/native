@@ -11,6 +11,7 @@ class Gallery {
   final int? favCount;
   final int? commentCount;
   final Map<String, dynamic>? viewer;
+  final List<Map<String, dynamic>>? facets;
 
   Gallery({
     required this.uri,
@@ -23,14 +24,16 @@ class Gallery {
     this.favCount,
     this.commentCount,
     this.viewer,
+    this.facets,
   });
 
   factory Gallery.fromJson(Map<String, dynamic> json) {
+    final record = json['record'] as Map<String, dynamic>? ?? {};
     return Gallery(
       uri: json['uri'] ?? '',
       cid: json['cid'] ?? '',
-      title: json['record']?['title'] ?? '',
-      description: json['record']?['description'] ?? '',
+      title: record['title'] ?? '',
+      description: record['description'] ?? '',
       items: (json['items'] as List<dynamic>? ?? [])
           .map((item) => GalleryPhoto.fromJson(item as Map<String, dynamic>))
           .toList(),
@@ -39,6 +42,7 @@ class Gallery {
       favCount: json['favCount'],
       commentCount: json['commentCount'],
       viewer: json['viewer'],
+      facets: (record['facets'] as List?)?.map((f) => Map<String, dynamic>.from(f)).toList(),
     );
   }
 }

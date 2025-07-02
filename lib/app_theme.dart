@@ -53,7 +53,7 @@ class AppTheme {
     dividerColor: Colors.grey[900],
     colorScheme: ColorScheme.dark(
       primary: primaryColor,
-      surface: Colors.black,
+      surface: Colors.grey[900]!,
       onSurface: Colors.white,
       onSurfaceVariant: Colors.white70,
       onPrimary: Colors.white,
