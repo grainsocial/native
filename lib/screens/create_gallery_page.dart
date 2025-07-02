@@ -9,9 +9,20 @@ import 'package:grain/widgets/app_button.dart';
 import 'gallery_page.dart';
 import 'package:grain/photo_manip.dart';
 import 'package:flutter/foundation.dart';
+import 'package:grain/models/gallery.dart';
+import 'package:path_provider/path_provider.dart';
+
+// Wrapper class for differentiating images
+class GalleryImage {
+  final XFile file;
+  final bool isExisting;
+  final String? remoteUri;
+  GalleryImage({required this.file, this.isExisting = false, this.remoteUri});
+}
 
 class CreateGalleryPage extends StatefulWidget {
-  const CreateGalleryPage({super.key});
+  final Gallery? gallery;
+  const CreateGalleryPage({super.key, this.gallery});
 
   @override
   State<CreateGalleryPage> createState() => _CreateGalleryPageState();
@@ -20,15 +31,54 @@ class CreateGalleryPage extends StatefulWidget {
 class _CreateGalleryPageState extends State<CreateGalleryPage> {
   final _titleController = TextEditingController();
   final _descController = TextEditingController();
-  final List<XFile> _images = [];
+  final List<GalleryImage> _images = [];
   bool _submitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.gallery != null) {
+      _titleController.text = widget.gallery!.title;
+      _descController.text = widget.gallery!.description;
+      // Load existing images
+      Future.microtask(() async {
+        final List<GalleryImage> loadedImages = [];
+        for (final item in widget.gallery!.items) {
+          try {
+            final response = await HttpClient().getUrl(Uri.parse(item.thumb));
+            final file = await response.close().then((res) async {
+              final bytes = await consolidateHttpClientResponseBytes(res);
+              final tempDir = await getTemporaryDirectory();
+              final tempFile = File('${tempDir.path}/${item.uri.hashCode}.jpg');
+              await tempFile.writeAsBytes(bytes);
+              return tempFile;
+            });
+            loadedImages.add(
+              GalleryImage(
+                file: XFile(file.path),
+                isExisting: true,
+                remoteUri: item.uri,
+              ),
+            );
+          } catch (_) {}
+        }
+        if (mounted) {
+          setState(() {
+            _images.addAll(loadedImages);
+          });
+        }
+      });
+    }
+  }
 
   Future<void> _pickImages() async {
     final picker = ImagePicker();
     final picked = await picker.pickMultiImage(imageQuality: 85);
     if (picked.isNotEmpty) {
       setState(() {
-        _images.addAll(picked);
+        _images.addAll(
+          picked.map((xfile) => GalleryImage(file: xfile, isExisting: false)),
+        );
       });
     }
   }
@@ -51,57 +101,87 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
   Future<void> _submit() async {
     setState(() => _submitting = true);
     final List<String> photoUris = [];
-    for (final xfile in _images) {
-      final file = File(xfile.path);
-      // Use compute to run resizeImage in a background isolate
-      final resizedResult = await compute<File, ResizeResult>(
-        (f) => resizeImage(file: f),
-        file,
-      );
-      final blobResult = await apiService.uploadBlob(resizedResult.file);
-      if (blobResult != null) {
-        final dims = await _getImageDimensions(xfile);
-        final photoUri = await apiService.createPhoto(
-          blob: blobResult,
-          width: dims['width']!,
-          height: dims['height']!,
+    for (final galleryImage in _images) {
+      if (galleryImage.isExisting && galleryImage.remoteUri != null) {
+        photoUris.add(galleryImage.remoteUri!);
+        continue;
+      }
+      // Only upload, create photo, and create gallery item if not existing
+      if (!galleryImage.isExisting) {
+        final file = File(galleryImage.file.path);
+        final resizedResult = await compute<File, ResizeResult>(
+          (f) => resizeImage(file: f),
+          file,
         );
-        if (photoUri != null) {
-          photoUris.add(photoUri);
+        final blobResult = await apiService.uploadBlob(resizedResult.file);
+        if (blobResult != null) {
+          final dims = await _getImageDimensions(galleryImage.file);
+          final photoUri = await apiService.createPhoto(
+            blob: blobResult,
+            width: dims['width']!,
+            height: dims['height']!,
+          );
+          if (photoUri != null) {
+            photoUris.add(photoUri);
+          }
         }
       }
     }
-    final galleryUri = await apiService.createGallery(
-      title: _titleController.text.trim(),
-      description: _descController.text.trim(),
-    );
-    // Link photos to gallery as gallery items
-    if (galleryUri != null) {
-      for (int i = 0; i < photoUris.length; i++) {
-        await apiService.createGalleryItem(
-          galleryUri: galleryUri,
-          photoUri: photoUris[i],
-          position: i,
-        );
-      }
+    String? galleryUri;
+    if (widget.gallery != null && widget.gallery!.uri.isNotEmpty) {
+      galleryUri = widget.gallery!.uri;
+    } else {
+      galleryUri = await apiService.createGallery(
+        title: _titleController.text.trim(),
+        description: _descController.text.trim(),
+      );
     }
+    // Link only new photos to gallery as gallery items
     if (galleryUri != null) {
+      int position = 0;
+      for (final galleryImage in _images) {
+        if (!galleryImage.isExisting) {
+          // Only create gallery item for new photos
+          if (position < photoUris.length) {
+            await apiService.createGalleryItem(
+              galleryUri: galleryUri,
+              photoUri: photoUris[position],
+              position: position,
+            );
+            position++;
+          }
+        } else {
+          position++;
+        }
+      }
       await apiService.pollGalleryItems(
         galleryUri: galleryUri,
-        expectedCount: photoUris.length,
+        expectedCount: _images.length,
       );
     }
     setState(() => _submitting = false);
     if (mounted && galleryUri != null) {
+      // Mark all images as existing after successful save
+      for (var i = 0; i < _images.length; i++) {
+        if (!_images[i].isExisting && i < photoUris.length) {
+          _images[i] = GalleryImage(
+            file: _images[i].file,
+            isExisting: true,
+            remoteUri: photoUris[i],
+          );
+        }
+      }
       Navigator.of(context).pop();
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => GalleryPage(
-            uri: galleryUri,
-            currentUserDid: apiService.currentUser?.did,
+      if (widget.gallery == null) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => GalleryPage(
+              uri: galleryUri!,
+              currentUserDid: apiService.currentUser?.did,
+            ),
           ),
-        ),
-      );
+        );
+      }
     } else if (mounted) {
       Navigator.of(context).pop(true);
     }
@@ -129,9 +209,7 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
                       ? null
                       : () => Navigator.of(context).pop(),
                   style: TextButton.styleFrom(
-                    foregroundColor: const Color(
-                      0xFF0EA5E9,
-                    ), // Tailwind sky-500
+                    foregroundColor: const Color(0xFF0EA5E9),
                   ),
                   child: const Text(
                     'Cancel',
@@ -139,14 +217,14 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
                   ),
                 ),
                 Text(
-                  'New Gallery',
+                  widget.gallery == null ? 'New Gallery' : 'Edit Gallery',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
                   ),
                 ),
                 AppButton(
-                  label: 'Create',
+                  label: widget.gallery == null ? 'Create' : 'Save',
                   onPressed: _submitting ? null : _submit,
                   loading: _submitting,
                   variant: AppButtonVariant.primary,
@@ -206,14 +284,29 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
                             ),
                         itemCount: _images.length,
                         itemBuilder: (context, index) {
+                          final galleryImage = _images[index];
                           return Stack(
                             children: [
                               Positioned.fill(
                                 child: Image.file(
-                                  File(_images[index].path),
+                                  File(galleryImage.file.path),
                                   fit: BoxFit.cover,
                                 ),
                               ),
+                              if (galleryImage.isExisting)
+                                Positioned(
+                                  left: 2,
+                                  top: 2,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(2),
+                                    color: Colors.green.withOpacity(0.7),
+                                    child: const Icon(
+                                      Icons.check_circle,
+                                      color: Colors.white,
+                                      size: 16,
+                                    ),
+                                  ),
+                                ),
                               Positioned(
                                 top: 2,
                                 right: 2,

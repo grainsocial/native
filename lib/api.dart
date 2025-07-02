@@ -5,7 +5,6 @@ import 'models/profile.dart';
 import 'models/gallery.dart';
 import 'models/notification.dart' as grain;
 import './auth.dart';
-import 'package:xrpc/xrpc.dart' as xrpc;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:grain/dpop_client.dart';
@@ -58,28 +57,39 @@ class ApiService {
 
   Future<Profile?> fetchProfile({required String did}) async {
     appLogger.i('Fetching profile for did: $did');
-    final response = await xrpc.query(
-      service: _apiUrl.replaceFirst(RegExp(r'^https?://'), ''),
-      xrpc.NSID.create('actor.grain.social', 'getProfile'),
-      parameters: {'actor': did},
-      to: Profile.fromJson,
+    final response = await http.get(
+      Uri.parse('$_apiUrl/xrpc/social.grain.actor.getProfile?actor=$did'),
+      headers: {'Content-Type': 'application/json'},
     );
-    return response.data;
+    if (response.statusCode != 200) {
+      appLogger.w(
+        'Failed to fetch profile: ${response.statusCode} ${response.body}',
+      );
+      return null;
+    }
+    return Profile.fromJson(jsonDecode(response.body));
   }
 
   Future<List<Gallery>> fetchActorGalleries({required String did}) async {
     appLogger.i('Fetching galleries for actor did: $did');
-    final record = await xrpc.query(
-      service: _apiUrl.replaceFirst(RegExp(r'^https?://'), ''),
-      xrpc.NSID.create('gallery.grain.social', 'getActorGalleries'),
-      parameters: {'actor': did},
-      to: (json) =>
-          (json['items'] as List<dynamic>?)
-              ?.map((item) => Gallery.fromJson(item))
-              .toList() ??
-          [],
+    final response = await http.get(
+      Uri.parse(
+        '$_apiUrl/xrpc/social.grain.gallery.getActorGalleries?actor=$did',
+      ),
+      headers: {'Content-Type': 'application/json'},
     );
-    galleries = record.data;
+    if (response.statusCode != 200) {
+      appLogger.w(
+        'Failed to fetch galleries: ${response.statusCode} ${response.body}',
+      );
+      return [];
+    }
+    final json = jsonDecode(response.body);
+    galleries =
+        (json['items'] as List<dynamic>?)
+            ?.map((item) => Gallery.fromJson(item))
+            .toList() ??
+        [];
     return galleries;
   }
 
@@ -87,41 +97,75 @@ class ApiService {
     if (_accessToken == null) {
       return [];
     }
-    appLogger.i('Fetching timeline with algorithm: ${algorithm ?? 'default'}');
-    final record = await xrpc.query(
-      service: _apiUrl.replaceFirst(RegExp(r'^https?://'), ''),
-      xrpc.NSID.create('feed.grain.social', 'getTimeline'),
-      parameters: algorithm != null ? {'algorithm': algorithm} : null,
-      headers: {'Authorization': "Bearer $_accessToken"},
-      to: (json) =>
-          (json['feed'] as List<dynamic>?)
-              ?.map((item) => Gallery.fromJson(item as Map<String, dynamic>))
-              .toList() ??
-          [],
+    appLogger.i(
+      'Fetching timeline with algorithm: \\${algorithm ?? 'default'}',
     );
-    return record.data;
+    final uri = algorithm != null
+        ? Uri.parse(
+            '$_apiUrl/xrpc/social.grain.feed.getTimeline?algorithm=$algorithm',
+          )
+        : Uri.parse('$_apiUrl/xrpc/social.grain.feed.getTimeline');
+    final response = await http.get(
+      uri,
+      headers: {
+        'Authorization': "Bearer $_accessToken",
+        'Content-Type': 'application/json',
+      },
+    );
+    if (response.statusCode != 200) {
+      appLogger.w(
+        'Failed to fetch timeline: ${response.statusCode} ${response.body}',
+      );
+      return [];
+    }
+    final json = jsonDecode(response.body);
+    return (json['feed'] as List<dynamic>?)
+            ?.map((item) => Gallery.fromJson(item as Map<String, dynamic>))
+            .toList() ??
+        [];
   }
 
   Future<Gallery?> getGallery({required String uri}) async {
     appLogger.i('Fetching gallery for uri: $uri');
-    final record = await xrpc.query(
-      service: _apiUrl.replaceFirst(RegExp(r'^https?://'), ''),
-      xrpc.NSID.create('gallery.grain.social', 'getGallery'),
-      parameters: {'uri': uri},
-      to: Gallery.fromJson,
+    final response = await http.get(
+      Uri.parse('$_apiUrl/xrpc/social.grain.gallery.getGallery?uri=$uri'),
+      headers: {'Content-Type': 'application/json'},
     );
-    return record.data;
+    if (response.statusCode != 200) {
+      appLogger.w(
+        'Failed to fetch gallery: ${response.statusCode} ${response.body}',
+      );
+      return null;
+    }
+    try {
+      final json = jsonDecode(response.body);
+      if (json is Map<String, dynamic>) {
+        return Gallery.fromJson(json);
+      } else {
+        appLogger.w(
+          'Unexpected response type for getGallery: ${response.body}',
+        );
+        return null;
+      }
+    } catch (e, st) {
+      appLogger.e('Error parsing getGallery response: $e', stackTrace: st);
+      return null;
+    }
   }
 
   Future<Map<String, dynamic>> getGalleryThread({required String uri}) async {
     appLogger.i('Fetching gallery thread for uri: $uri');
-    final record = await xrpc.query(
-      service: _apiUrl.replaceFirst(RegExp(r'^https?://'), ''),
-      xrpc.NSID.create('gallery.grain.social', 'getGalleryThread'),
-      parameters: {'uri': uri},
-      to: (json) => json as Map<String, dynamic>,
+    final response = await http.get(
+      Uri.parse('$_apiUrl/xrpc/social.grain.gallery.getGalleryThread?uri=$uri'),
+      headers: {'Content-Type': 'application/json'},
     );
-    return record.data;
+    if (response.statusCode != 200) {
+      appLogger.w(
+        'Failed to fetch gallery thread: ${response.statusCode} ${response.body}',
+      );
+      return {};
+    }
+    return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
   Future<List<grain.Notification>> getNotifications() async {
@@ -130,20 +174,27 @@ class ApiService {
       return [];
     }
     appLogger.i('Fetching notifications');
-    final record = await xrpc.query(
-      service: _apiUrl.replaceFirst(RegExp(r'^https?://'), ''),
-      xrpc.NSID.create('notification.grain.social', 'getNotifications'),
-      headers: {'Authorization': "Bearer $_accessToken"},
-      to: (json) =>
-          (json['notifications'] as List<dynamic>?)
-              ?.map(
-                (item) =>
-                    grain.Notification.fromJson(item as Map<String, dynamic>),
-              )
-              .toList() ??
-          [],
+    final response = await http.get(
+      Uri.parse('$_apiUrl/xrpc/social.grain.notification.getNotifications'),
+      headers: {
+        'Authorization': "Bearer $_accessToken",
+        'Content-Type': 'application/json',
+      },
     );
-    return record.data;
+    if (response.statusCode != 200) {
+      appLogger.w(
+        'Failed to fetch notifications: ${response.statusCode} ${response.body}',
+      );
+      return [];
+    }
+    final json = jsonDecode(response.body);
+    return (json['notifications'] as List<dynamic>?)
+            ?.map(
+              (item) =>
+                  grain.Notification.fromJson(item as Map<String, dynamic>),
+            )
+            .toList() ??
+        [];
   }
 
   Future<List<Profile>> searchActors(String query) async {
@@ -152,32 +203,43 @@ class ApiService {
       return [];
     }
     appLogger.i('Searching actors with query: $query');
-    final record = await xrpc.query(
-      service: _apiUrl.replaceFirst(RegExp(r'^https?://'), ''),
-      xrpc.NSID.create('actor.grain.social', 'searchActors'),
-      parameters: {'q': query},
-      to: (json) =>
-          (json['actors'] as List<dynamic>?)
-              ?.map((item) => Profile.fromJson(item))
-              .toList() ??
-          [],
+    final response = await http.get(
+      Uri.parse('$_apiUrl/xrpc/social.grain.actor.searchActors?q=$query'),
+      headers: {
+        'Authorization': "Bearer $_accessToken",
+        'Content-Type': 'application/json',
+      },
     );
-    return record.data;
+    if (response.statusCode != 200) {
+      appLogger.w(
+        'Failed to search actors: ${response.statusCode} ${response.body}',
+      );
+      return [];
+    }
+    final json = jsonDecode(response.body);
+    return (json['actors'] as List<dynamic>?)
+            ?.map((item) => Profile.fromJson(item))
+            .toList() ??
+        [];
   }
 
   Future<List<Gallery>> getActorFavs({required String did}) async {
     appLogger.i('Fetching actor favs for did: $did');
-    final record = await xrpc.query(
-      service: _apiUrl.replaceFirst(RegExp(r'^https?://'), ''),
-      xrpc.NSID.create('actor.grain.social', 'getActorFavs'),
-      parameters: {'actor': did},
-      to: (json) =>
-          (json['items'] as List<dynamic>?)
-              ?.map((item) => Gallery.fromJson(item))
-              .toList() ??
-          [],
+    final response = await http.get(
+      Uri.parse('$_apiUrl/xrpc/social.grain.actor.getActorFavs?actor=$did'),
+      headers: {'Content-Type': 'application/json'},
     );
-    return record.data;
+    if (response.statusCode != 200) {
+      appLogger.w(
+        'Failed to fetch actor favs: ${response.statusCode} ${response.body}',
+      );
+      return [];
+    }
+    final json = jsonDecode(response.body);
+    return (json['items'] as List<dynamic>?)
+            ?.map((item) => Gallery.fromJson(item))
+            .toList() ??
+        [];
   }
 
   Future<String?> createGallery({

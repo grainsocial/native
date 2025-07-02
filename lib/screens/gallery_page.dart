@@ -9,6 +9,7 @@ import 'package:at_uri/at_uri.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:grain/widgets/app_image.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:grain/screens/create_gallery_page.dart';
 
 class GalleryPage extends StatefulWidget {
   final String uri;
@@ -111,6 +112,25 @@ class _GalleryPageState extends State<GalleryPage> {
               fontSize: 18,
               fontWeight: FontWeight.w600,
             ),
+            actions: [
+              if (gallery.creator?.did == widget.currentUserDid)
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  tooltip: 'Edit Gallery',
+                  onPressed: () async {
+                    await showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      builder: (context) => CreateGalleryPage(
+                        // Optionally pass initial data for editing
+                        gallery: gallery,
+                      ),
+                    );
+                    // Optionally refresh after editing
+                    _fetchGallery();
+                  },
+                ),
+            ],
           ),
           body: ListView(
             children: [
