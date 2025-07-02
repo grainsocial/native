@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:grain/api.dart';
 import 'package:grain/models/gallery.dart';
 import 'package:grain/screens/create_gallery_page.dart';
+import 'package:grain/screens/profile_page.dart';
 import 'package:grain/widgets/app_image.dart';
 import 'package:grain/widgets/gallery_action_buttons.dart';
 import 'package:grain/widgets/gallery_photo_view.dart';
@@ -132,47 +133,76 @@ class _GalleryPageState extends State<GalleryPage> {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        CircleAvatar(
-                          radius: 18,
-                          backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                          backgroundImage:
-                              gallery.creator?.avatar != null && gallery.creator!.avatar.isNotEmpty
-                              ? null
+                        GestureDetector(
+                          onTap: gallery.creator != null && gallery.creator!.did.isNotEmpty
+                              ? () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          ProfilePage(did: gallery.creator!.did, showAppBar: true),
+                                    ),
+                                  );
+                                }
                               : null,
-                          child: (gallery.creator == null || gallery.creator!.avatar.isEmpty)
-                              ? Icon(
-                                  Icons.account_circle,
-                                  size: 24,
-                                  color: theme.colorScheme.onSurface.withOpacity(0.4),
-                                )
-                              : ClipOval(
-                                  child: AppImage(
-                                    url: gallery.creator!.avatar,
-                                    width: 36,
-                                    height: 36,
-                                    fit: BoxFit.cover,
+                          child: CircleAvatar(
+                            radius: 18,
+                            backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                            backgroundImage:
+                                gallery.creator?.avatar != null &&
+                                    gallery.creator!.avatar.isNotEmpty
+                                ? null
+                                : null,
+                            child: (gallery.creator == null || gallery.creator!.avatar.isEmpty)
+                                ? Icon(
+                                    Icons.account_circle,
+                                    size: 24,
+                                    color: theme.colorScheme.onSurface.withOpacity(0.4),
+                                  )
+                                : ClipOval(
+                                    child: AppImage(
+                                      url: gallery.creator!.avatar,
+                                      width: 36,
+                                      height: 36,
+                                      fit: BoxFit.cover,
+                                    ),
                                   ),
-                                ),
+                          ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Text(
-                                gallery.creator?.displayName ?? '',
-                                style: theme.textTheme.bodyLarge?.copyWith(
-                                  fontWeight: FontWeight.w600,
+                          child: GestureDetector(
+                            onTap: gallery.creator != null && gallery.creator!.did.isNotEmpty
+                                ? () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) => ProfilePage(
+                                          did: gallery.creator!.did,
+                                          showAppBar: true,
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                : null,
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Text(
+                                  gallery.creator?.displayName ?? '',
+                                  style: theme.textTheme.bodyLarge?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
-                              ),
-                              if ((gallery.creator?.displayName ?? '').isNotEmpty &&
-                                  (gallery.creator?.handle ?? '').isNotEmpty)
-                                const SizedBox(width: 8),
-                              Text(
-                                '@${gallery.creator?.handle ?? ''}',
-                                style: theme.textTheme.bodyMedium?.copyWith(color: theme.hintColor),
-                              ),
-                            ],
+                                if ((gallery.creator?.displayName ?? '').isNotEmpty &&
+                                    (gallery.creator?.handle ?? '').isNotEmpty)
+                                  const SizedBox(width: 8),
+                                Text(
+                                  '@${gallery.creator?.handle ?? ''}',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: theme.hintColor,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
