@@ -13,9 +13,7 @@ class SplashPage extends StatefulWidget {
 }
 
 class _SplashPageState extends State<SplashPage> {
-  final TextEditingController _handleController = TextEditingController(
-    text: '',
-  );
+  final TextEditingController _handleController = TextEditingController(text: '');
   bool _signingIn = false;
 
   Future<void> _signInWithBluesky(BuildContext context) async {
@@ -75,9 +73,7 @@ class _SplashPageState extends State<SplashPage> {
                     width: double.infinity,
                     child: AppButton(
                       label: 'Login',
-                      onPressed: _signingIn
-                          ? null
-                          : () => _signInWithBluesky(context),
+                      onPressed: _signingIn ? null : () => _signInWithBluesky(context),
                       loading: _signingIn,
                       variant: AppButtonVariant.primary,
                       height: 44,

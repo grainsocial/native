@@ -1,9 +1,11 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:grain/api.dart';
 import 'package:grain/models/profile.dart';
 import 'package:grain/widgets/app_image.dart';
 import 'package:grain/widgets/plain_text_field.dart';
+
 import 'profile_page.dart';
 
 class ExplorePage extends StatefulWidget {
@@ -108,16 +110,11 @@ class _ExplorePageState extends State<ExplorePage> {
         leading: SizedBox(
           width: 20,
           height: 20,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: theme.colorScheme.primary,
-          ),
+          child: CircularProgressIndicator(strokeWidth: 2, color: theme.colorScheme.primary),
         ),
       );
     } else if (_searched && results.isEmpty) {
-      return ListTile(
-        title: Text('No users found', style: theme.textTheme.bodyMedium),
-      );
+      return ListTile(title: Text('No users found', style: theme.textTheme.bodyMedium));
     }
     return ListView.separated(
       itemCount: results.length,
@@ -128,33 +125,21 @@ class _ExplorePageState extends State<ExplorePage> {
         return ListTile(
           leading: profile.avatar.isNotEmpty
               ? ClipOval(
-                  child: AppImage(
-                    url: profile.avatar,
-                    width: 32,
-                    height: 32,
-                    fit: BoxFit.cover,
-                  ),
+                  child: AppImage(url: profile.avatar, width: 32, height: 32, fit: BoxFit.cover),
                 )
               : CircleAvatar(
                   radius: 16,
                   backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                  child: Icon(
-                    Icons.account_circle,
-                    color: theme.iconTheme.color,
-                  ),
+                  child: Icon(Icons.account_circle, color: theme.iconTheme.color),
                 ),
           title: Text(
-            profile.displayName.isNotEmpty
-                ? profile.displayName
-                : '@${profile.handle}',
+            profile.displayName.isNotEmpty ? profile.displayName : '@${profile.handle}',
             style: theme.textTheme.bodyLarge,
           ),
           subtitle: profile.handle.isNotEmpty
               ? Text(
                   '@${profile.handle}',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.hintColor,
-                  ),
+                  style: theme.textTheme.bodyMedium?.copyWith(color: theme.hintColor),
                 )
               : null,
           onTap: () async {
@@ -167,8 +152,7 @@ class _ExplorePageState extends State<ExplorePage> {
             if (context.mounted) {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (context) =>
-                      ProfilePage(did: profile.did, showAppBar: true),
+                  builder: (context) => ProfilePage(did: profile.did, showAppBar: true),
                 ),
               );
             }

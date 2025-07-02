@@ -1,15 +1,17 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:grain/app_logger.dart';
+import 'package:grain/dpop_client.dart';
 import 'package:grain/main.dart';
 import 'package:grain/models/atproto_session.dart';
-import 'models/profile.dart';
+import 'package:http/http.dart' as http;
+import 'package:mime/mime.dart';
+
+import './auth.dart';
 import 'models/gallery.dart';
 import 'models/notification.dart' as grain;
-import './auth.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:grain/dpop_client.dart';
-import 'dart:io';
-import 'package:mime/mime.dart';
+import 'models/profile.dart';
 
 class ApiService {
   String? _accessToken;
@@ -28,10 +30,7 @@ class ApiService {
 
     final response = await http.get(
       Uri.parse('$_apiUrl/oauth/session'),
-      headers: {
-        'Authorization': 'Bearer $_accessToken',
-        'Content-Type': 'application/json',
-      },
+      headers: {'Authorization': 'Bearer $_accessToken', 'Content-Type': 'application/json'},
     );
 
     if (response.statusCode != 200) {
@@ -62,9 +61,7 @@ class ApiService {
       headers: {'Content-Type': 'application/json'},
     );
     if (response.statusCode != 200) {
-      appLogger.w(
-        'Failed to fetch profile: ${response.statusCode} ${response.body}',
-      );
+      appLogger.w('Failed to fetch profile: ${response.statusCode} ${response.body}');
       return null;
     }
     return Profile.fromJson(jsonDecode(response.body));
@@ -73,23 +70,16 @@ class ApiService {
   Future<List<Gallery>> fetchActorGalleries({required String did}) async {
     appLogger.i('Fetching galleries for actor did: $did');
     final response = await http.get(
-      Uri.parse(
-        '$_apiUrl/xrpc/social.grain.gallery.getActorGalleries?actor=$did',
-      ),
+      Uri.parse('$_apiUrl/xrpc/social.grain.gallery.getActorGalleries?actor=$did'),
       headers: {'Content-Type': 'application/json'},
     );
     if (response.statusCode != 200) {
-      appLogger.w(
-        'Failed to fetch galleries: ${response.statusCode} ${response.body}',
-      );
+      appLogger.w('Failed to fetch galleries: ${response.statusCode} ${response.body}');
       return [];
     }
     final json = jsonDecode(response.body);
     galleries =
-        (json['items'] as List<dynamic>?)
-            ?.map((item) => Gallery.fromJson(item))
-            .toList() ??
-        [];
+        (json['items'] as List<dynamic>?)?.map((item) => Gallery.fromJson(item)).toList() ?? [];
     return galleries;
   }
 
@@ -97,25 +87,16 @@ class ApiService {
     if (_accessToken == null) {
       return [];
     }
-    appLogger.i(
-      'Fetching timeline with algorithm: \\${algorithm ?? 'default'}',
-    );
+    appLogger.i('Fetching timeline with algorithm: \\${algorithm ?? 'default'}');
     final uri = algorithm != null
-        ? Uri.parse(
-            '$_apiUrl/xrpc/social.grain.feed.getTimeline?algorithm=$algorithm',
-          )
+        ? Uri.parse('$_apiUrl/xrpc/social.grain.feed.getTimeline?algorithm=$algorithm')
         : Uri.parse('$_apiUrl/xrpc/social.grain.feed.getTimeline');
     final response = await http.get(
       uri,
-      headers: {
-        'Authorization': "Bearer $_accessToken",
-        'Content-Type': 'application/json',
-      },
+      headers: {'Authorization': "Bearer $_accessToken", 'Content-Type': 'application/json'},
     );
     if (response.statusCode != 200) {
-      appLogger.w(
-        'Failed to fetch timeline: ${response.statusCode} ${response.body}',
-      );
+      appLogger.w('Failed to fetch timeline: ${response.statusCode} ${response.body}');
       return [];
     }
     final json = jsonDecode(response.body);
@@ -129,15 +110,10 @@ class ApiService {
     appLogger.i('Fetching gallery for uri: $uri');
     final response = await http.get(
       Uri.parse('$_apiUrl/xrpc/social.grain.gallery.getGallery?uri=$uri'),
-      headers: {
-        'Authorization': "Bearer $_accessToken",
-        'Content-Type': 'application/json',
-      },
+      headers: {'Authorization': "Bearer $_accessToken", 'Content-Type': 'application/json'},
     );
     if (response.statusCode != 200) {
-      appLogger.w(
-        'Failed to fetch gallery: ${response.statusCode} ${response.body}',
-      );
+      appLogger.w('Failed to fetch gallery: ${response.statusCode} ${response.body}');
       return null;
     }
     try {
@@ -145,9 +121,7 @@ class ApiService {
       if (json is Map<String, dynamic>) {
         return Gallery.fromJson(json);
       } else {
-        appLogger.w(
-          'Unexpected response type for getGallery: ${response.body}',
-        );
+        appLogger.w('Unexpected response type for getGallery: ${response.body}');
         return null;
       }
     } catch (e, st) {
@@ -163,9 +137,7 @@ class ApiService {
       headers: {'Content-Type': 'application/json'},
     );
     if (response.statusCode != 200) {
-      appLogger.w(
-        'Failed to fetch gallery thread: ${response.statusCode} ${response.body}',
-      );
+      appLogger.w('Failed to fetch gallery thread: ${response.statusCode} ${response.body}');
       return {};
     }
     return jsonDecode(response.body) as Map<String, dynamic>;
@@ -179,23 +151,15 @@ class ApiService {
     appLogger.i('Fetching notifications');
     final response = await http.get(
       Uri.parse('$_apiUrl/xrpc/social.grain.notification.getNotifications'),
-      headers: {
-        'Authorization': "Bearer $_accessToken",
-        'Content-Type': 'application/json',
-      },
+      headers: {'Authorization': "Bearer $_accessToken", 'Content-Type': 'application/json'},
     );
     if (response.statusCode != 200) {
-      appLogger.w(
-        'Failed to fetch notifications: ${response.statusCode} ${response.body}',
-      );
+      appLogger.w('Failed to fetch notifications: ${response.statusCode} ${response.body}');
       return [];
     }
     final json = jsonDecode(response.body);
     return (json['notifications'] as List<dynamic>?)
-            ?.map(
-              (item) =>
-                  grain.Notification.fromJson(item as Map<String, dynamic>),
-            )
+            ?.map((item) => grain.Notification.fromJson(item as Map<String, dynamic>))
             .toList() ??
         [];
   }
@@ -208,22 +172,14 @@ class ApiService {
     appLogger.i('Searching actors with query: $query');
     final response = await http.get(
       Uri.parse('$_apiUrl/xrpc/social.grain.actor.searchActors?q=$query'),
-      headers: {
-        'Authorization': "Bearer $_accessToken",
-        'Content-Type': 'application/json',
-      },
+      headers: {'Authorization': "Bearer $_accessToken", 'Content-Type': 'application/json'},
     );
     if (response.statusCode != 200) {
-      appLogger.w(
-        'Failed to search actors: ${response.statusCode} ${response.body}',
-      );
+      appLogger.w('Failed to search actors: ${response.statusCode} ${response.body}');
       return [];
     }
     final json = jsonDecode(response.body);
-    return (json['actors'] as List<dynamic>?)
-            ?.map((item) => Profile.fromJson(item))
-            .toList() ??
-        [];
+    return (json['actors'] as List<dynamic>?)?.map((item) => Profile.fromJson(item)).toList() ?? [];
   }
 
   Future<List<Gallery>> getActorFavs({required String did}) async {
@@ -233,22 +189,14 @@ class ApiService {
       headers: {'Content-Type': 'application/json'},
     );
     if (response.statusCode != 200) {
-      appLogger.w(
-        'Failed to fetch actor favs: ${response.statusCode} ${response.body}',
-      );
+      appLogger.w('Failed to fetch actor favs: ${response.statusCode} ${response.body}');
       return [];
     }
     final json = jsonDecode(response.body);
-    return (json['items'] as List<dynamic>?)
-            ?.map((item) => Gallery.fromJson(item))
-            .toList() ??
-        [];
+    return (json['items'] as List<dynamic>?)?.map((item) => Gallery.fromJson(item)).toList() ?? [];
   }
 
-  Future<String?> createGallery({
-    required String title,
-    required String description,
-  }) async {
+  Future<String?> createGallery({required String title, required String description}) async {
     final session = await auth.getValidSession();
     if (session == null) {
       appLogger.w('No valid session for createGallery');
@@ -277,9 +225,7 @@ class ApiService {
       body: jsonEncode(record),
     );
     if (response.statusCode != 200 && response.statusCode != 201) {
-      appLogger.w(
-        'Failed to create gallery: \\${response.statusCode} \\${response.body}',
-      );
+      appLogger.w('Failed to create gallery: \\${response.statusCode} \\${response.body}');
       throw Exception('Failed to create gallery: \\${response.statusCode}');
     }
     final result = jsonDecode(response.body) as Map<String, dynamic>;
@@ -301,9 +247,7 @@ class ApiService {
     while (attempts < maxAttempts) {
       gallery = await getGallery(uri: galleryUri);
       if (gallery != null && gallery.items.length == expectedCount) {
-        appLogger.i(
-          'Gallery $galleryUri has expected number of items: $expectedCount',
-        );
+        appLogger.i('Gallery $galleryUri has expected number of items: $expectedCount');
         return gallery;
       }
       await Future.delayed(pollDelay);
@@ -394,9 +338,7 @@ class ApiService {
       body: jsonEncode(record),
     );
     if (response.statusCode != 200 && response.statusCode != 201) {
-      appLogger.w(
-        'Failed to create photo record: \\${response.statusCode} \\${response.body}',
-      );
+      appLogger.w('Failed to create photo record: \\${response.statusCode} \\${response.body}');
       return null;
     }
     final result = jsonDecode(response.body) as Map<String, dynamic>;
@@ -437,9 +379,7 @@ class ApiService {
       body: jsonEncode(record),
     );
     if (response.statusCode != 200 && response.statusCode != 201) {
-      appLogger.w(
-        'Failed to create gallery item: \\${response.statusCode} \\${response.body}',
-      );
+      appLogger.w('Failed to create gallery item: \\${response.statusCode} \\${response.body}');
       return null;
     }
     final result = jsonDecode(response.body) as Map<String, dynamic>;

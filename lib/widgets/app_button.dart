@@ -46,9 +46,7 @@ class AppButton extends StatelessWidget {
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(borderRadius),
-            side: isPrimary
-                ? BorderSide.none
-                : BorderSide(color: secondaryBorder, width: 1),
+            side: isPrimary ? BorderSide.none : BorderSide(color: secondaryBorder, width: 1),
           ),
           padding: padding ?? const EdgeInsets.symmetric(horizontal: 16),
           textStyle: theme.textTheme.labelLarge?.copyWith(
@@ -70,11 +68,7 @@ class AppButton extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   if (icon != null) ...[
-                    Icon(
-                      icon,
-                      size: 20,
-                      color: isPrimary ? primaryText : secondaryText,
-                    ),
+                    Icon(icon, size: 20, color: isPrimary ? primaryText : secondaryText),
                     const SizedBox(width: 8),
                   ],
                   Text(

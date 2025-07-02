@@ -1,9 +1,10 @@
 import 'dart:convert';
+
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:grain/api.dart';
 import 'package:grain/app_logger.dart';
 import 'package:grain/main.dart';
-import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:grain/models/atproto_session.dart';
 
 class Auth {
@@ -13,8 +14,7 @@ class Auth {
   Future<void> login(String handle) async {
     final apiUrl = AppConfig.apiUrl;
     final redirectedUrl = await FlutterWebAuth2.authenticate(
-      url:
-          '$apiUrl/oauth/login?client=native&handle=${Uri.encodeComponent(handle)}',
+      url: '$apiUrl/oauth/login?client=native&handle=${Uri.encodeComponent(handle)}',
       callbackUrlScheme: 'grainflutter',
     );
     final uri = Uri.parse(redirectedUrl);

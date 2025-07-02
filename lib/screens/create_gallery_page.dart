@@ -1,16 +1,18 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:grain/api.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:grain/widgets/plain_text_field.dart';
-import 'package:grain/widgets/app_button.dart';
-import 'gallery_page.dart';
-import 'package:grain/photo_manip.dart';
-import 'package:flutter/foundation.dart';
 import 'package:grain/models/gallery.dart';
+import 'package:grain/photo_manip.dart';
+import 'package:grain/widgets/app_button.dart';
+import 'package:grain/widgets/plain_text_field.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
+
+import 'gallery_page.dart';
 
 // Wrapper class for differentiating images
 class GalleryImage {
@@ -54,11 +56,7 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
               return tempFile;
             });
             loadedImages.add(
-              GalleryImage(
-                file: XFile(file.path),
-                isExisting: true,
-                remoteUri: item.uri,
-              ),
+              GalleryImage(file: XFile(file.path), isExisting: true, remoteUri: item.uri),
             );
           } catch (_) {}
         }
@@ -76,9 +74,7 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
     final picked = await picker.pickMultiImage(imageQuality: 85);
     if (picked.isNotEmpty) {
       setState(() {
-        _images.addAll(
-          picked.map((xfile) => GalleryImage(file: xfile, isExisting: false)),
-        );
+        _images.addAll(picked.map((xfile) => GalleryImage(file: xfile, isExisting: false)));
       });
     }
   }
@@ -109,10 +105,7 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
       // Only upload, create photo, and create gallery item if not existing
       if (!galleryImage.isExisting) {
         final file = File(galleryImage.file.path);
-        final resizedResult = await compute<File, ResizeResult>(
-          (f) => resizeImage(file: f),
-          file,
-        );
+        final resizedResult = await compute<File, ResizeResult>((f) => resizeImage(file: f), file);
         final blobResult = await apiService.uploadBlob(resizedResult.file);
         if (blobResult != null) {
           final dims = await _getImageDimensions(galleryImage.file);
@@ -154,10 +147,7 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
           position++;
         }
       }
-      await apiService.pollGalleryItems(
-        galleryUri: galleryUri,
-        expectedCount: _images.length,
-      );
+      await apiService.pollGalleryItems(galleryUri: galleryUri, expectedCount: _images.length);
     }
     setState(() => _submitting = false);
     if (mounted && galleryUri != null) {
@@ -175,10 +165,8 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
       if (widget.gallery == null) {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (context) => GalleryPage(
-              uri: galleryUri!,
-              currentUserDid: apiService.currentUser?.did,
-            ),
+            builder: (context) =>
+                GalleryPage(uri: galleryUri!, currentUserDid: apiService.currentUser?.did),
           ),
         );
       }
@@ -191,9 +179,7 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final double maxHeight =
-        MediaQuery.of(context).size.height -
-        kToolbarHeight -
-        MediaQuery.of(context).padding.top;
+        MediaQuery.of(context).size.height - kToolbarHeight - MediaQuery.of(context).padding.top;
 
     return ConstrainedBox(
       constraints: BoxConstraints(maxHeight: maxHeight),
@@ -208,19 +194,13 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   TextButton(
-                    onPressed: _submitting
-                        ? null
-                        : () => Navigator.of(context).pop(),
-                    style: TextButton.styleFrom(
-                      foregroundColor: theme.colorScheme.primary,
-                    ),
+                    onPressed: _submitting ? null : () => Navigator.of(context).pop(),
+                    style: TextButton.styleFrom(foregroundColor: theme.colorScheme.primary),
                     child: Text('Cancel', style: theme.textTheme.bodyLarge),
                   ),
                   Text(
                     widget.gallery == null ? 'New Gallery' : 'Edit Gallery',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                   ),
                   AppButton(
                     label: widget.gallery == null ? 'Create' : 'Save',
@@ -237,9 +217,7 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
               const SizedBox(height: 16),
               Expanded(
                 child: SingleChildScrollView(
-                  padding: EdgeInsets.only(
-                    bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-                  ),
+                  padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom + 16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
@@ -275,12 +253,11 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
                         GridView.builder(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 3,
-                                crossAxisSpacing: 8,
-                                mainAxisSpacing: 8,
-                              ),
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3,
+                            crossAxisSpacing: 8,
+                            mainAxisSpacing: 8,
+                          ),
                           itemCount: _images.length,
                           itemBuilder: (context, index) {
                             final galleryImage = _images[index];
@@ -289,9 +266,7 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
                                 Positioned.fill(
                                   child: Container(
                                     decoration: BoxDecoration(
-                                      color: theme
-                                          .colorScheme
-                                          .surfaceContainerHighest,
+                                      color: theme.colorScheme.surfaceContainerHighest,
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: ClipRRect(
@@ -310,8 +285,7 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
                                     child: Container(
                                       padding: const EdgeInsets.all(2),
                                       decoration: BoxDecoration(
-                                        color: theme.colorScheme.secondary
-                                            .withOpacity(0.7),
+                                        color: theme.colorScheme.secondary.withOpacity(0.7),
                                         borderRadius: BorderRadius.circular(4),
                                       ),
                                       child: Icon(
@@ -328,8 +302,7 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
                                     onTap: () => _removeImage(index),
                                     child: Container(
                                       decoration: BoxDecoration(
-                                        color: theme.colorScheme.surfaceTint
-                                            .withOpacity(0.7),
+                                        color: theme.colorScheme.surfaceTint.withOpacity(0.7),
                                         shape: BoxShape.circle,
                                       ),
                                       child: Icon(

@@ -33,13 +33,9 @@ class JustifiedGalleryView extends StatelessWidget {
             children: [
               for (int i = 0; i < row.length; i++)
                 Padding(
-                  padding: EdgeInsets.only(
-                    right: i == row.length - 1 ? 0 : spacing,
-                  ),
+                  padding: EdgeInsets.only(right: i == row.length - 1 ? 0 : spacing),
                   child: GestureDetector(
-                    onTap: onImageTap != null
-                        ? () => onImageTap!(row[i].originalIndex)
-                        : null,
+                    onTap: onImageTap != null ? () => onImageTap!(row[i].originalIndex) : null,
                     child: SizedBox(
                       width: row[i].displayWidth,
                       height: row[i].displayHeight,
@@ -54,10 +50,7 @@ class JustifiedGalleryView extends StatelessWidget {
         ),
       );
     }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: rowWidgets,
-    );
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: rowWidgets);
   }
 }
 

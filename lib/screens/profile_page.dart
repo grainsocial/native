@@ -1,27 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:grain/models/gallery.dart';
 import 'package:grain/api.dart';
-import 'gallery_page.dart';
-import 'package:grain/widgets/app_image.dart';
 import 'package:grain/app_theme.dart';
+import 'package:grain/models/gallery.dart';
+import 'package:grain/widgets/app_image.dart';
+
+import 'gallery_page.dart';
 
 class ProfilePage extends StatefulWidget {
   final dynamic profile;
   final String? did;
   final bool showAppBar;
-  const ProfilePage({
-    super.key,
-    this.profile,
-    this.did,
-    this.showAppBar = false,
-  });
+  const ProfilePage({super.key, this.profile, this.did, this.showAppBar = false});
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage>
-    with SingleTickerProviderStateMixin {
+class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStateMixin {
   dynamic _profile;
   bool _loading = true;
   List<Gallery> _galleries = [];
@@ -116,10 +111,7 @@ class _ProfilePageState extends State<ProfilePage>
       return Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: const Center(
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: AppTheme.primaryColor,
-          ),
+          child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primaryColor),
         ),
       );
     }
@@ -171,19 +163,12 @@ class _ProfilePageState extends State<ProfilePage>
                               else
                                 const Align(
                                   alignment: Alignment.centerLeft,
-                                  child: Icon(
-                                    Icons.account_circle,
-                                    size: 64,
-                                    color: Colors.grey,
-                                  ),
+                                  child: Icon(Icons.account_circle, size: 64, color: Colors.grey),
                                 ),
                               const SizedBox(height: 8),
                               Text(
                                 profile.displayName ?? '',
-                                style: const TextStyle(
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.w800,
-                                ),
+                                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800),
                                 textAlign: TextAlign.left,
                               ),
                               const SizedBox(height: 2),
@@ -191,9 +176,7 @@ class _ProfilePageState extends State<ProfilePage>
                                 '@${profile.handle ?? ''}',
                                 style: TextStyle(
                                   fontSize: 14,
-                                  color:
-                                      Theme.of(context).brightness ==
-                                          Brightness.dark
+                                  color: Theme.of(context).brightness == Brightness.dark
                                       ? Colors.grey[400]
                                       : Colors.grey[700],
                                 ),
@@ -205,9 +188,7 @@ class _ProfilePageState extends State<ProfilePage>
                                     (profile.followersCount is int
                                             ? profile.followersCount
                                             : int.tryParse(
-                                                    profile.followersCount
-                                                            ?.toString() ??
-                                                        '0',
+                                                    profile.followersCount?.toString() ?? '0',
                                                   ) ??
                                                   0)
                                         .toString(),
@@ -215,9 +196,7 @@ class _ProfilePageState extends State<ProfilePage>
                                     (profile.followsCount is int
                                             ? profile.followsCount
                                             : int.tryParse(
-                                                    profile.followsCount
-                                                            ?.toString() ??
-                                                        '0',
+                                                    profile.followsCount?.toString() ?? '0',
                                                   ) ??
                                                   0)
                                         .toString(),
@@ -225,19 +204,14 @@ class _ProfilePageState extends State<ProfilePage>
                                     (profile.galleryCount is int
                                             ? profile.galleryCount
                                             : int.tryParse(
-                                                    profile.galleryCount
-                                                            ?.toString() ??
-                                                        '0',
+                                                    profile.galleryCount?.toString() ?? '0',
                                                   ) ??
                                                   0)
                                         .toString(),
                               ),
                               if ((profile.description ?? '').isNotEmpty) ...[
                                 const SizedBox(height: 16),
-                                Text(
-                                  profile.description,
-                                  textAlign: TextAlign.left,
-                                ),
+                                Text(profile.description, textAlign: TextAlign.left),
                               ],
                               const SizedBox(height: 24),
                             ],
@@ -250,20 +224,13 @@ class _ProfilePageState extends State<ProfilePage>
                             dividerColor: theme.disabledColor,
                             controller: _tabController,
                             indicator: UnderlineTabIndicator(
-                              borderSide: const BorderSide(
-                                color: AppTheme.primaryColor,
-                                width: 3,
-                              ),
+                              borderSide: const BorderSide(color: AppTheme.primaryColor, width: 3),
                               insets: EdgeInsets.zero,
                             ),
                             indicatorSize: TabBarIndicatorSize.tab,
                             labelColor: theme.colorScheme.onSurface,
-                            unselectedLabelColor:
-                                theme.colorScheme.onSurfaceVariant,
-                            labelStyle: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 16,
-                            ),
+                            unselectedLabelColor: theme.colorScheme.onSurfaceVariant,
+                            labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
                             tabs: [
                               const Tab(text: 'Galleries'),
                               if (apiService.currentUser?.did == profile.did)
@@ -290,23 +257,18 @@ class _ProfilePageState extends State<ProfilePage>
                         ? const Center(child: Text('No galleries yet'))
                         : GridView.builder(
                             padding: EdgeInsets.zero,
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 3,
-                                  childAspectRatio: 3 / 4,
-                                  crossAxisSpacing: 2,
-                                  mainAxisSpacing: 2,
-                                ),
-                            itemCount: (_galleries.length < 12
-                                ? 12
-                                : _galleries.length),
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 3,
+                              childAspectRatio: 3 / 4,
+                              crossAxisSpacing: 2,
+                              mainAxisSpacing: 2,
+                            ),
+                            itemCount: (_galleries.length < 12 ? 12 : _galleries.length),
                             itemBuilder: (context, index) {
-                              if (_galleries.isNotEmpty &&
-                                  index < _galleries.length) {
+                              if (_galleries.isNotEmpty && index < _galleries.length) {
                                 final gallery = _galleries[index];
                                 final hasPhoto =
-                                    gallery.items.isNotEmpty &&
-                                    gallery.items[0].thumb.isNotEmpty;
+                                    gallery.items.isNotEmpty && gallery.items[0].thumb.isNotEmpty;
                                 return GestureDetector(
                                   onTap: () {
                                     if (gallery.uri.isNotEmpty) {
@@ -322,24 +284,17 @@ class _ProfilePageState extends State<ProfilePage>
                                   },
                                   child: Container(
                                     decoration: BoxDecoration(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.surfaceContainerHighest,
+                                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
                                     ),
                                     clipBehavior: Clip.antiAlias,
                                     child: hasPhoto
-                                        ? AppImage(
-                                            url: gallery.items[0].thumb,
-                                            fit: BoxFit.cover,
-                                          )
+                                        ? AppImage(url: gallery.items[0].thumb, fit: BoxFit.cover)
                                         : Center(
                                             child: Text(
                                               gallery.title,
                                               style: TextStyle(
                                                 fontSize: 12,
-                                                color: theme
-                                                    .colorScheme
-                                                    .onSurfaceVariant,
+                                                color: theme.colorScheme.onSurfaceVariant,
                                               ),
                                               textAlign: TextAlign.center,
                                             ),
@@ -348,10 +303,7 @@ class _ProfilePageState extends State<ProfilePage>
                                 );
                               }
                               // Placeholder for empty slots
-                              return Container(
-                                color:
-                                    theme.colorScheme.surfaceContainerHighest,
-                              );
+                              return Container(color: theme.colorScheme.surfaceContainerHighest);
                             },
                           ),
                     // Favs tab
@@ -367,19 +319,17 @@ class _ProfilePageState extends State<ProfilePage>
                           ? const Center(child: Text('No favorites yet'))
                           : GridView.builder(
                               padding: EdgeInsets.zero,
-                              gridDelegate:
-                                  const SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 3,
-                                    childAspectRatio: 3 / 4,
-                                    crossAxisSpacing: 2,
-                                    mainAxisSpacing: 2,
-                                  ),
+                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 3,
+                                childAspectRatio: 3 / 4,
+                                crossAxisSpacing: 2,
+                                mainAxisSpacing: 2,
+                              ),
                               itemCount: _favs.length,
                               itemBuilder: (context, index) {
                                 final gallery = _favs[index];
                                 final hasPhoto =
-                                    gallery.items.isNotEmpty &&
-                                    gallery.items[0].thumb.isNotEmpty;
+                                    gallery.items.isNotEmpty && gallery.items[0].thumb.isNotEmpty;
                                 return GestureDetector(
                                   onTap: () {
                                     if (gallery.uri.isNotEmpty) {
@@ -395,24 +345,17 @@ class _ProfilePageState extends State<ProfilePage>
                                   },
                                   child: Container(
                                     decoration: BoxDecoration(
-                                      color: theme
-                                          .colorScheme
-                                          .surfaceContainerHighest,
+                                      color: theme.colorScheme.surfaceContainerHighest,
                                     ),
                                     clipBehavior: Clip.antiAlias,
                                     child: hasPhoto
-                                        ? AppImage(
-                                            url: gallery.items[0].thumb,
-                                            fit: BoxFit.cover,
-                                          )
+                                        ? AppImage(url: gallery.items[0].thumb, fit: BoxFit.cover)
                                         : Center(
                                             child: Text(
                                               gallery.title,
                                               style: TextStyle(
                                                 fontSize: 12,
-                                                color: theme
-                                                    .colorScheme
-                                                    .onSurfaceVariant,
+                                                color: theme.colorScheme.onSurfaceVariant,
                                               ),
                                               textAlign: TextAlign.center,
                                             ),
@@ -450,9 +393,7 @@ class _ProfileStatsRow extends StatelessWidget {
       fontSize: 14, // Set to 14
     );
     final styleLabel = TextStyle(
-      color: theme.brightness == Brightness.dark
-          ? Colors.grey[400]
-          : Colors.grey[700],
+      color: theme.brightness == Brightness.dark ? Colors.grey[400] : Colors.grey[700],
       fontSize: 14, // Set to 14
     );
     return Row(

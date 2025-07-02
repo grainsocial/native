@@ -47,9 +47,7 @@ class PlainTextField extends StatelessWidget {
                   duration: const Duration(milliseconds: 150),
                   decoration: BoxDecoration(
                     border: Border.all(
-                      color: isFocused
-                          ? theme.colorScheme.primary
-                          : theme.dividerColor,
+                      color: isFocused ? theme.colorScheme.primary : theme.dividerColor,
                       width: isFocused ? 2 : 1,
                     ),
                     borderRadius: BorderRadius.circular(8),
@@ -63,14 +61,9 @@ class PlainTextField extends StatelessWidget {
                     style: theme.textTheme.bodyMedium?.copyWith(fontSize: 15),
                     decoration: InputDecoration(
                       hintText: hintText,
-                      hintStyle: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.hintColor,
-                      ),
+                      hintStyle: theme.textTheme.bodyMedium?.copyWith(color: theme.hintColor),
                       border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 12,
-                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                       isDense: true,
                     ),
                   ),

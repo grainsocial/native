@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:grain/api.dart';
 import 'package:grain/models/gallery.dart';
-import 'package:grain/widgets/timeline_item.dart';
+import 'package:grain/screens/create_gallery_page.dart';
+import 'package:grain/widgets/app_image.dart';
 import 'package:grain/widgets/app_version_text.dart';
 import 'package:grain/widgets/bottom_nav_bar.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:grain/widgets/timeline_item.dart';
+
 import 'explore_page.dart';
 import 'log_page.dart';
 import 'notifications_page.dart';
 import 'profile_page.dart';
-import 'package:grain/widgets/app_image.dart';
-import 'package:grain/screens/create_gallery_page.dart';
 
 class TimelineItem {
   final Gallery gallery;
@@ -55,9 +56,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       try {
         final galleries = await apiService.getTimeline(algorithm: algorithm);
         setState(() {
-          _followingTimeline = galleries
-              .map((g) => TimelineItem.fromGallery(g))
-              .toList();
+          _followingTimeline = galleries.map((g) => TimelineItem.fromGallery(g)).toList();
           _followingTimelineLoading = false;
         });
       } catch (e) {
@@ -73,9 +72,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       try {
         final galleries = await apiService.getTimeline(algorithm: algorithm);
         setState(() {
-          _timeline = galleries
-              .map((g) => TimelineItem.fromGallery(g))
-              .toList();
+          _timeline = galleries.map((g) => TimelineItem.fromGallery(g)).toList();
           _timelineLoading = false;
         });
       } catch (e) {
@@ -100,11 +97,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
   void _initTabController() {
     _tabController?.dispose();
-    _tabController = TabController(
-      length: 2,
-      vsync: this,
-      initialIndex: _tabIndex,
-    );
+    _tabController = TabController(length: 2, vsync: this, initialIndex: _tabIndex);
     _tabController!.addListener(() {
       if (_tabController!.index != _tabIndex) {
         _onTabChanged(_tabController!.index);
@@ -139,9 +132,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     return CustomScrollView(
       key: PageStorageKey(following ? 'following' : 'timeline'),
       slivers: [
-        SliverOverlapInjector(
-          handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
-        ),
+        SliverOverlapInjector(handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context)),
         if (timeline.isEmpty && loading)
           SliverFillRemaining(
             hasScrollBody: false,
@@ -156,11 +147,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
           SliverFillRemaining(
             hasScrollBody: false,
             child: Center(
-              child: Text(
-                following
-                    ? 'No following timeline items.'
-                    : 'No timeline items.',
-              ),
+              child: Text(following ? 'No following timeline items.' : 'No timeline items.'),
             ),
           ),
         if (timeline.isNotEmpty)
@@ -180,10 +167,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     if (apiService.currentUser == null) {
       return Scaffold(
         body: Center(
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: theme.colorScheme.primary,
-          ),
+          child: CircularProgressIndicator(strokeWidth: 2, color: theme.colorScheme.primary),
         ),
       );
     }
@@ -199,9 +183,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                 height: 250,
                 decoration: BoxDecoration(
                   color: theme.scaffoldBackgroundColor,
-                  border: Border(
-                    bottom: BorderSide(color: theme.dividerColor, width: 1),
-                  ),
+                  border: Border(bottom: BorderSide(color: theme.dividerColor, width: 1)),
                 ),
                 padding: const EdgeInsets.fromLTRB(16, 115, 16, 16),
                 child: Column(
@@ -231,17 +213,14 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                     if (apiService.currentUser?.handle != null)
                       Text(
                         '@${apiService.currentUser!.handle}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.hintColor,
-                        ),
+                        style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor),
                       ),
                     const SizedBox(height: 6),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         Text(
-                          (apiService.currentUser?.followersCount ?? 0)
-                              .toString(),
+                          (apiService.currentUser?.followersCount ?? 0).toString(),
                           style: theme.textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: theme.colorScheme.onSurface,
@@ -250,14 +229,11 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                         const SizedBox(width: 4),
                         Text(
                           'Followers',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.hintColor,
-                          ),
+                          style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor),
                         ),
                         const SizedBox(width: 16),
                         Text(
-                          (apiService.currentUser?.followsCount ?? 0)
-                              .toString(),
+                          (apiService.currentUser?.followsCount ?? 0).toString(),
                           style: theme.textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: theme.colorScheme.onSurface,
@@ -266,9 +242,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                         const SizedBox(width: 4),
                         Text(
                           'Following',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.hintColor,
-                          ),
+                          style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor),
                         ),
                       ],
                     ),
@@ -316,9 +290,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                 title: const Text('Logs'),
                 onTap: () {
                   Navigator.pop(context);
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => const LogPage()),
-                  );
+                  Navigator.of(
+                    context,
+                  ).push(MaterialPageRoute(builder: (context) => const LogPage()));
                 },
               ),
               const SizedBox(height: 16),
@@ -341,10 +315,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                 snap: false,
                 pinned: true,
                 elevation: 0.5,
-                title: Text(
-                  widget.title,
-                  style: theme.appBarTheme.titleTextStyle,
-                ),
+                title: Text(widget.title, style: theme.appBarTheme.titleTextStyle),
                 leading: Builder(
                   builder: (context) => IconButton(
                     icon: const Icon(Icons.menu),
@@ -366,19 +337,13 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                       dividerColor: theme.dividerColor,
                       controller: _tabController,
                       indicator: UnderlineTabIndicator(
-                        borderSide: BorderSide(
-                          color: theme.colorScheme.primary,
-                          width: 3,
-                        ),
+                        borderSide: BorderSide(color: theme.colorScheme.primary, width: 3),
                         insets: EdgeInsets.zero,
                       ),
                       indicatorSize: TabBarIndicatorSize.tab,
                       labelColor: theme.colorScheme.onSurface,
                       unselectedLabelColor: theme.colorScheme.onSurfaceVariant,
-                      labelStyle: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
-                      ),
+                      labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
                       tabs: const [
                         Tab(text: 'Timeline'),
                         Tab(text: 'Following'),
@@ -393,14 +358,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             controller: _tabController,
             physics: const NeverScrollableScrollPhysics(),
             children: [
-              Builder(
-                builder: (context) =>
-                    _buildTimelineSliver(context, following: false),
-              ),
-              Builder(
-                builder: (context) =>
-                    _buildTimelineSliver(context, following: true),
-              ),
+              Builder(builder: (context) => _buildTimelineSliver(context, following: false)),
+              Builder(builder: (context) => _buildTimelineSliver(context, following: true)),
             ],
           ),
         ),
@@ -436,8 +395,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
           },
           avatarUrl: apiService.currentUser?.avatar,
         ),
-        floatingActionButton:
-            (!showProfile && !showNotifications && !showExplore)
+        floatingActionButton: (!showProfile && !showNotifications && !showExplore)
             ? FloatingActionButton(
                 shape: const CircleBorder(),
                 onPressed: () {
@@ -464,9 +422,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             Container(
               decoration: BoxDecoration(
                 color: theme.scaffoldBackgroundColor,
-                border: Border(
-                  bottom: BorderSide(color: theme.dividerColor, width: 1),
-                ),
+                border: Border(bottom: BorderSide(color: theme.dividerColor, width: 1)),
               ),
               padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
               child: Column(
@@ -507,8 +463,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       Text(
-                        (apiService.currentUser?.followersCount ?? 0)
-                            .toString(),
+                        (apiService.currentUser?.followersCount ?? 0).toString(),
                         style: theme.textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
@@ -586,9 +541,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               title: const Text('Logs'),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const LogPage()),
-                );
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (context) => const LogPage()));
               },
             ),
             const SizedBox(height: 16),
@@ -645,12 +600,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                 color: theme.scaffoldBackgroundColor.withOpacity(0.98),
                 child: SafeArea(
                   child: Stack(
-                    children: [
-                      ProfilePage(
-                        did: apiService.currentUser?.did,
-                        showAppBar: false,
-                      ),
-                    ],
+                    children: [ProfilePage(did: apiService.currentUser?.did, showAppBar: false)],
                   ),
                 ),
               ),

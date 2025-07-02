@@ -34,9 +34,7 @@ class Gallery {
       items: (json['items'] as List<dynamic>? ?? [])
           .map((item) => GalleryPhoto.fromJson(item as Map<String, dynamic>))
           .toList(),
-      creator: json['creator'] != null
-          ? Profile.fromJson(json['creator'])
-          : null,
+      creator: json['creator'] != null ? Profile.fromJson(json['creator']) : null,
       createdAt: json['createdAt'],
       favCount: json['favCount'],
       commentCount: json['commentCount'],

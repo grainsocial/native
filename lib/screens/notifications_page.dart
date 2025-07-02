@@ -77,17 +77,13 @@ class _NotificationsPageState extends State<NotificationsPage> {
     return ListTile(
       leading: CircleAvatar(
         backgroundColor: theme.colorScheme.surfaceVariant,
-        backgroundImage: author.avatar.isNotEmpty
-            ? NetworkImage(author.avatar)
-            : null,
+        backgroundImage: author.avatar.isNotEmpty ? NetworkImage(author.avatar) : null,
         child: author.avatar.isEmpty
             ? Icon(Icons.account_circle, color: theme.iconTheme.color)
             : null,
       ),
       title: Text(
-        author.displayName.isNotEmpty
-            ? author.displayName
-            : '@${author.handle}',
+        author.displayName.isNotEmpty ? author.displayName : '@${author.handle}',
         style: theme.textTheme.bodyLarge,
       ),
       subtitle: Text(
@@ -107,29 +103,15 @@ class _NotificationsPageState extends State<NotificationsPage> {
       backgroundColor: theme.scaffoldBackgroundColor,
       body: _loading
           ? Center(
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: theme.colorScheme.primary,
-              ),
+              child: CircularProgressIndicator(strokeWidth: 2, color: theme.colorScheme.primary),
             )
           : _error
-          ? Center(
-              child: Text(
-                'Failed to load notifications.',
-                style: theme.textTheme.bodyMedium,
-              ),
-            )
+          ? Center(child: Text('Failed to load notifications.', style: theme.textTheme.bodyMedium))
           : _notifications.isEmpty
-          ? Center(
-              child: Text(
-                'No notifications yet.',
-                style: theme.textTheme.bodyMedium,
-              ),
-            )
+          ? Center(child: Text('No notifications yet.', style: theme.textTheme.bodyMedium))
           : ListView.separated(
               itemCount: _notifications.length,
-              separatorBuilder: (context, index) =>
-                  Divider(height: 1, color: theme.dividerColor),
+              separatorBuilder: (context, index) => Divider(height: 1, color: theme.dividerColor),
               itemBuilder: (context, index) {
                 final notification = _notifications[index];
                 return _buildNotificationTile(notification);

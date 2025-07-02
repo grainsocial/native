@@ -14,11 +14,7 @@ class AppTheme {
       foregroundColor: Colors.black87,
       elevation: 0,
       iconTheme: IconThemeData(color: Colors.black87),
-      titleTextStyle: TextStyle(
-        color: Colors.black87,
-        fontSize: 18,
-        fontWeight: FontWeight.w600,
-      ),
+      titleTextStyle: TextStyle(color: Colors.black87, fontSize: 18, fontWeight: FontWeight.w600),
     ),
     floatingActionButtonTheme: const FloatingActionButtonThemeData(
       backgroundColor: primaryColor,
@@ -47,11 +43,7 @@ class AppTheme {
       foregroundColor: Colors.white,
       elevation: 0,
       iconTheme: IconThemeData(color: Colors.white),
-      titleTextStyle: TextStyle(
-        color: Colors.white,
-        fontSize: 18,
-        fontWeight: FontWeight.w600,
-      ),
+      titleTextStyle: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600),
     ),
     floatingActionButtonTheme: const FloatingActionButtonThemeData(
       backgroundColor: primaryColor,

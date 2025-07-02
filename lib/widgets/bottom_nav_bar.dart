@@ -26,9 +26,7 @@ class BottomNavBar extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
-        border: Border(
-          top: BorderSide(color: Theme.of(context).dividerColor, width: 1),
-        ),
+        border: Border(top: BorderSide(color: Theme.of(context).dividerColor, width: 1)),
       ),
       height: 42 + MediaQuery.of(context).padding.bottom,
       child: Row(
@@ -114,10 +112,7 @@ class BottomNavBar extends StatelessWidget {
                             decoration: navIndex == 3
                                 ? BoxDecoration(
                                     shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: AppTheme.primaryColor,
-                                      width: 2.2,
-                                    ),
+                                    border: Border.all(color: AppTheme.primaryColor, width: 2.2),
                                   )
                                 : null,
                             child: ClipOval(
@@ -130,15 +125,11 @@ class BottomNavBar extends StatelessWidget {
                             ),
                           )
                         : FaIcon(
-                            navIndex == 3
-                                ? FontAwesomeIcons.solidUser
-                                : FontAwesomeIcons.user,
+                            navIndex == 3 ? FontAwesomeIcons.solidUser : FontAwesomeIcons.user,
                             size: 16,
                             color: navIndex == 3
                                 ? AppTheme.primaryColor
-                                : Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
+                                : Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                   ),
                 ),

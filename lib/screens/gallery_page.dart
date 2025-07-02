@@ -1,16 +1,17 @@
+import 'package:at_uri/at_uri.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:grain/api.dart';
 import 'package:grain/app_theme.dart';
 import 'package:grain/models/gallery.dart';
-import 'package:grain/api.dart';
-import 'package:grain/widgets/justified_gallery_view.dart';
-import './comments_page.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:grain/widgets/gallery_photo_view.dart';
-import 'package:at_uri/at_uri.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:grain/widgets/app_image.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:grain/screens/create_gallery_page.dart';
+import 'package:grain/widgets/app_image.dart';
+import 'package:grain/widgets/gallery_photo_view.dart';
+import 'package:grain/widgets/justified_gallery_view.dart';
+import 'package:share_plus/share_plus.dart';
+
+import './comments_page.dart';
 
 class GalleryPage extends StatefulWidget {
   final String uri;
@@ -73,10 +74,7 @@ class _GalleryPageState extends State<GalleryPage> {
       return Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
         body: const Center(
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: Color(0xFF0EA5E9),
-          ),
+          child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF0EA5E9)),
         ),
       );
     }
@@ -88,9 +86,7 @@ class _GalleryPageState extends State<GalleryPage> {
     }
     final gallery = _gallery!;
     final isLoggedIn = widget.currentUserDid != null;
-    final galleryItems = gallery.items
-        .where((item) => item.thumb.isNotEmpty)
-        .toList();
+    final galleryItems = gallery.items.where((item) => item.thumb.isNotEmpty).toList();
     final isFav = gallery.viewer != null && gallery.viewer!['fav'] != null;
 
     return Stack(
@@ -106,9 +102,7 @@ class _GalleryPageState extends State<GalleryPage> {
             ),
             title: Text(
               'Gallery',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
             iconTheme: theme.appBarTheme.iconTheme,
             titleTextStyle: theme.appBarTheme.titleTextStyle,
@@ -138,9 +132,7 @@ class _GalleryPageState extends State<GalleryPage> {
                     const SizedBox(height: 10),
                     Text(
                       gallery.title.isNotEmpty ? gallery.title : 'Gallery',
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(height: 10),
                     Row(
@@ -148,21 +140,16 @@ class _GalleryPageState extends State<GalleryPage> {
                       children: [
                         CircleAvatar(
                           radius: 18,
-                          backgroundColor:
-                              theme.colorScheme.surfaceContainerHighest,
+                          backgroundColor: theme.colorScheme.surfaceContainerHighest,
                           backgroundImage:
-                              gallery.creator?.avatar != null &&
-                                  gallery.creator!.avatar.isNotEmpty
+                              gallery.creator?.avatar != null && gallery.creator!.avatar.isNotEmpty
                               ? null
                               : null,
-                          child:
-                              (gallery.creator == null ||
-                                  gallery.creator!.avatar.isEmpty)
+                          child: (gallery.creator == null || gallery.creator!.avatar.isEmpty)
                               ? Icon(
                                   Icons.account_circle,
                                   size: 24,
-                                  color: theme.colorScheme.onSurface
-                                      .withOpacity(0.4),
+                                  color: theme.colorScheme.onSurface.withOpacity(0.4),
                                 )
                               : ClipOval(
                                   child: AppImage(
@@ -184,15 +171,12 @@ class _GalleryPageState extends State<GalleryPage> {
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              if ((gallery.creator?.displayName ?? '')
-                                      .isNotEmpty &&
+                              if ((gallery.creator?.displayName ?? '').isNotEmpty &&
                                   (gallery.creator?.handle ?? '').isNotEmpty)
                                 const SizedBox(width: 8),
                               Text(
                                 '@${gallery.creator?.handle ?? ''}',
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: theme.hintColor,
-                                ),
+                                style: theme.textTheme.bodyMedium?.copyWith(color: theme.hintColor),
                               ),
                             ],
                           ),
@@ -205,14 +189,10 @@ class _GalleryPageState extends State<GalleryPage> {
               const SizedBox(height: 12),
               if (gallery.description.isNotEmpty)
                 Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                  ).copyWith(bottom: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 8).copyWith(bottom: 8),
                   child: Text(
                     gallery.description,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface,
-                    ),
+                    style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface),
                   ),
                 ),
               if (isLoggedIn)
@@ -235,12 +215,8 @@ class _GalleryPageState extends State<GalleryPage> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 FaIcon(
-                                  isFav
-                                      ? FontAwesomeIcons.solidHeart
-                                      : FontAwesomeIcons.heart,
-                                  color: isFav
-                                      ? AppTheme.favoriteColor
-                                      : theme.iconTheme.color,
+                                  isFav ? FontAwesomeIcons.solidHeart : FontAwesomeIcons.heart,
+                                  color: isFav ? AppTheme.favoriteColor : theme.iconTheme.color,
                                   size: 20,
                                 ),
                                 if (gallery.favCount != null) ...[
@@ -265,8 +241,7 @@ class _GalleryPageState extends State<GalleryPage> {
                           onTap: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(
-                                builder: (context) =>
-                                    CommentsPage(galleryUri: gallery.uri),
+                                builder: (context) => CommentsPage(galleryUri: gallery.uri),
                               ),
                             );
                           },
@@ -307,13 +282,9 @@ class _GalleryPageState extends State<GalleryPage> {
                             final atUri = AtUri.parse(gallery.uri);
                             final handle = gallery.creator?.handle ?? '';
                             final galleryRkey = atUri.rkey;
-                            final url =
-                                'https://grain.social/profile/$handle/gallery/$galleryRkey';
-                            final shareText =
-                                "Check out this gallery on @grain.social \n$url";
-                            SharePlus.instance.share(
-                              ShareParams(text: shareText),
-                            );
+                            final url = 'https://grain.social/profile/$handle/gallery/$galleryRkey';
+                            final shareText = "Check out this gallery on @grain.social \n$url";
+                            SharePlus.instance.share(ShareParams(text: shareText));
                           },
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 8),
@@ -350,10 +321,7 @@ class _GalleryPageState extends State<GalleryPage> {
                 ),
               if (galleryItems.isEmpty)
                 Center(
-                  child: Text(
-                    'No photos in this gallery.',
-                    style: theme.textTheme.bodyMedium,
-                  ),
+                  child: Text('No photos in this gallery.', style: theme.textTheme.bodyMedium),
                 ),
             ],
           ),

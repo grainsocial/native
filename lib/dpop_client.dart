@@ -1,7 +1,8 @@
 import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 import 'package:jose/jose.dart';
-import 'package:crypto/crypto.dart';
 import 'package:uuid/uuid.dart';
 
 class DpopHttpClient {
@@ -13,9 +14,7 @@ class DpopHttpClient {
   /// Extract origin (scheme + host + port) from a URL
   String _extractOrigin(String url) {
     final uri = Uri.parse(url);
-    final portPart = (uri.hasPort && uri.port != 80 && uri.port != 443)
-        ? ':${uri.port}'
-        : '';
+    final portPart = (uri.hasPort && uri.port != 80 && uri.port != 443) ? ':${uri.port}' : '';
     return '${uri.scheme}://${uri.host}$portPart';
   }
 
@@ -40,12 +39,7 @@ class DpopHttpClient {
     late Map<String, String> ordered;
 
     if (jwk['kty'] == 'EC') {
-      ordered = {
-        'crv': jwk['crv'],
-        'kty': jwk['kty'],
-        'x': jwk['x'],
-        'y': jwk['y'],
-      };
+      ordered = {'crv': jwk['crv'], 'kty': jwk['kty'], 'x': jwk['x'], 'y': jwk['y']};
     } else if (jwk['kty'] == 'RSA') {
       ordered = {'e': jwk['e'], 'kty': jwk['kty'], 'n': jwk['n']};
     } else {
@@ -103,12 +97,7 @@ class DpopHttpClient {
     final htu = _buildHtu(url.toString());
     final ath = _calculateAth(accessToken);
 
-    final proof = await _buildProof(
-      htm: method.toUpperCase(),
-      htu: htu,
-      nonce: nonce,
-      ath: ath,
-    );
+    final proof = await _buildProof(htm: method.toUpperCase(), htu: htu, nonce: nonce, ath: ath);
 
     // Compose headers, allowing override of Content-Type for raw uploads
     final requestHeaders = <String, String>{

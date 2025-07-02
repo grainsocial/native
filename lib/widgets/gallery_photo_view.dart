@@ -60,18 +60,12 @@ class _GalleryPhotoViewState extends State<GalleryPhotoView> {
                       placeholder: Container(
                         color: Colors.black,
                         child: const Center(
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                         ),
                       ),
                       errorWidget: Container(
                         color: Colors.black,
-                        child: const Icon(
-                          Icons.broken_image,
-                          color: Colors.grey,
-                        ),
+                        child: const Icon(Icons.broken_image, color: Colors.grey),
                       ),
                     ),
                   ),
@@ -81,10 +75,7 @@ class _GalleryPhotoViewState extends State<GalleryPhotoView> {
                 Container(
                   width: double.infinity,
                   color: Colors.black.withOpacity(0.7),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 16,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                   child: Text(
                     photo.alt,
                     style: const TextStyle(color: Colors.white, fontSize: 16),

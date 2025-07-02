@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/material.dart';
 
 class AppImage extends StatelessWidget {
   final String? url;
@@ -67,8 +67,7 @@ class AppImage extends StatelessWidget {
     );
     if (borderRadius != null) {
       return ClipRRect(
-        borderRadius:
-            borderRadius!, // BorderRadius is a subclass of BorderRadiusGeometry
+        borderRadius: borderRadius!, // BorderRadius is a subclass of BorderRadiusGeometry
         child: image,
       );
     }

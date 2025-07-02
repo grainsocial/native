@@ -27,9 +27,7 @@ class Comment {
       text: json['text'] ?? '',
       replyTo: json['replyTo'],
       createdAt: json['createdAt'],
-      focus: json['focus'] != null
-          ? GalleryPhoto.fromJson(json['focus'])
-          : null,
+      focus: json['focus'] != null ? GalleryPhoto.fromJson(json['focus']) : null,
     );
   }
 }

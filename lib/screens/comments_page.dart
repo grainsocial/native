@@ -3,8 +3,8 @@ import 'package:grain/api.dart';
 import 'package:grain/models/comment.dart';
 import 'package:grain/models/gallery.dart';
 import 'package:grain/utils.dart';
-import 'package:grain/widgets/gallery_photo_view.dart';
 import 'package:grain/widgets/app_image.dart';
+import 'package:grain/widgets/gallery_photo_view.dart';
 
 class CommentsPage extends StatefulWidget {
   final String galleryUri;
@@ -73,17 +73,11 @@ class _CommentsPageState extends State<CommentsPage> {
                   ),
                 )
               : _error
-              ? Center(
-                  child: Text(
-                    'Failed to load comments.',
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                )
+              ? Center(child: Text('Failed to load comments.', style: theme.textTheme.bodyMedium))
               : ListView(
                   padding: const EdgeInsets.all(12),
                   children: [
-                    if (_gallery != null)
-                      Text(_gallery!.title, style: theme.textTheme.titleMedium),
+                    if (_gallery != null) Text(_gallery!.title, style: theme.textTheme.titleMedium),
                     const SizedBox(height: 12),
                     _CommentsList(
                       comments: _comments,
@@ -128,11 +122,7 @@ class _CommentsList extends StatelessWidget {
     return comments.where((c) => c.replyTo == null).toList();
   }
 
-  Widget _buildCommentTree(
-    Comment comment,
-    Map<String, List<Comment>> repliesByParent,
-    int depth,
-  ) {
+  Widget _buildCommentTree(Comment comment, Map<String, List<Comment>> repliesByParent, int depth) {
     return Padding(
       padding: EdgeInsets.only(left: depth * 18.0),
       child: Column(
@@ -166,10 +156,7 @@ class _CommentsList extends StatelessWidget {
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (final comment in topLevel)
-          _buildCommentTree(comment, repliesByParent, 0),
-      ],
+      children: [for (final comment in topLevel) _buildCommentTree(comment, repliesByParent, 0)],
     );
   }
 }
@@ -190,12 +177,7 @@ class _CommentTile extends StatelessWidget {
         children: [
           if (author['avatar'] != null)
             ClipOval(
-              child: AppImage(
-                url: author['avatar'],
-                width: 32,
-                height: 32,
-                fit: BoxFit.cover,
-              ),
+              child: AppImage(url: author['avatar'], width: 32, height: 32, fit: BoxFit.cover),
             )
           else
             CircleAvatar(
@@ -210,9 +192,7 @@ class _CommentTile extends StatelessWidget {
               children: [
                 Text(
                   author['displayName'] ?? '@${author['handle'] ?? ''}',
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 Text(comment.text, style: theme.textTheme.bodyMedium),
                 if (comment.focus != null) ...[
@@ -220,14 +200,9 @@ class _CommentTile extends StatelessWidget {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: ConstrainedBox(
-                      constraints: const BoxConstraints(
-                        maxWidth: 180,
-                        maxHeight: 180,
-                      ),
+                      constraints: const BoxConstraints(maxWidth: 180, maxHeight: 180),
                       child: AspectRatio(
-                        aspectRatio:
-                            (comment.focus!.width > 0 &&
-                                comment.focus!.height > 0)
+                        aspectRatio: (comment.focus!.width > 0 && comment.focus!.height > 0)
                             ? comment.focus!.width / comment.focus!.height
                             : 1.0,
                         child: ClipRRect(
@@ -261,9 +236,7 @@ class _CommentTile extends StatelessWidget {
                 if (comment.createdAt != null)
                   Text(
                     formatRelativeTime(comment.createdAt!),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.hintColor,
-                    ),
+                    style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor),
                   ),
               ],
             ),

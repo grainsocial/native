@@ -48,7 +48,4 @@ class DualLogOutput extends LogOutput {
 }
 
 // Globally available logger
-final appLogger = Logger(
-  printer: SimpleLogPrinter('Grain'),
-  output: DualLogOutput(),
-);
+final appLogger = Logger(printer: SimpleLogPrinter('Grain'), output: DualLogOutput());

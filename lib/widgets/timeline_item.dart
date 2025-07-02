@@ -1,23 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:grain/models/gallery.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:grain/widgets/gallery_preview.dart';
-import '../screens/gallery_page.dart';
-import '../screens/comments_page.dart';
-import '../screens/profile_page.dart';
 import 'package:grain/api.dart';
+import 'package:grain/app_theme.dart';
+import 'package:grain/models/gallery.dart';
 import 'package:grain/utils.dart';
 import 'package:grain/widgets/app_image.dart';
-import 'package:grain/app_theme.dart';
+import 'package:grain/widgets/gallery_preview.dart';
+
+import '../screens/comments_page.dart';
+import '../screens/gallery_page.dart';
+import '../screens/profile_page.dart';
 
 class TimelineItemWidget extends StatelessWidget {
   final Gallery gallery;
   final VoidCallback? onProfileTap;
-  const TimelineItemWidget({
-    super.key,
-    required this.gallery,
-    this.onProfileTap,
-  });
+  const TimelineItemWidget({super.key, required this.gallery, this.onProfileTap});
 
   @override
   Widget build(BuildContext context) {
@@ -38,8 +35,7 @@ class TimelineItemWidget extends StatelessWidget {
                       if (actor != null) {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (context) =>
-                                ProfilePage(did: actor.did, showAppBar: true),
+                            builder: (context) => ProfilePage(did: actor.did, showAppBar: true),
                           ),
                         );
                       }
@@ -112,10 +108,8 @@ class TimelineItemWidget extends StatelessWidget {
               if (gallery.uri.isNotEmpty) {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => GalleryPage(
-                      uri: gallery.uri,
-                      currentUserDid: apiService.currentUser?.did,
-                    ),
+                    builder: (context) =>
+                        GalleryPage(uri: gallery.uri, currentUserDid: apiService.currentUser?.did),
                   ),
                 );
               }
@@ -129,9 +123,7 @@ class TimelineItemWidget extends StatelessWidget {
             padding: const EdgeInsets.only(top: 8, left: 8, right: 8),
             child: Text(
               gallery.title,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
           ),
         if (gallery.description.isNotEmpty)
@@ -147,12 +139,7 @@ class TimelineItemWidget extends StatelessWidget {
           ),
         const SizedBox(height: 8),
         Padding(
-          padding: const EdgeInsets.only(
-            top: 12,
-            bottom: 12,
-            left: 12,
-            right: 12,
-          ),
+          padding: const EdgeInsets.only(top: 12, bottom: 12, left: 12, right: 12),
           child: Row(
             children: [
               GestureDetector(
@@ -163,8 +150,7 @@ class TimelineItemWidget extends StatelessWidget {
                     gallery.viewer != null && gallery.viewer!['fav'] != null
                         ? FontAwesomeIcons.solidHeart
                         : FontAwesomeIcons.heart,
-                    color:
-                        gallery.viewer != null && gallery.viewer!['fav'] != null
+                    color: gallery.viewer != null && gallery.viewer!['fav'] != null
                         ? AppTheme.favoriteColor
                         : theme.colorScheme.onSurfaceVariant,
                   ),
@@ -185,10 +171,7 @@ class TimelineItemWidget extends StatelessWidget {
               GestureDetector(
                 onTap: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          CommentsPage(galleryUri: gallery.uri),
-                    ),
+                    MaterialPageRoute(builder: (context) => CommentsPage(galleryUri: gallery.uri)),
                   );
                 },
                 child: Padding(
