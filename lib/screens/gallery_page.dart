@@ -1,17 +1,12 @@
-import 'package:at_uri/at_uri.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:grain/api.dart';
-import 'package:grain/app_theme.dart';
 import 'package:grain/models/gallery.dart';
 import 'package:grain/screens/create_gallery_page.dart';
 import 'package:grain/widgets/app_image.dart';
+import 'package:grain/widgets/gallery_action_buttons.dart';
 import 'package:grain/widgets/gallery_photo_view.dart';
 import 'package:grain/widgets/justified_gallery_view.dart';
-import 'package:share_plus/share_plus.dart';
-
-import './comments_page.dart';
 
 class GalleryPage extends StatefulWidget {
   final String uri;
@@ -87,7 +82,6 @@ class _GalleryPageState extends State<GalleryPage> {
     final gallery = _gallery!;
     final isLoggedIn = widget.currentUserDid != null;
     final galleryItems = gallery.items.where((item) => item.thumb.isNotEmpty).toList();
-    final isFav = gallery.viewer != null && gallery.viewer!['fav'] != null;
 
     return Stack(
       children: [
@@ -198,111 +192,11 @@ class _GalleryPageState extends State<GalleryPage> {
               if (isLoggedIn)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Row(
-                    children: [
-                      // Favorite button
-                      Expanded(
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(12),
-                          onTap: () {},
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                FaIcon(
-                                  isFav ? FontAwesomeIcons.solidHeart : FontAwesomeIcons.heart,
-                                  color: isFav ? AppTheme.favoriteColor : theme.iconTheme.color,
-                                  size: 20,
-                                ),
-                                if (gallery.favCount != null) ...[
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    gallery.favCount.toString(),
-                                    style: theme.textTheme.bodyMedium?.copyWith(
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Comment button
-                      Expanded(
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(12),
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => CommentsPage(galleryUri: gallery.uri),
-                              ),
-                            );
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                FaIcon(
-                                  FontAwesomeIcons.comment,
-                                  color: theme.iconTheme.color,
-                                  size: 20,
-                                ),
-                                if (gallery.commentCount != null) ...[
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    gallery.commentCount.toString(),
-                                    style: theme.textTheme.bodyMedium?.copyWith(
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Share button
-                      Expanded(
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(12),
-                          onTap: () {
-                            final atUri = AtUri.parse(gallery.uri);
-                            final handle = gallery.creator?.handle ?? '';
-                            final galleryRkey = atUri.rkey;
-                            final url = 'https://grain.social/profile/$handle/gallery/$galleryRkey';
-                            final shareText = "Check out this gallery on @grain.social \n$url";
-                            SharePlus.instance.share(ShareParams(text: shareText));
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Center(
-                              child: FaIcon(
-                                FontAwesomeIcons.arrowUpFromBracket,
-                                color: theme.iconTheme.color,
-                                size: 20,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                  child: GalleryActionButtons(
+                    gallery: gallery,
+                    parentContext: context,
+                    currentUserDid: widget.currentUserDid,
+                    isLoggedIn: isLoggedIn,
                   ),
                 ),
               const SizedBox(height: 8),

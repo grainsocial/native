@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:grain/api.dart';
-import 'package:grain/app_theme.dart';
 import 'package:grain/models/gallery.dart';
 import 'package:grain/utils.dart';
 import 'package:grain/widgets/app_image.dart';
+import 'package:grain/widgets/gallery_action_buttons.dart';
 import 'package:grain/widgets/gallery_preview.dart';
 
-import '../screens/comments_page.dart';
 import '../screens/gallery_page.dart';
 import '../screens/profile_page.dart';
 
@@ -21,6 +19,7 @@ class TimelineItemWidget extends StatelessWidget {
     final actor = gallery.creator;
     final createdAt = gallery.createdAt;
     final theme = Theme.of(context);
+    final isLoggedIn = apiService.currentUser?.did != null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -138,62 +137,17 @@ class TimelineItemWidget extends StatelessWidget {
             ),
           ),
         const SizedBox(height: 8),
-        Padding(
-          padding: const EdgeInsets.only(top: 12, bottom: 12, left: 12, right: 12),
-          child: Row(
-            children: [
-              GestureDetector(
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 12),
-                  child: Icon(
-                    size: 18,
-                    gallery.viewer != null && gallery.viewer!['fav'] != null
-                        ? FontAwesomeIcons.solidHeart
-                        : FontAwesomeIcons.heart,
-                    color: gallery.viewer != null && gallery.viewer!['fav'] != null
-                        ? AppTheme.favoriteColor
-                        : theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                onTap: () {},
-              ),
-              if (gallery.favCount != null)
-                Padding(
-                  padding: const EdgeInsets.only(right: 12),
-                  child: Text(
-                    gallery.favCount.toString(),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      fontSize: 14,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-              GestureDetector(
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => CommentsPage(galleryUri: gallery.uri)),
-                  );
-                },
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 12, right: 12),
-                  child: Icon(
-                    FontAwesomeIcons.comment,
-                    size: 18,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
-              if (gallery.commentCount != null)
-                Text(
-                  gallery.commentCount.toString(),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontSize: 14,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-            ],
+        if (isLoggedIn)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: GalleryActionButtons(
+              gallery: gallery,
+              parentContext: context,
+              currentUserDid: gallery.creator?.did, // or apiService.currentUser?.did if available
+              isLoggedIn: isLoggedIn,
+            ),
           ),
-        ),
+        const SizedBox(height: 8),
       ],
     );
   }
