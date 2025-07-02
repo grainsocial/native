@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:grain/app_logger.dart';
 import 'package:grain/screens/splash_page.dart';
 import 'package:grain/screens/home_page.dart';
+import 'package:grain/app_theme.dart';
 
 class AppConfig {
   static late final String apiUrl;
@@ -59,12 +60,9 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Grain',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.lightBlue),
-        scaffoldBackgroundColor: Colors.white,
-        dividerColor: const Color(0xFFF4F4F5),
-        // textTheme: GoogleFonts.interTextTheme(),
-      ),
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system,
       home: isSignedIn
           ? MyHomePage(title: 'Grain', onSignOut: handleSignOut)
           : SplashPage(onSignIn: handleSignIn),

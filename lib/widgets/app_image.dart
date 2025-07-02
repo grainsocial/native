@@ -23,12 +23,16 @@ class AppImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final Color bgColor = theme.brightness == Brightness.dark
+        ? Colors.grey[900]!
+        : Colors.grey[100]!;
     if (url == null || url!.isEmpty) {
       return errorWidget ??
           Container(
             width: width,
             height: height,
-            color: Colors.grey[200],
+            color: bgColor,
             child: const Icon(Icons.broken_image, color: Colors.grey),
           );
     }
@@ -37,12 +41,14 @@ class AppImage extends StatelessWidget {
       width: width,
       height: height,
       fit: fit,
+      fadeInDuration: Duration.zero,
+      fadeOutDuration: Duration.zero,
       placeholder: (context, _) =>
           placeholder ??
           Container(
             width: width,
             height: height,
-            color: Colors.grey[200],
+            color: bgColor,
             // child: const Center(
             //   child: CircularProgressIndicator(
             //     strokeWidth: 2,
@@ -55,7 +61,7 @@ class AppImage extends StatelessWidget {
           Container(
             width: width,
             height: height,
-            color: Colors.grey[200],
+            color: bgColor,
             child: const Icon(Icons.broken_image, color: Colors.grey),
           ),
     );

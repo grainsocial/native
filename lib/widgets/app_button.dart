@@ -28,14 +28,12 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color primaryColor = const Color(0xFF0EA5E9); // Tailwind sky-500
-    final Color secondaryColor = Theme.of(
-      context,
-    ).colorScheme.surfaceContainerHighest;
-    final Color secondaryBorder = Colors.grey[300]!;
-    final Color secondaryText = Colors.black87;
-    final Color primaryText = Colors.white;
-
+    final theme = Theme.of(context);
+    final Color primaryColor = theme.colorScheme.primary;
+    final Color secondaryColor = theme.colorScheme.surfaceContainerHighest;
+    final Color secondaryBorder = theme.dividerColor;
+    final Color secondaryText = theme.colorScheme.onSurface;
+    final Color primaryText = theme.colorScheme.onPrimary;
     final bool isPrimary = variant == AppButtonVariant.primary;
 
     return SizedBox(
@@ -53,14 +51,17 @@ class AppButton extends StatelessWidget {
                 : BorderSide(color: secondaryBorder, width: 1),
           ),
           padding: padding ?? const EdgeInsets.symmetric(horizontal: 16),
-          textStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: fontSize),
+          textStyle: theme.textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+            fontSize: fontSize,
+          ),
         ),
         child: loading
             ? SizedBox(
                 width: 22,
                 height: 22,
                 child: CircularProgressIndicator(
-                  color: isPrimary ? Colors.white : primaryColor,
+                  color: isPrimary ? primaryColor : secondaryColor,
                   strokeWidth: 2,
                 ),
               )
@@ -72,11 +73,17 @@ class AppButton extends StatelessWidget {
                     Icon(
                       icon,
                       size: 20,
-                      color: isPrimary ? Colors.white : primaryColor,
+                      color: isPrimary ? primaryText : secondaryText,
                     ),
                     const SizedBox(width: 8),
                   ],
-                  Text(label),
+                  Text(
+                    label,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      fontSize: fontSize,
+                    ),
+                  ),
                 ],
               ),
       ),

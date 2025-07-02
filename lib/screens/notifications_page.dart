@@ -43,6 +43,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
   }
 
   Widget _buildNotificationTile(grain.Notification notification) {
+    final theme = Theme.of(context);
     final author = notification.author;
     final record = notification.record;
     String message = '';
@@ -75,18 +76,23 @@ class _NotificationsPageState extends State<NotificationsPage> {
     }
     return ListTile(
       leading: CircleAvatar(
+        backgroundColor: theme.colorScheme.surfaceVariant,
         backgroundImage: author.avatar.isNotEmpty
             ? NetworkImage(author.avatar)
             : null,
-        child: author.avatar.isEmpty ? const Icon(Icons.account_circle) : null,
+        child: author.avatar.isEmpty
+            ? Icon(Icons.account_circle, color: theme.iconTheme.color)
+            : null,
       ),
       title: Text(
         author.displayName.isNotEmpty
             ? author.displayName
             : '@${author.handle}',
+        style: theme.textTheme.bodyLarge,
       ),
       subtitle: Text(
         '$message · ${createdAt != null ? formatRelativeTime(createdAt) : ''}',
+        style: theme.textTheme.bodyMedium?.copyWith(color: theme.hintColor),
       ),
       onTap: () {
         // TODO: Navigate to gallery/comment/profile as appropriate
@@ -96,26 +102,34 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: _loading
-          ? const Center(
+          ? Center(
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: Color(0xFF0EA5E9),
+                color: theme.colorScheme.primary,
               ),
             )
           : _error
-          ? const Center(child: Text('Failed to load notifications.'))
+          ? Center(
+              child: Text(
+                'Failed to load notifications.',
+                style: theme.textTheme.bodyMedium,
+              ),
+            )
           : _notifications.isEmpty
-          ? const Center(child: Text('No notifications yet.'))
+          ? Center(
+              child: Text(
+                'No notifications yet.',
+                style: theme.textTheme.bodyMedium,
+              ),
+            )
           : ListView.separated(
               itemCount: _notifications.length,
-              separatorBuilder: (context, index) => Divider(
-                height: 1,
-                color: Theme.of(
-                  context,
-                ).dividerColor, // Use theme divider color
-              ),
+              separatorBuilder: (context, index) =>
+                  Divider(height: 1, color: theme.dividerColor),
               itemBuilder: (context, index) {
                 final notification = _notifications[index];
                 return _buildNotificationTile(notification);

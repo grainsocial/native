@@ -6,20 +6,20 @@ class LogPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final logs = InMemoryLogOutput.logs.reversed.toList();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Logs'),
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
+        title: Text('Logs', style: theme.appBarTheme.titleTextStyle),
+        backgroundColor: theme.appBarTheme.backgroundColor,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(color: Theme.of(context).dividerColor, height: 1),
+          child: Container(color: theme.dividerColor, height: 1),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete),
+            icon: Icon(Icons.delete, color: theme.iconTheme.color),
             onPressed: () {
               InMemoryLogOutput.clear();
               (context as Element).markNeedsBuild();
@@ -27,11 +27,12 @@ class LogPage extends StatelessWidget {
           ),
         ],
       ),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: ListView.builder(
         itemCount: logs.length,
         itemBuilder: (_, index) => Padding(
           padding: const EdgeInsets.all(4.0),
-          child: Text(logs[index]),
+          child: Text(logs[index], style: theme.textTheme.bodyMedium),
         ),
       ),
     );

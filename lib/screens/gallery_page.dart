@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:grain/app_theme.dart';
 import 'package:grain/models/gallery.dart';
 import 'package:grain/api.dart';
 import 'package:grain/widgets/justified_gallery_view.dart';
@@ -67,9 +68,11 @@ class _GalleryPageState extends State<GalleryPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     if (_loading) {
-      return const Scaffold(
-        body: Center(
+      return Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        body: const Center(
           child: CircularProgressIndicator(
             strokeWidth: 2,
             color: Color(0xFF0EA5E9),
@@ -78,8 +81,9 @@ class _GalleryPageState extends State<GalleryPage> {
       );
     }
     if (_error || _gallery == null) {
-      return const Scaffold(
-        body: Center(child: Text('Failed to load gallery.')),
+      return Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        body: const Center(child: Text('Failed to load gallery.')),
       );
     }
     final gallery = _gallery!;
@@ -87,31 +91,27 @@ class _GalleryPageState extends State<GalleryPage> {
     final galleryItems = gallery.items
         .where((item) => item.thumb.isNotEmpty)
         .toList();
+    final isFav = gallery.viewer != null && gallery.viewer!['fav'] != null;
 
-    // The Stack is now OUTSIDE the Scaffold!
     return Stack(
       children: [
         Scaffold(
+          backgroundColor: theme.scaffoldBackgroundColor,
           appBar: AppBar(
-            backgroundColor: Colors.white,
-            surfaceTintColor: Colors.white,
+            backgroundColor: theme.appBarTheme.backgroundColor,
+            surfaceTintColor: theme.appBarTheme.backgroundColor,
             bottom: PreferredSize(
               preferredSize: const Size.fromHeight(1),
-              child: Container(
-                color: Theme.of(context).dividerColor,
-                height: 1,
+              child: Container(color: theme.dividerColor, height: 1),
+            ),
+            title: Text(
+              'Gallery',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
               ),
             ),
-            title: const Text(
-              'Gallery',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            ),
-            iconTheme: const IconThemeData(color: Colors.black87),
-            titleTextStyle: const TextStyle(
-              color: Colors.black87,
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
+            iconTheme: theme.appBarTheme.iconTheme,
+            titleTextStyle: theme.appBarTheme.titleTextStyle,
             actions: [
               if (gallery.creator?.did == widget.currentUserDid)
                 IconButton(
@@ -121,12 +121,8 @@ class _GalleryPageState extends State<GalleryPage> {
                     await showModalBottomSheet(
                       context: context,
                       isScrollControlled: true,
-                      builder: (context) => CreateGalleryPage(
-                        // Optionally pass initial data for editing
-                        gallery: gallery,
-                      ),
+                      builder: (context) => CreateGalleryPage(gallery: gallery),
                     );
-                    // Optionally refresh after editing
                     _fetchGallery();
                   },
                 ),
@@ -142,8 +138,7 @@ class _GalleryPageState extends State<GalleryPage> {
                     const SizedBox(height: 10),
                     Text(
                       gallery.title.isNotEmpty ? gallery.title : 'Gallery',
-                      style: const TextStyle(
-                        fontSize: 24,
+                      style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -153,6 +148,8 @@ class _GalleryPageState extends State<GalleryPage> {
                       children: [
                         CircleAvatar(
                           radius: 18,
+                          backgroundColor:
+                              theme.colorScheme.surfaceContainerHighest,
                           backgroundImage:
                               gallery.creator?.avatar != null &&
                                   gallery.creator!.avatar.isNotEmpty
@@ -161,10 +158,11 @@ class _GalleryPageState extends State<GalleryPage> {
                           child:
                               (gallery.creator == null ||
                                   gallery.creator!.avatar.isEmpty)
-                              ? const Icon(
+                              ? Icon(
                                   Icons.account_circle,
                                   size: 24,
-                                  color: Colors.grey,
+                                  color: theme.colorScheme.onSurface
+                                      .withOpacity(0.4),
                                 )
                               : ClipOval(
                                   child: AppImage(
@@ -182,9 +180,8 @@ class _GalleryPageState extends State<GalleryPage> {
                             children: [
                               Text(
                                 gallery.creator?.displayName ?? '',
-                                style: const TextStyle(
+                                style: theme.textTheme.bodyLarge?.copyWith(
                                   fontWeight: FontWeight.w600,
-                                  fontSize: 16,
                                 ),
                               ),
                               if ((gallery.creator?.displayName ?? '')
@@ -193,9 +190,8 @@ class _GalleryPageState extends State<GalleryPage> {
                                 const SizedBox(width: 8),
                               Text(
                                 '@${gallery.creator?.handle ?? ''}',
-                                style: const TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 15,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.hintColor,
                                 ),
                               ),
                             ],
@@ -214,7 +210,9 @@ class _GalleryPageState extends State<GalleryPage> {
                   ).copyWith(bottom: 8),
                   child: Text(
                     gallery.description,
-                    style: const TextStyle(fontSize: 15, color: Colors.black87),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurface,
+                    ),
                   ),
                 ),
               if (isLoggedIn)
@@ -230,33 +228,26 @@ class _GalleryPageState extends State<GalleryPage> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 8),
                             decoration: BoxDecoration(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.surfaceContainerHighest,
+                              color: theme.colorScheme.surfaceContainerHighest,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 FaIcon(
-                                  gallery.viewer != null &&
-                                          gallery.viewer!['fav'] != null
+                                  isFav
                                       ? FontAwesomeIcons.solidHeart
                                       : FontAwesomeIcons.heart,
-                                  color:
-                                      gallery.viewer != null &&
-                                          gallery.viewer!['fav'] != null
-                                      ? const Color(0xFFEC4899)
-                                      : Colors.black54,
+                                  color: isFav
+                                      ? AppTheme.favoriteColor
+                                      : theme.iconTheme.color,
                                   size: 20,
                                 ),
                                 if (gallery.favCount != null) ...[
                                   const SizedBox(width: 6),
                                   Text(
                                     gallery.favCount.toString(),
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.black87,
+                                    style: theme.textTheme.bodyMedium?.copyWith(
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
@@ -282,26 +273,22 @@ class _GalleryPageState extends State<GalleryPage> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 8),
                             decoration: BoxDecoration(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.surfaceContainerHighest,
+                              color: theme.colorScheme.surfaceContainerHighest,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const FaIcon(
+                                FaIcon(
                                   FontAwesomeIcons.comment,
-                                  color: Colors.black54,
+                                  color: theme.iconTheme.color,
                                   size: 20,
                                 ),
                                 if (gallery.commentCount != null) ...[
                                   const SizedBox(width: 6),
                                   Text(
                                     gallery.commentCount.toString(),
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.black87,
+                                    style: theme.textTheme.bodyMedium?.copyWith(
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
@@ -317,7 +304,6 @@ class _GalleryPageState extends State<GalleryPage> {
                         child: InkWell(
                           borderRadius: BorderRadius.circular(12),
                           onTap: () {
-                            // Parse the gallery URI to get handle and rkey
                             final atUri = AtUri.parse(gallery.uri);
                             final handle = gallery.creator?.handle ?? '';
                             final galleryRkey = atUri.rkey;
@@ -332,15 +318,13 @@ class _GalleryPageState extends State<GalleryPage> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 8),
                             decoration: BoxDecoration(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.surfaceContainerHighest,
+                              color: theme.colorScheme.surfaceContainerHighest,
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Center(
+                            child: Center(
                               child: FaIcon(
                                 FontAwesomeIcons.arrowUpFromBracket,
-                                color: Colors.black54,
+                                color: theme.iconTheme.color,
                                 size: 20,
                               ),
                             ),
@@ -365,7 +349,12 @@ class _GalleryPageState extends State<GalleryPage> {
                   },
                 ),
               if (galleryItems.isEmpty)
-                const Center(child: Text('No photos in this gallery.')),
+                Center(
+                  child: Text(
+                    'No photos in this gallery.',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                ),
             ],
           ),
         ),

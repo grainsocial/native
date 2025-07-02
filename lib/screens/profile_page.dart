@@ -3,6 +3,7 @@ import 'package:grain/models/gallery.dart';
 import 'package:grain/api.dart';
 import 'gallery_page.dart';
 import 'package:grain/widgets/app_image.dart';
+import 'package:grain/app_theme.dart';
 
 class ProfilePage extends StatefulWidget {
   final dynamic profile;
@@ -109,14 +110,15 @@ class _ProfilePageState extends State<ProfilePage>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final profile = _profile ?? widget.profile;
     if (_loading) {
-      return const Scaffold(
-        backgroundColor: Colors.white,
-        body: Center(
+      return Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        body: const Center(
           child: CircularProgressIndicator(
             strokeWidth: 2,
-            color: Color(0xFF0EA5E9),
+            color: AppTheme.primaryColor,
           ),
         ),
       );
@@ -125,17 +127,14 @@ class _ProfilePageState extends State<ProfilePage>
       return const Center(child: Text('No profile data'));
     }
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: widget.showAppBar
           ? AppBar(
-              backgroundColor: Colors.white,
-              surfaceTintColor: Colors.white,
+              backgroundColor: theme.appBarTheme.backgroundColor,
+              surfaceTintColor: theme.appBarTheme.backgroundColor,
               bottom: PreferredSize(
                 preferredSize: const Size.fromHeight(1),
-                child: Container(
-                  color: Theme.of(context).dividerColor,
-                  height: 1,
-                ),
+                child: Container(color: theme.dividerColor, height: 1),
               ),
               leading: const BackButton(),
             )
@@ -246,21 +245,21 @@ class _ProfilePageState extends State<ProfilePage>
                         ),
                         // TabBar with no horizontal padding
                         Container(
-                          color: Colors.white,
+                          color: theme.scaffoldBackgroundColor,
                           child: TabBar(
+                            dividerColor: theme.disabledColor,
                             controller: _tabController,
                             indicator: UnderlineTabIndicator(
                               borderSide: const BorderSide(
-                                color: Color(0xFF0EA5E9),
+                                color: AppTheme.primaryColor,
                                 width: 3,
                               ),
                               insets: EdgeInsets.zero,
                             ),
                             indicatorSize: TabBarIndicatorSize.tab,
-                            labelColor: const Color(0xFF0EA5E9),
-                            unselectedLabelColor: Theme.of(
-                              context,
-                            ).colorScheme.onSurfaceVariant,
+                            labelColor: theme.colorScheme.onSurface,
+                            unselectedLabelColor:
+                                theme.colorScheme.onSurfaceVariant,
                             labelStyle: const TextStyle(
                               fontWeight: FontWeight.w600,
                               fontSize: 16,
@@ -284,7 +283,7 @@ class _ProfilePageState extends State<ProfilePage>
                         ? const Center(
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: Color(0xFF0EA5E9),
+                              color: AppTheme.primaryColor,
                             ),
                           )
                         : _galleries.isEmpty
@@ -323,7 +322,9 @@ class _ProfilePageState extends State<ProfilePage>
                                   },
                                   child: Container(
                                     decoration: BoxDecoration(
-                                      color: Colors.grey[200],
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.surfaceContainerHighest,
                                     ),
                                     clipBehavior: Clip.antiAlias,
                                     child: hasPhoto
@@ -334,9 +335,11 @@ class _ProfilePageState extends State<ProfilePage>
                                         : Center(
                                             child: Text(
                                               gallery.title,
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 fontSize: 12,
-                                                color: Colors.black54,
+                                                color: theme
+                                                    .colorScheme
+                                                    .onSurfaceVariant,
                                               ),
                                               textAlign: TextAlign.center,
                                             ),
@@ -345,7 +348,10 @@ class _ProfilePageState extends State<ProfilePage>
                                 );
                               }
                               // Placeholder for empty slots
-                              return Container(color: Colors.grey[100]);
+                              return Container(
+                                color:
+                                    theme.colorScheme.surfaceContainerHighest,
+                              );
                             },
                           ),
                     // Favs tab
@@ -354,7 +360,7 @@ class _ProfilePageState extends State<ProfilePage>
                           ? const Center(
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: Color(0xFF0EA5E9),
+                                color: AppTheme.primaryColor,
                               ),
                             )
                           : _favs.isEmpty
@@ -389,7 +395,9 @@ class _ProfilePageState extends State<ProfilePage>
                                   },
                                   child: Container(
                                     decoration: BoxDecoration(
-                                      color: Colors.grey[200],
+                                      color: theme
+                                          .colorScheme
+                                          .surfaceContainerHighest,
                                     ),
                                     clipBehavior: Clip.antiAlias,
                                     child: hasPhoto
@@ -400,9 +408,11 @@ class _ProfilePageState extends State<ProfilePage>
                                         : Center(
                                             child: Text(
                                               gallery.title,
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 fontSize: 12,
-                                                color: Colors.black54,
+                                                color: theme
+                                                    .colorScheme
+                                                    .onSurfaceVariant,
                                               ),
                                               textAlign: TextAlign.center,
                                             ),
@@ -434,12 +444,13 @@ class _ProfileStatsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final styleCount = const TextStyle(
       fontWeight: FontWeight.bold,
       fontSize: 14, // Set to 14
     );
     final styleLabel = TextStyle(
-      color: Theme.of(context).brightness == Brightness.dark
+      color: theme.brightness == Brightness.dark
           ? Colors.grey[400]
           : Colors.grey[700],
       fontSize: 14, // Set to 14

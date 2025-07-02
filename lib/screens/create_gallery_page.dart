@@ -189,6 +189,7 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final double maxHeight =
         MediaQuery.of(context).size.height -
         kToolbarHeight -
@@ -196,145 +197,160 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
 
     return ConstrainedBox(
       constraints: BoxConstraints(maxHeight: maxHeight),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                TextButton(
-                  onPressed: _submitting
-                      ? null
-                      : () => Navigator.of(context).pop(),
-                  style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFF0EA5E9),
-                  ),
-                  child: const Text(
-                    'Cancel',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
-                  ),
-                ),
-                Text(
-                  widget.gallery == null ? 'New Gallery' : 'Edit Gallery',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                  ),
-                ),
-                AppButton(
-                  label: widget.gallery == null ? 'Create' : 'Save',
-                  onPressed: _submitting ? null : _submit,
-                  loading: _submitting,
-                  variant: AppButtonVariant.primary,
-                  height: 36,
-                  fontSize: 15,
-                  borderRadius: 6,
-                  padding: const EdgeInsets.symmetric(horizontal: 18),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.only(
-                  bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    PlainTextField(
-                      label: 'Title',
-                      controller: _titleController,
-                      hintText: 'Enter a title',
+      child: Container(
+        color: theme.scaffoldBackgroundColor,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  TextButton(
+                    onPressed: _submitting
+                        ? null
+                        : () => Navigator.of(context).pop(),
+                    style: TextButton.styleFrom(
+                      foregroundColor: theme.colorScheme.primary,
                     ),
-                    const SizedBox(height: 16),
-                    PlainTextField(
-                      label: 'Description',
-                      controller: _descController,
-                      maxLines: 3,
-                      hintText: 'Enter a description',
+                    child: Text('Cancel', style: theme.textTheme.bodyLarge),
+                  ),
+                  Text(
+                    widget.gallery == null ? 'New Gallery' : 'Edit Gallery',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
                     ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        AppButton(
-                          label: 'Add Images',
-                          onPressed: _pickImages,
-                          icon: Icons.photo_library,
-                          variant: AppButtonVariant.secondary,
-                          height: 40,
-                          fontSize: 15,
-                          borderRadius: 6,
-                        ),
-                      ],
-                    ),
-                    if (_images.isNotEmpty) ...[
+                  ),
+                  AppButton(
+                    label: widget.gallery == null ? 'Create' : 'Save',
+                    onPressed: _submitting ? null : _submit,
+                    loading: _submitting,
+                    variant: AppButtonVariant.primary,
+                    height: 36,
+                    fontSize: 15,
+                    borderRadius: 6,
+                    padding: const EdgeInsets.symmetric(horizontal: 18),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      PlainTextField(
+                        label: 'Title',
+                        controller: _titleController,
+                        hintText: 'Enter a title',
+                      ),
                       const SizedBox(height: 16),
-                      GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 3,
-                              crossAxisSpacing: 8,
-                              mainAxisSpacing: 8,
-                            ),
-                        itemCount: _images.length,
-                        itemBuilder: (context, index) {
-                          final galleryImage = _images[index];
-                          return Stack(
-                            children: [
-                              Positioned.fill(
-                                child: Image.file(
-                                  File(galleryImage.file.path),
-                                  fit: BoxFit.cover,
-                                ),
+                      PlainTextField(
+                        label: 'Description',
+                        controller: _descController,
+                        maxLines: 3,
+                        hintText: 'Enter a description',
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          AppButton(
+                            label: 'Add Images',
+                            onPressed: _pickImages,
+                            icon: Icons.photo_library,
+                            variant: AppButtonVariant.secondary,
+                            height: 40,
+                            fontSize: 15,
+                            borderRadius: 6,
+                          ),
+                        ],
+                      ),
+                      if (_images.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 3,
+                                crossAxisSpacing: 8,
+                                mainAxisSpacing: 8,
                               ),
-                              if (galleryImage.isExisting)
-                                Positioned(
-                                  left: 2,
-                                  top: 2,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(2),
-                                    color: Colors.green.withOpacity(0.7),
-                                    child: const Icon(
-                                      Icons.check_circle,
-                                      color: Colors.white,
-                                      size: 16,
-                                    ),
-                                  ),
-                                ),
-                              Positioned(
-                                top: 2,
-                                right: 2,
-                                child: GestureDetector(
-                                  onTap: () => _removeImage(index),
+                          itemCount: _images.length,
+                          itemBuilder: (context, index) {
+                            final galleryImage = _images[index];
+                            return Stack(
+                              children: [
+                                Positioned.fill(
                                   child: Container(
                                     decoration: BoxDecoration(
-                                      color: Colors.black54,
-                                      shape: BoxShape.circle,
+                                      color: theme
+                                          .colorScheme
+                                          .surfaceContainerHighest,
+                                      borderRadius: BorderRadius.circular(8),
                                     ),
-                                    child: const Icon(
-                                      Icons.close,
-                                      color: Colors.white,
-                                      size: 18,
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.file(
+                                        File(galleryImage.file.path),
+                                        fit: BoxFit.cover,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
+                                if (galleryImage.isExisting)
+                                  Positioned(
+                                    left: 2,
+                                    top: 2,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(2),
+                                      decoration: BoxDecoration(
+                                        color: theme.colorScheme.secondary
+                                            .withOpacity(0.7),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Icon(
+                                        Icons.check_circle,
+                                        color: theme.colorScheme.onSecondary,
+                                        size: 16,
+                                      ),
+                                    ),
+                                  ),
+                                Positioned(
+                                  top: 2,
+                                  right: 2,
+                                  child: GestureDetector(
+                                    onTap: () => _removeImage(index),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: theme.colorScheme.surfaceTint
+                                            .withOpacity(0.7),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        Icons.close,
+                                        color: theme.colorScheme.onSurface,
+                                        size: 18,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

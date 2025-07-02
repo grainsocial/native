@@ -148,7 +148,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             child: Center(
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: Color(0xFF0ea5e9),
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
           ),
@@ -176,12 +176,13 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     if (apiService.currentUser == null) {
-      return const Scaffold(
+      return Scaffold(
         body: Center(
           child: CircularProgressIndicator(
             strokeWidth: 2,
-            color: Color(0xFF0EA5E9),
+            color: theme.colorScheme.primary,
           ),
         ),
       );
@@ -194,20 +195,22 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
           child: ListView(
             padding: EdgeInsets.zero,
             children: [
-              DrawerHeader(
-                decoration: BoxDecoration(color: Colors.white),
+              Container(
+                height: 250,
+                decoration: BoxDecoration(
+                  color: theme.scaffoldBackgroundColor,
+                  border: Border(
+                    bottom: BorderSide(color: theme.dividerColor, width: 1),
+                  ),
+                ),
+                padding: const EdgeInsets.fromLTRB(16, 115, 16, 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     CircleAvatar(
-                      radius: 22, // Smaller avatar
-                      backgroundImage:
-                          apiService.currentUser?.avatar != null &&
-                              apiService.currentUser!.avatar.isNotEmpty
-                          ? null
-                          : null,
-                      backgroundColor: Colors.white,
+                      radius: 22,
+                      backgroundColor: theme.scaffoldBackgroundColor,
                       child: ClipOval(
                         child: AppImage(
                           url: apiService.currentUser!.avatar,
@@ -220,18 +223,16 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                     const SizedBox(height: 6),
                     Text(
                       apiService.currentUser?.displayName ?? '',
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontSize: 15, // Smaller text
+                      style: theme.textTheme.bodyLarge?.copyWith(
                         fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurface,
                       ),
                     ),
                     if (apiService.currentUser?.handle != null)
                       Text(
                         '@${apiService.currentUser!.handle}',
-                        style: const TextStyle(
-                          color: Colors.black54,
-                          fontSize: 11, // Smaller text
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.hintColor,
                         ),
                       ),
                     const SizedBox(height: 6),
@@ -241,31 +242,33 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                         Text(
                           (apiService.currentUser?.followersCount ?? 0)
                               .toString(),
-                          style: const TextStyle(
-                            color: Colors.black,
+                          style: theme.textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.bold,
-                            fontSize: 13,
+                            color: theme.colorScheme.onSurface,
                           ),
                         ),
                         const SizedBox(width: 4),
-                        const Text(
+                        Text(
                           'Followers',
-                          style: TextStyle(color: Colors.black54, fontSize: 10),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.hintColor,
+                          ),
                         ),
                         const SizedBox(width: 16),
                         Text(
                           (apiService.currentUser?.followsCount ?? 0)
                               .toString(),
-                          style: const TextStyle(
-                            color: Colors.black,
+                          style: theme.textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.bold,
-                            fontSize: 13,
+                            color: theme.colorScheme.onSurface,
                           ),
                         ),
                         const SizedBox(width: 4),
-                        const Text(
+                        Text(
                           'Following',
-                          style: TextStyle(color: Colors.black54, fontSize: 10),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.hintColor,
+                          ),
                         ),
                       ],
                     ),
@@ -327,24 +330,20 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
           ),
         ),
         body: NestedScrollView(
-          floatHeaderSlivers:
-              true, // Ensures SliverAppBar snaps instantly on scroll up
+          floatHeaderSlivers: true,
           headerSliverBuilder: (context, innerBoxIsScrolled) => [
             SliverOverlapAbsorber(
               handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
               sliver: SliverAppBar(
-                backgroundColor: Colors.white,
-                surfaceTintColor: Colors.white,
-                floating: true,
-                snap: true,
+                backgroundColor: theme.appBarTheme.backgroundColor,
+                surfaceTintColor: theme.appBarTheme.backgroundColor,
+                floating: false,
+                snap: false,
                 pinned: true,
                 elevation: 0.5,
                 title: Text(
                   widget.title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: theme.appBarTheme.titleTextStyle,
                 ),
                 leading: Builder(
                   builder: (context) => IconButton(
@@ -360,23 +359,22 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                   ),
                 ],
                 bottom: PreferredSize(
-                  preferredSize: const Size.fromHeight(49),
+                  preferredSize: const Size.fromHeight(48),
                   child: Container(
-                    color: Colors.white,
+                    color: theme.scaffoldBackgroundColor,
                     child: TabBar(
+                      dividerColor: theme.dividerColor,
                       controller: _tabController,
                       indicator: UnderlineTabIndicator(
-                        borderSide: const BorderSide(
-                          color: Color(0xFF0EA5E9),
+                        borderSide: BorderSide(
+                          color: theme.colorScheme.primary,
                           width: 3,
                         ),
                         insets: EdgeInsets.zero,
                       ),
                       indicatorSize: TabBarIndicatorSize.tab,
-                      labelColor: const Color(0xFF0EA5E9),
-                      unselectedLabelColor: Theme.of(
-                        context,
-                      ).colorScheme.onSurfaceVariant,
+                      labelColor: theme.colorScheme.onSurface,
+                      unselectedLabelColor: theme.colorScheme.onSurfaceVariant,
                       labelStyle: const TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 16,
@@ -440,21 +438,21 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         ),
         floatingActionButton:
             (!showProfile && !showNotifications && !showExplore)
-                ? FloatingActionButton(
-                    shape: const CircleBorder(),
-                    onPressed: () {
-                      showModalBottomSheet(
-                        context: context,
-                        isScrollControlled: true,
-                        builder: (context) => CreateGalleryPage(),
-                      );
-                    },
-                    backgroundColor: const Color(0xFF0EA5E9),
-                    foregroundColor: Colors.white,
-                    child: const Icon(Icons.add_a_photo),
-                    tooltip: 'Create Gallery',
-                  )
-                : null,
+            ? FloatingActionButton(
+                shape: const CircleBorder(),
+                onPressed: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    builder: (context) => CreateGalleryPage(),
+                  );
+                },
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: Colors.white,
+                tooltip: 'Create Gallery',
+                child: const Icon(Icons.add_a_photo),
+              )
+            : null,
       );
     }
     // Explore, Notifications, Profile: no tabs, no TabController
@@ -463,20 +461,21 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            DrawerHeader(
-              decoration: BoxDecoration(color: Colors.white),
+            Container(
+              decoration: BoxDecoration(
+                color: theme.scaffoldBackgroundColor,
+                border: Border(
+                  bottom: BorderSide(color: theme.dividerColor, width: 1),
+                ),
+              ),
+              padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   CircleAvatar(
-                    radius: 22, // Smaller avatar
-                    backgroundImage:
-                        apiService.currentUser?.avatar != null &&
-                            apiService.currentUser!.avatar.isNotEmpty
-                        ? null
-                        : null,
-                    backgroundColor: Colors.white,
+                    radius: 22,
+                    backgroundColor: theme.scaffoldBackgroundColor,
                     child: ClipOval(
                       child: AppImage(
                         url: apiService.currentUser!.avatar,
@@ -489,18 +488,18 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                   const SizedBox(height: 6),
                   Text(
                     apiService.currentUser?.displayName ?? '',
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 15, // Smaller text
+                    style: theme.textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: theme.colorScheme.onSurface,
                     ),
                   ),
                   if (apiService.currentUser?.handle != null)
                     Text(
                       '@${apiService.currentUser!.handle}',
-                      style: const TextStyle(
-                        color: Colors.black54,
-                        fontSize: 11, // Smaller text
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.hintColor,
+                        fontSize: 11,
                       ),
                     ),
                   const SizedBox(height: 6),
@@ -510,30 +509,36 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                       Text(
                         (apiService.currentUser?.followersCount ?? 0)
                             .toString(),
-                        style: const TextStyle(
-                          color: Colors.black,
+                        style: theme.textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
+                          color: theme.colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(width: 4),
-                      const Text(
+                      Text(
                         'Followers',
-                        style: TextStyle(color: Colors.black54, fontSize: 10),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.hintColor,
+                          fontSize: 10,
+                        ),
                       ),
                       const SizedBox(width: 16),
                       Text(
                         (apiService.currentUser?.followsCount ?? 0).toString(),
-                        style: const TextStyle(
-                          color: Colors.black,
+                        style: theme.textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
+                          color: theme.colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(width: 4),
-                      const Text(
+                      Text(
                         'Following',
-                        style: TextStyle(color: Colors.black54, fontSize: 10),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.hintColor,
+                          fontSize: 10,
+                        ),
                       ),
                     ],
                   ),
@@ -596,15 +601,12 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       ),
       appBar: (showExplore || showNotifications)
           ? AppBar(
-              backgroundColor: Colors.white,
-              surfaceTintColor: Colors.white,
+              backgroundColor: theme.appBarTheme.backgroundColor,
+              surfaceTintColor: theme.appBarTheme.backgroundColor,
               elevation: 0.5,
               title: Text(
                 showExplore ? 'Explore' : 'Notifications',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: theme.appBarTheme.titleTextStyle,
               ),
               leading: Builder(
                 builder: (context) => IconButton(
@@ -626,27 +628,21 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
           if (showExplore)
             Positioned.fill(
               child: Material(
-                color: Theme.of(
-                  context,
-                ).scaffoldBackgroundColor.withOpacity(0.98),
+                color: theme.scaffoldBackgroundColor.withOpacity(0.98),
                 child: SafeArea(child: Stack(children: [ExplorePage()])),
               ),
             ),
           if (showNotifications)
             Positioned.fill(
               child: Material(
-                color: Theme.of(
-                  context,
-                ).scaffoldBackgroundColor.withOpacity(0.98),
+                color: theme.scaffoldBackgroundColor.withOpacity(0.98),
                 child: SafeArea(child: Stack(children: [NotificationsPage()])),
               ),
             ),
           if (showProfile)
             Positioned.fill(
               child: Material(
-                color: Theme.of(
-                  context,
-                ).scaffoldBackgroundColor.withOpacity(0.98),
+                color: theme.scaffoldBackgroundColor.withOpacity(0.98),
                 child: SafeArea(
                   child: Stack(
                     children: [

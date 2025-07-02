@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:grain/api.dart';
 import 'package:grain/models/profile.dart';
 import 'package:grain/widgets/app_image.dart';
+import 'package:grain/widgets/plain_text_field.dart';
 import 'profile_page.dart';
 
 class ExplorePage extends StatefulWidget {
@@ -67,41 +68,17 @@ class _ExplorePageState extends State<ExplorePage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: TextField(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
+          child: PlainTextField(
+            label: '',
             controller: _controller,
-            decoration: InputDecoration(
-              hintText: 'Search for users',
-              filled: true,
-              fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide.none,
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(
-                  color: Color(0xFF0ea5e9), // Tailwind sky-500
-                  width: 2,
-                ),
-              ),
-              suffixIcon: _controller.text.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () {
-                        _controller.clear();
-                        setState(() {
-                          _results = [];
-                          _searched = false;
-                        });
-                      },
-                    )
-                  : null,
-            ),
+            hintText: 'Search for users',
             onChanged: _onSearchChanged,
+            enabled: true,
           ),
         ),
         if (_controller.text.isNotEmpty)
@@ -111,39 +88,41 @@ class _ExplorePageState extends State<ExplorePage> {
               alignment: Alignment.centerLeft,
               child: Text(
                 'Search for "${_controller.text}"',
-                style: TextStyle(
-                  color: Colors.black54,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.hintColor,
                   fontWeight: FontWeight.w500,
                   fontSize: 16,
                 ),
               ),
             ),
           ),
-        Expanded(child: _buildResultsList(_results)),
+        Expanded(child: _buildResultsList(_results, theme)),
       ],
     );
   }
 
-  Widget _buildResultsList(List<Profile> results) {
+  Widget _buildResultsList(List<Profile> results, ThemeData theme) {
     if (_loading) {
-      return const ListTile(
-        title: Text('Searching...'),
+      return ListTile(
+        title: Text('Searching...', style: theme.textTheme.bodyMedium),
         leading: SizedBox(
           width: 20,
           height: 20,
           child: CircularProgressIndicator(
             strokeWidth: 2,
-            color: Color(0xFF0EA5E9),
+            color: theme.colorScheme.primary,
           ),
         ),
       );
     } else if (_searched && results.isEmpty) {
-      return const ListTile(title: Text('No users found'));
+      return ListTile(
+        title: Text('No users found', style: theme.textTheme.bodyMedium),
+      );
     }
     return ListView.separated(
       itemCount: results.length,
       separatorBuilder: (context, index) =>
-          const Divider(height: 1, thickness: 1),
+          Divider(height: 1, thickness: 1, color: theme.dividerColor),
       itemBuilder: (context, index) {
         final profile = results[index];
         return ListTile(
@@ -156,23 +135,31 @@ class _ExplorePageState extends State<ExplorePage> {
                     fit: BoxFit.cover,
                   ),
                 )
-              : const CircleAvatar(
+              : CircleAvatar(
                   radius: 16,
-                  child: Icon(Icons.account_circle, color: Colors.grey),
+                  backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                  child: Icon(
+                    Icons.account_circle,
+                    color: theme.iconTheme.color,
+                  ),
                 ),
           title: Text(
             profile.displayName.isNotEmpty
                 ? profile.displayName
                 : '@${profile.handle}',
+            style: theme.textTheme.bodyLarge,
           ),
           subtitle: profile.handle.isNotEmpty
-              ? Text('@${profile.handle}')
+              ? Text(
+                  '@${profile.handle}',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.hintColor,
+                  ),
+                )
               : null,
           onTap: () async {
-            FocusScope.of(
-              context,
-            ).unfocus(); // Dismiss keyboard and prevent onChanged
-            _debounce?.cancel(); // Cancel any pending search
+            FocusScope.of(context).unfocus();
+            _debounce?.cancel();
             setState(() {
               _searched = false;
               _loading = false;

@@ -9,6 +9,10 @@ class GalleryPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final Color bgColor = theme.brightness == Brightness.dark
+        ? Colors.grey[900]!
+        : Colors.grey[100]!;
     final photos = gallery.items
         .where((item) => item.thumb.isNotEmpty)
         .toList();
@@ -25,7 +29,7 @@ class GalleryPreview extends StatelessWidget {
                     width: double.infinity,
                     height: double.infinity,
                   )
-                : Container(color: Colors.grey[300]),
+                : Container(color: theme.colorScheme.surfaceContainerHighest),
           ),
           const SizedBox(width: 2),
           Expanded(
@@ -40,7 +44,7 @@ class GalleryPreview extends StatelessWidget {
                           width: double.infinity,
                           height: double.infinity,
                         )
-                      : Container(color: Colors.grey[200]),
+                      : Container(color: bgColor),
                 ),
                 const SizedBox(height: 2),
                 Expanded(
@@ -51,7 +55,7 @@ class GalleryPreview extends StatelessWidget {
                           width: double.infinity,
                           height: double.infinity,
                         )
-                      : Container(color: Colors.grey[200]),
+                      : Container(color: bgColor),
                 ),
               ],
             ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:grain/app_theme.dart';
 import 'package:grain/widgets/app_image.dart';
 
 class BottomNavBar extends StatelessWidget {
@@ -24,7 +25,7 @@ class BottomNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).scaffoldBackgroundColor,
         border: Border(
           top: BorderSide(color: Theme.of(context).dividerColor, width: 1),
         ),
@@ -46,7 +47,7 @@ class BottomNavBar extends StatelessWidget {
                       FontAwesomeIcons.house,
                       size: 20,
                       color: navIndex == 0
-                          ? const Color(0xFF0EA5E9)
+                          ? AppTheme.primaryColor
                           : Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
@@ -67,7 +68,7 @@ class BottomNavBar extends StatelessWidget {
                       FontAwesomeIcons.magnifyingGlass,
                       size: 20,
                       color: navIndex == 1
-                          ? const Color(0xFF0EA5E9)
+                          ? AppTheme.primaryColor
                           : Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
@@ -88,7 +89,7 @@ class BottomNavBar extends StatelessWidget {
                       FontAwesomeIcons.solidBell,
                       size: 20,
                       color: navIndex == 2
-                          ? const Color(0xFF0EA5E9)
+                          ? AppTheme.primaryColor
                           : Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
@@ -114,7 +115,7 @@ class BottomNavBar extends StatelessWidget {
                                 ? BoxDecoration(
                                     shape: BoxShape.circle,
                                     border: Border.all(
-                                      color: const Color(0xFF0EA5E9),
+                                      color: AppTheme.primaryColor,
                                       width: 2.2,
                                     ),
                                   )
@@ -134,7 +135,7 @@ class BottomNavBar extends StatelessWidget {
                                 : FontAwesomeIcons.user,
                             size: 16,
                             color: navIndex == 3
-                                ? const Color(0xFF0EA5E9)
+                                ? AppTheme.primaryColor
                                 : Theme.of(
                                     context,
                                   ).colorScheme.onSurfaceVariant,

@@ -51,44 +51,39 @@ class _CommentsPageState extends State<CommentsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Stack(
       children: [
         Scaffold(
+          backgroundColor: theme.scaffoldBackgroundColor,
           appBar: AppBar(
-            backgroundColor: Colors.white,
-            surfaceTintColor: Colors.white,
+            backgroundColor: theme.appBarTheme.backgroundColor,
+            surfaceTintColor: theme.appBarTheme.backgroundColor,
             bottom: PreferredSize(
               preferredSize: const Size.fromHeight(1),
-              child: Container(
-                color: Theme.of(context).dividerColor,
-                height: 1,
-              ),
+              child: Container(color: theme.dividerColor, height: 1),
             ),
-            title: const Text(
-              'Comments',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            ),
+            title: Text('Comments', style: theme.appBarTheme.titleTextStyle),
           ),
           body: _loading
-              ? const Center(
+              ? Center(
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: Color(0xFF0EA5E9),
+                    color: theme.colorScheme.primary,
                   ),
-                ) // Tailwind sky-500)
+                )
               : _error
-              ? const Center(child: Text('Failed to load comments.'))
+              ? Center(
+                  child: Text(
+                    'Failed to load comments.',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                )
               : ListView(
                   padding: const EdgeInsets.all(12),
                   children: [
                     if (_gallery != null)
-                      Text(
-                        _gallery!.title,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                        ),
-                      ),
+                      Text(_gallery!.title, style: theme.textTheme.titleMedium),
                     const SizedBox(height: 12),
                     _CommentsList(
                       comments: _comments,
@@ -155,13 +150,17 @@ class _CommentsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final repliesByParent = _groupReplies(comments);
     final topLevel = _topLevel(comments);
     if (comments.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 32),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 32),
         child: Center(
-          child: Text('No comments yet', style: TextStyle(color: Colors.grey)),
+          child: Text(
+            'No comments yet',
+            style: theme.textTheme.bodyMedium?.copyWith(color: theme.hintColor),
+          ),
         ),
       );
     }
@@ -182,6 +181,7 @@ class _CommentTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final author = comment.author;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -198,7 +198,11 @@ class _CommentTile extends StatelessWidget {
               ),
             )
           else
-            const CircleAvatar(radius: 16, child: Icon(Icons.person, size: 16)),
+            CircleAvatar(
+              radius: 16,
+              backgroundColor: theme.colorScheme.surfaceContainerHighest,
+              child: Icon(Icons.person, size: 16, color: theme.iconTheme.color),
+            ),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -206,17 +210,19 @@ class _CommentTile extends StatelessWidget {
               children: [
                 Text(
                   author['displayName'] ?? '@${author['handle'] ?? ''}',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-                Text(comment.text, style: const TextStyle(fontSize: 15)),
+                Text(comment.text, style: theme.textTheme.bodyMedium),
                 if (comment.focus != null) ...[
                   const SizedBox(height: 8),
                   Align(
                     alignment: Alignment.centerLeft,
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(
-                        maxWidth: 180, // Limit max width
-                        maxHeight: 180, // Limit max height
+                        maxWidth: 180,
+                        maxHeight: 180,
                       ),
                       child: AspectRatio(
                         aspectRatio:
@@ -255,7 +261,9 @@ class _CommentTile extends StatelessWidget {
                 if (comment.createdAt != null)
                   Text(
                     formatRelativeTime(comment.createdAt!),
-                    style: const TextStyle(fontSize: 11, color: Colors.grey),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.hintColor,
+                    ),
                   ),
               ],
             ),

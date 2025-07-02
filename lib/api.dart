@@ -129,7 +129,10 @@ class ApiService {
     appLogger.i('Fetching gallery for uri: $uri');
     final response = await http.get(
       Uri.parse('$_apiUrl/xrpc/social.grain.gallery.getGallery?uri=$uri'),
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Authorization': "Bearer $_accessToken",
+        'Content-Type': 'application/json',
+      },
     );
     if (response.statusCode != 200) {
       appLogger.w(

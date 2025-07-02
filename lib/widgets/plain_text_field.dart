@@ -22,39 +22,60 @@ class PlainTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: theme.textTheme.bodyMedium?.copyWith(
             fontWeight: FontWeight.w500,
-            fontSize: 15,
-            color: Colors.black87,
+            color: theme.colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 6),
         Container(
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            color: theme.colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey[300]!),
           ),
-          child: TextField(
-            controller: controller,
-            maxLines: maxLines,
-            enabled: enabled,
-            keyboardType: keyboardType,
-            onChanged: onChanged,
-            style: const TextStyle(fontSize: 15),
-            decoration: InputDecoration(
-              hintText: hintText,
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 12,
-              ),
-              isDense: true,
+          child: Focus(
+            child: Builder(
+              builder: (context) {
+                final isFocused = Focus.of(context).hasFocus;
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: isFocused
+                          ? theme.colorScheme.primary
+                          : theme.dividerColor,
+                      width: isFocused ? 2 : 1,
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: TextField(
+                    controller: controller,
+                    maxLines: maxLines,
+                    enabled: enabled,
+                    keyboardType: keyboardType,
+                    onChanged: onChanged,
+                    style: theme.textTheme.bodyMedium?.copyWith(fontSize: 15),
+                    decoration: InputDecoration(
+                      hintText: hintText,
+                      hintStyle: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.hintColor,
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
+                      ),
+                      isDense: true,
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         ),

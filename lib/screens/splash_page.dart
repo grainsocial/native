@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:grain/auth.dart';
+import 'package:grain/widgets/app_button.dart';
 import 'package:grain/widgets/app_image.dart';
+import 'package:grain/widgets/plain_text_field.dart';
 
 class SplashPage extends StatefulWidget {
   final void Function()? onSignIn;
@@ -39,7 +41,9 @@ class _SplashPageState extends State<SplashPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Stack(
         fit: StackFit.expand,
         children: [
@@ -55,55 +59,30 @@ class _SplashPageState extends State<SplashPage> {
               children: [
                 const SizedBox(height: 24),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
-                  child: TextField(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: PlainTextField(
+                    label: '',
                     controller: _handleController,
-                    decoration: const InputDecoration(
-                      labelText: 'Enter your handle',
-                      border: OutlineInputBorder(),
-                      fillColor: Colors.white,
-                      filled: true,
-                      floatingLabelBehavior: FloatingLabelBehavior.never,
-                      contentPadding: EdgeInsets.symmetric(
-                        vertical: 10,
-                        horizontal: 12,
-                      ),
-                    ),
+                    hintText: 'Enter your handle',
                     enabled: !_signingIn,
-                    onSubmitted: (_) => _signInWithBluesky(context),
+                    onChanged: (_) {},
                   ),
                 ),
                 const SizedBox(height: 12),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0EA5E9),
-                        foregroundColor: Colors.white,
-                        textStyle: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                      ),
+                    child: AppButton(
+                      label: 'Login',
                       onPressed: _signingIn
                           ? null
                           : () => _signInWithBluesky(context),
-                      child: _signingIn
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text('Login'),
+                      loading: _signingIn,
+                      variant: AppButtonVariant.primary,
+                      height: 44,
+                      fontSize: 15,
+                      borderRadius: 6,
                     ),
                   ),
                 ),

@@ -8,6 +8,7 @@ import '../screens/profile_page.dart';
 import 'package:grain/api.dart';
 import 'package:grain/utils.dart';
 import 'package:grain/widgets/app_image.dart';
+import 'package:grain/app_theme.dart';
 
 class TimelineItemWidget extends StatelessWidget {
   final Gallery gallery;
@@ -22,6 +23,7 @@ class TimelineItemWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final actor = gallery.creator;
     final createdAt = gallery.createdAt;
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -44,7 +46,7 @@ class TimelineItemWidget extends StatelessWidget {
                     },
                 child: CircleAvatar(
                   radius: 18,
-                  backgroundColor: Colors.transparent,
+                  backgroundColor: theme.scaffoldBackgroundColor,
                   child: (actor != null && actor.avatar.isNotEmpty)
                       ? ClipOval(
                           child: AppImage(
@@ -54,10 +56,10 @@ class TimelineItemWidget extends StatelessWidget {
                             fit: BoxFit.cover,
                           ),
                         )
-                      : const Icon(
+                      : Icon(
                           Icons.account_circle,
                           size: 24,
-                          color: Colors.grey,
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                 ),
               ),
@@ -70,7 +72,7 @@ class TimelineItemWidget extends StatelessWidget {
                         actor != null && actor.displayName.isNotEmpty
                             ? actor.displayName
                             : (actor != null ? '@${actor.handle}' : ''),
-                        style: const TextStyle(
+                        style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w600,
                           fontSize: 16,
                         ),
@@ -82,9 +84,9 @@ class TimelineItemWidget extends StatelessWidget {
                         padding: const EdgeInsets.only(left: 6),
                         child: Text(
                           '@${actor.handle}',
-                          style: TextStyle(
+                          style: theme.textTheme.bodySmall?.copyWith(
                             fontSize: 14,
-                            color: Colors.grey[800],
+                            color: theme.colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.normal,
                           ),
                           overflow: TextOverflow.ellipsis,
@@ -96,7 +98,10 @@ class TimelineItemWidget extends StatelessWidget {
               ),
               Text(
                 formatRelativeTime(createdAt ?? ''),
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontSize: 12,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),
@@ -124,7 +129,9 @@ class TimelineItemWidget extends StatelessWidget {
             padding: const EdgeInsets.only(top: 8, left: 8, right: 8),
             child: Text(
               gallery.title,
-              style: const TextStyle(fontWeight: FontWeight.w600),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         if (gallery.description.isNotEmpty)
@@ -132,7 +139,10 @@ class TimelineItemWidget extends StatelessWidget {
             padding: const EdgeInsets.only(top: 4, left: 8, right: 8),
             child: Text(
               gallery.description,
-              style: const TextStyle(fontSize: 13, color: Colors.black54),
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontSize: 13,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
         const SizedBox(height: 8),
@@ -155,8 +165,8 @@ class TimelineItemWidget extends StatelessWidget {
                         : FontAwesomeIcons.heart,
                     color:
                         gallery.viewer != null && gallery.viewer!['fav'] != null
-                        ? Color(0xFFEC4899)
-                        : Colors.black54,
+                        ? AppTheme.favoriteColor
+                        : theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
                 onTap: () {},
@@ -166,7 +176,10 @@ class TimelineItemWidget extends StatelessWidget {
                   padding: const EdgeInsets.only(right: 12),
                   child: Text(
                     gallery.favCount.toString(),
-                    style: const TextStyle(fontSize: 14, color: Colors.black54),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontSize: 14,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
               GestureDetector(
@@ -183,14 +196,17 @@ class TimelineItemWidget extends StatelessWidget {
                   child: Icon(
                     FontAwesomeIcons.comment,
                     size: 18,
-                    color: Colors.black54,
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
               ),
               if (gallery.commentCount != null)
                 Text(
                   gallery.commentCount.toString(),
-                  style: const TextStyle(fontSize: 14, color: Colors.black54),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontSize: 14,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
             ],
           ),
