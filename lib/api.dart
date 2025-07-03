@@ -11,8 +11,8 @@ import 'package:jose/jose.dart';
 import 'package:mime/mime.dart';
 
 import './auth.dart';
-import 'models/comment.dart';
 import 'models/gallery.dart';
+import 'models/gallery_thread.dart';
 import 'models/notification.dart' as grain;
 import 'models/profile.dart';
 
@@ -70,7 +70,7 @@ class ApiService {
     appLogger.i('Fetching profile for did: $did');
     final response = await http.get(
       Uri.parse('$_apiUrl/xrpc/social.grain.actor.getProfile?actor=$did'),
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'application/json', 'Authorization': "Bearer $_accessToken"},
     );
     if (response.statusCode != 200) {
       appLogger.w('Failed to fetch profile: ${response.statusCode} ${response.body}');
@@ -153,11 +153,7 @@ class ApiService {
       return null;
     }
     final json = jsonDecode(response.body) as Map<String, dynamic>;
-    final gallery = Gallery.fromJson(json['gallery']);
-    final comments = (json['comments'] as List<dynamic>? ?? [])
-        .map((c) => Comment.fromJson(c as Map<String, dynamic>))
-        .toList();
-    return GalleryThread(gallery: gallery, comments: comments);
+    return GalleryThread.fromJson(json);
   }
 
   Future<List<grain.Notification>> getNotifications() async {
@@ -506,6 +502,38 @@ class ApiService {
     return result['uri'] as String?;
   }
 
+  Future<String?> createFollow({required String followeeDid}) async {
+    final session = await auth.getValidSession();
+    if (session == null) {
+      appLogger.w('No valid session for createFollow');
+      return null;
+    }
+    final dpopClient = DpopHttpClient(dpopKey: session.dpopJwk);
+    final issuer = session.issuer;
+    final did = session.subject;
+    final url = Uri.parse('$issuer/xrpc/com.atproto.repo.createRecord');
+    final record = {
+      'collection': 'social.grain.graph.follow',
+      'repo': did,
+      'record': {'subject': followeeDid, 'createdAt': DateTime.now().toUtc().toIso8601String()},
+    };
+    appLogger.i('Creating follow: $record');
+    final response = await dpopClient.send(
+      method: 'POST',
+      url: url,
+      accessToken: session.accessToken,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(record),
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      appLogger.w('Failed to create follow: \\${response.statusCode} \\${response.body}');
+      return null;
+    }
+    final result = jsonDecode(response.body) as Map<String, dynamic>;
+    appLogger.i('Created follow result: $result');
+    return result['uri'] as String?;
+  }
+
   /// Deletes a record by its URI using DPoP authentication.
   /// Returns true on success, false on failure.
   Future<bool> deleteRecord(String uri) async {
@@ -554,9 +582,3 @@ class ApiService {
 }
 
 final apiService = ApiService();
-
-class GalleryThread {
-  final Gallery gallery;
-  final List<Comment> comments;
-  GalleryThread({required this.gallery, required this.comments});
-}

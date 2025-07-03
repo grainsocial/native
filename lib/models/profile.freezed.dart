@@ -29,6 +29,7 @@ mixin _$Profile {
   int? get followersCount => throw _privateConstructorUsedError;
   int? get followsCount => throw _privateConstructorUsedError;
   int? get galleryCount => throw _privateConstructorUsedError;
+  ProfileViewer? get viewer => throw _privateConstructorUsedError;
 
   /// Serializes this Profile to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -53,7 +54,10 @@ abstract class $ProfileCopyWith<$Res> {
     int? followersCount,
     int? followsCount,
     int? galleryCount,
+    ProfileViewer? viewer,
   });
+
+  $ProfileViewerCopyWith<$Res>? get viewer;
 }
 
 /// @nodoc
@@ -79,6 +83,7 @@ class _$ProfileCopyWithImpl<$Res, $Val extends Profile>
     Object? followersCount = freezed,
     Object? followsCount = freezed,
     Object? galleryCount = freezed,
+    Object? viewer = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -114,9 +119,27 @@ class _$ProfileCopyWithImpl<$Res, $Val extends Profile>
                 ? _value.galleryCount
                 : galleryCount // ignore: cast_nullable_to_non_nullable
                       as int?,
+            viewer: freezed == viewer
+                ? _value.viewer
+                : viewer // ignore: cast_nullable_to_non_nullable
+                      as ProfileViewer?,
           )
           as $Val,
     );
+  }
+
+  /// Create a copy of Profile
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $ProfileViewerCopyWith<$Res>? get viewer {
+    if (_value.viewer == null) {
+      return null;
+    }
+
+    return $ProfileViewerCopyWith<$Res>(_value.viewer!, (value) {
+      return _then(_value.copyWith(viewer: value) as $Val);
+    });
   }
 }
 
@@ -137,7 +160,11 @@ abstract class _$$ProfileImplCopyWith<$Res> implements $ProfileCopyWith<$Res> {
     int? followersCount,
     int? followsCount,
     int? galleryCount,
+    ProfileViewer? viewer,
   });
+
+  @override
+  $ProfileViewerCopyWith<$Res>? get viewer;
 }
 
 /// @nodoc
@@ -162,6 +189,7 @@ class __$$ProfileImplCopyWithImpl<$Res>
     Object? followersCount = freezed,
     Object? followsCount = freezed,
     Object? galleryCount = freezed,
+    Object? viewer = freezed,
   }) {
     return _then(
       _$ProfileImpl(
@@ -197,6 +225,10 @@ class __$$ProfileImplCopyWithImpl<$Res>
             ? _value.galleryCount
             : galleryCount // ignore: cast_nullable_to_non_nullable
                   as int?,
+        viewer: freezed == viewer
+            ? _value.viewer
+            : viewer // ignore: cast_nullable_to_non_nullable
+                  as ProfileViewer?,
       ),
     );
   }
@@ -214,6 +246,7 @@ class _$ProfileImpl implements _Profile {
     this.followersCount,
     this.followsCount,
     this.galleryCount,
+    this.viewer,
   });
 
   factory _$ProfileImpl.fromJson(Map<String, dynamic> json) =>
@@ -235,10 +268,12 @@ class _$ProfileImpl implements _Profile {
   final int? followsCount;
   @override
   final int? galleryCount;
+  @override
+  final ProfileViewer? viewer;
 
   @override
   String toString() {
-    return 'Profile(did: $did, handle: $handle, displayName: $displayName, description: $description, avatar: $avatar, followersCount: $followersCount, followsCount: $followsCount, galleryCount: $galleryCount)';
+    return 'Profile(did: $did, handle: $handle, displayName: $displayName, description: $description, avatar: $avatar, followersCount: $followersCount, followsCount: $followsCount, galleryCount: $galleryCount, viewer: $viewer)';
   }
 
   @override
@@ -258,7 +293,8 @@ class _$ProfileImpl implements _Profile {
             (identical(other.followsCount, followsCount) ||
                 other.followsCount == followsCount) &&
             (identical(other.galleryCount, galleryCount) ||
-                other.galleryCount == galleryCount));
+                other.galleryCount == galleryCount) &&
+            (identical(other.viewer, viewer) || other.viewer == viewer));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -273,6 +309,7 @@ class _$ProfileImpl implements _Profile {
     followersCount,
     followsCount,
     galleryCount,
+    viewer,
   );
 
   /// Create a copy of Profile
@@ -299,6 +336,7 @@ abstract class _Profile implements Profile {
     final int? followersCount,
     final int? followsCount,
     final int? galleryCount,
+    final ProfileViewer? viewer,
   }) = _$ProfileImpl;
 
   factory _Profile.fromJson(Map<String, dynamic> json) = _$ProfileImpl.fromJson;
@@ -319,6 +357,8 @@ abstract class _Profile implements Profile {
   int? get followsCount;
   @override
   int? get galleryCount;
+  @override
+  ProfileViewer? get viewer;
 
   /// Create a copy of Profile
   /// with the given fields replaced by the non-null parameter values.

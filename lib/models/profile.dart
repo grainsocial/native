@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'profile_viewer.dart';
+
 part 'profile.freezed.dart';
 part 'profile.g.dart';
 
@@ -14,6 +16,7 @@ class Profile with _$Profile {
     int? followersCount,
     int? followsCount,
     int? galleryCount,
+    ProfileViewer? viewer,
   }) = _Profile;
 
   factory Profile.fromJson(Map<String, dynamic> json) => _$ProfileFromJson(json);

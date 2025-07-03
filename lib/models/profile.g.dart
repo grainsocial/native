@@ -16,6 +16,9 @@ _$ProfileImpl _$$ProfileImplFromJson(Map<String, dynamic> json) =>
       followersCount: (json['followersCount'] as num?)?.toInt(),
       followsCount: (json['followsCount'] as num?)?.toInt(),
       galleryCount: (json['galleryCount'] as num?)?.toInt(),
+      viewer: json['viewer'] == null
+          ? null
+          : ProfileViewer.fromJson(json['viewer'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$$ProfileImplToJson(_$ProfileImpl instance) =>
@@ -28,4 +31,5 @@ Map<String, dynamic> _$$ProfileImplToJson(_$ProfileImpl instance) =>
       'followersCount': instance.followersCount,
       'followsCount': instance.followsCount,
       'galleryCount': instance.galleryCount,
+      'viewer': instance.viewer,
     };

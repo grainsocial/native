@@ -1,25 +1,28 @@
 import 'package:bluesky_text/bluesky_text.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:grain/api.dart';
 import 'package:grain/app_theme.dart';
 import 'package:grain/models/gallery.dart';
+import 'package:grain/providers/profile_cache_provider.dart';
 import 'package:grain/screens/hashtag_page.dart';
+import 'package:grain/widgets/app_button.dart';
 import 'package:grain/widgets/app_image.dart';
 import 'package:grain/widgets/faceted_text.dart';
 
 import 'gallery_page.dart';
 
-class ProfilePage extends StatefulWidget {
+class ProfilePage extends ConsumerStatefulWidget {
   final dynamic profile;
   final String? did;
   final bool showAppBar;
   const ProfilePage({super.key, this.profile, this.did, this.showAppBar = false});
 
   @override
-  State<ProfilePage> createState() => _ProfilePageState();
+  ConsumerState<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStateMixin {
+class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProviderStateMixin {
   dynamic _profile;
   bool _loading = true;
   List<Gallery> _galleries = [];
@@ -103,7 +106,8 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
       }
       return;
     }
-    final profile = await apiService.fetchProfile(did: did);
+    // Use the profileCacheProvider to fetch and cache the profile
+    final profile = await ref.read(profileCacheProvider.notifier).fetch(did);
     final galleries = await apiService.fetchActorGalleries(did: did);
     List<Map<String, dynamic>>? descriptionFacets;
     if ((profile?.description ?? '').isNotEmpty) {
@@ -127,7 +131,10 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final profile = _profile ?? widget.profile;
+    final did = widget.did ?? widget.profile?.did;
+    final profile = did != null
+        ? ref.watch(profileCacheProvider)[did] ?? _profile ?? widget.profile
+        : _profile ?? widget.profile;
     if (_loading) {
       return Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -169,23 +176,50 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const SizedBox(height: 16),
-                              if (profile.avatar != null)
-                                Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: ClipOval(
-                                    child: AppImage(
-                                      url: profile.avatar,
-                                      width: 64,
-                                      height: 64,
-                                      fit: BoxFit.cover,
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Avatar
+                                  if (profile.avatar != null)
+                                    ClipOval(
+                                      child: AppImage(
+                                        url: profile.avatar,
+                                        width: 64,
+                                        height: 64,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    )
+                                  else
+                                    const Icon(Icons.account_circle, size: 64, color: Colors.grey),
+                                  const Spacer(),
+                                  // Follow/Unfollow button
+                                  if (profile.did != apiService.currentUser?.did)
+                                    SizedBox(
+                                      height: 28,
+                                      child: AppButton(
+                                        variant: profile.viewer?.following?.isNotEmpty == true
+                                            ? AppButtonVariant.secondary
+                                            : AppButtonVariant.primary,
+                                        onPressed: () async {
+                                          await ref
+                                              .read(profileCacheProvider.notifier)
+                                              .toggleFollow(
+                                                profile.did,
+                                                apiService.currentUser?.did,
+                                              );
+                                        },
+                                        borderRadius: 8,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 14,
+                                          vertical: 0,
+                                        ),
+                                        label: (profile.viewer?.following?.isNotEmpty == true)
+                                            ? 'Following'
+                                            : 'Follow',
+                                      ),
                                     ),
-                                  ),
-                                )
-                              else
-                                const Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: Icon(Icons.account_circle, size: 64, color: Colors.grey),
-                                ),
+                                ],
+                              ),
                               const SizedBox(height: 8),
                               Text(
                                 profile.displayName ?? '',
@@ -336,7 +370,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                                         MaterialPageRoute(
                                           builder: (context) => GalleryPage(
                                             uri: gallery.uri,
-                                            currentUserDid: profile.did,
+                                            currentUserDid: apiService.currentUser?.did ?? '',
                                           ),
                                         ),
                                       );
@@ -414,7 +448,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                                         MaterialPageRoute(
                                           builder: (context) => GalleryPage(
                                             uri: gallery.uri,
-                                            currentUserDid: profile.did,
+                                            currentUserDid: apiService.currentUser?.did ?? '',
                                           ),
                                         ),
                                       );
