@@ -13,7 +13,9 @@ class GalleryPreview extends StatelessWidget {
     final Color bgColor = theme.brightness == Brightness.dark
         ? Colors.grey[900]!
         : Colors.grey[100]!;
-    final photos = gallery.items.where((item) => item.thumb.isNotEmpty).toList();
+    final photos = gallery.items
+        .where((item) => item.thumb != null && item.thumb!.isNotEmpty)
+        .toList();
     return AspectRatio(
       aspectRatio: 3 / 2,
       child: Row(

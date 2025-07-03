@@ -1,47 +1,20 @@
-class Profile {
-  final String did;
-  final String handle;
-  final String displayName;
-  final String description;
-  final String avatar;
-  final int followersCount;
-  final int followsCount;
-  final int galleryCount;
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-  Profile({
-    required this.did,
-    required this.handle,
-    required this.displayName,
-    required this.description,
-    required this.avatar,
-    required this.followersCount,
-    required this.followsCount,
-    required this.galleryCount,
-  });
+part 'profile.freezed.dart';
+part 'profile.g.dart';
 
-  factory Profile.fromJson(Map<String, dynamic> json) {
-    return Profile(
-      did: json['did'] ?? '',
-      handle: json['handle'] ?? '',
-      displayName: json['displayName'] ?? '',
-      description: json['description'] ?? '',
-      avatar: json['avatar'] ?? '',
-      followersCount: json['followersCount'] ?? 0,
-      followsCount: json['followsCount'] ?? 0,
-      galleryCount: json['galleryCount'] ?? 0,
-    );
-  }
+@freezed
+class Profile with _$Profile {
+  const factory Profile({
+    required String did,
+    required String handle,
+    String? displayName,
+    String? description,
+    String? avatar,
+    int? followersCount,
+    int? followsCount,
+    int? galleryCount,
+  }) = _Profile;
 
-  Map<String, dynamic> toJson() {
-    return {
-      'did': did,
-      'handle': handle,
-      'displayName': displayName,
-      'description': description,
-      'avatar': avatar,
-      'followersCount': followersCount,
-      'followsCount': followsCount,
-      'galleryCount': galleryCount,
-    };
-  }
+  factory Profile.fromJson(Map<String, dynamic> json) => _$ProfileFromJson(json);
 }

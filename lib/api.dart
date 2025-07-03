@@ -7,6 +7,7 @@ import 'package:grain/dpop_client.dart';
 import 'package:grain/main.dart';
 import 'package:grain/models/atproto_session.dart';
 import 'package:http/http.dart' as http;
+import 'package:jose/jose.dart';
 import 'package:mime/mime.dart';
 
 import './auth.dart';
@@ -39,7 +40,16 @@ class ApiService {
       throw Exception('Failed to fetch session');
     }
 
-    return AtprotoSession.fromJson(jsonDecode(response.body));
+    final json = jsonDecode(response.body);
+    final token = json['tokenSet'] ?? {};
+    return AtprotoSession(
+      accessToken: token['access_token'] as String,
+      tokenType: token['token_type'] as String,
+      expiresAt: DateTime.parse(token['expires_at'] as String),
+      dpopJwk: JsonWebKey.fromJson(json['dpopJwk'] as Map<String, dynamic>),
+      issuer: token['iss'] as String,
+      subject: token['sub'] as String,
+    );
   }
 
   Future<Profile?> fetchCurrentUser() async {
@@ -461,6 +471,38 @@ class ApiService {
     }
     final result = jsonDecode(response.body) as Map<String, dynamic>;
     appLogger.i('Created comment result: $result');
+    return result['uri'] as String?;
+  }
+
+  Future<String?> createFavorite({required String galleryUri}) async {
+    final session = await auth.getValidSession();
+    if (session == null) {
+      appLogger.w('No valid session for createFavorite');
+      return null;
+    }
+    final dpopClient = DpopHttpClient(dpopKey: session.dpopJwk);
+    final issuer = session.issuer;
+    final did = session.subject;
+    final url = Uri.parse('$issuer/xrpc/com.atproto.repo.createRecord');
+    final record = {
+      'collection': 'social.grain.favorite',
+      'repo': did,
+      'record': {'subject': galleryUri, 'createdAt': DateTime.now().toUtc().toIso8601String()},
+    };
+    appLogger.i('Creating favorite: $record');
+    final response = await dpopClient.send(
+      method: 'POST',
+      url: url,
+      accessToken: session.accessToken,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(record),
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      appLogger.w('Failed to create favorite: \\${response.statusCode} \\${response.body}');
+      return null;
+    }
+    final result = jsonDecode(response.body) as Map<String, dynamic>;
+    appLogger.i('Created favorite result: $result');
     return result['uri'] as String?;
   }
 

@@ -1,0 +1,31 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+part of 'profile.dart';
+
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
+_$ProfileImpl _$$ProfileImplFromJson(Map<String, dynamic> json) =>
+    _$ProfileImpl(
+      did: json['did'] as String,
+      handle: json['handle'] as String,
+      displayName: json['displayName'] as String?,
+      description: json['description'] as String?,
+      avatar: json['avatar'] as String?,
+      followersCount: (json['followersCount'] as num?)?.toInt(),
+      followsCount: (json['followsCount'] as num?)?.toInt(),
+      galleryCount: (json['galleryCount'] as num?)?.toInt(),
+    );
+
+Map<String, dynamic> _$$ProfileImplToJson(_$ProfileImpl instance) =>
+    <String, dynamic>{
+      'did': instance.did,
+      'handle': instance.handle,
+      'displayName': instance.displayName,
+      'description': instance.description,
+      'avatar': instance.avatar,
+      'followersCount': instance.followersCount,
+      'followsCount': instance.followsCount,
+      'galleryCount': instance.galleryCount,
+    };

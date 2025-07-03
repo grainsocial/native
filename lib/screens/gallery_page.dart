@@ -1,7 +1,8 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:grain/api.dart';
-import 'package:grain/models/gallery.dart';
+import 'package:grain/models/gallery_photo.dart';
+import 'package:grain/providers/gallery_cache_provider.dart';
 import 'package:grain/screens/create_gallery_page.dart';
 import 'package:grain/screens/profile_page.dart';
 import 'package:grain/widgets/app_image.dart';
@@ -10,17 +11,16 @@ import 'package:grain/widgets/gallery_action_buttons.dart';
 import 'package:grain/widgets/gallery_photo_view.dart';
 import 'package:grain/widgets/justified_gallery_view.dart';
 
-class GalleryPage extends StatefulWidget {
+class GalleryPage extends ConsumerStatefulWidget {
   final String uri;
   final String? currentUserDid;
   const GalleryPage({super.key, required this.uri, this.currentUserDid});
 
   @override
-  State<GalleryPage> createState() => _GalleryPageState();
+  ConsumerState<GalleryPage> createState() => _GalleryPageState();
 }
 
-class _GalleryPageState extends State<GalleryPage> {
-  Gallery? _gallery;
+class _GalleryPageState extends ConsumerState<GalleryPage> {
   bool _loading = true;
   bool _error = false;
   GalleryPhoto? _selectedPhoto;
@@ -29,31 +29,33 @@ class _GalleryPageState extends State<GalleryPage> {
   @override
   void initState() {
     super.initState();
-    _fetchGallery();
+    _maybeFetchGallery();
   }
 
-  Future<void> _fetchGallery() async {
+  Future<void> _maybeFetchGallery() async {
+    final cached = ref.read(galleryCacheProvider)[widget.uri];
+    if (cached != null) {
+      setState(() {
+        _loading = false;
+        _error = false;
+      });
+      return;
+    }
     setState(() {
       _loading = true;
       _error = false;
     });
     try {
       final gallery = await apiService.getGallery(uri: widget.uri);
-      setState(() {
-        _gallery = gallery;
-        _loading = false;
-      });
-      // Pre-cache thumbnails and fullsize images in the background
       if (gallery != null) {
-        Future.microtask(() {
-          for (final item in gallery.items) {
-            if (item.thumb.isNotEmpty) {
-              precacheImage(CachedNetworkImageProvider(item.thumb), context);
-            }
-            if (item.fullsize.isNotEmpty) {
-              precacheImage(CachedNetworkImageProvider(item.fullsize), context);
-            }
-          }
+        ref.read(galleryCacheProvider.notifier).setGallery(gallery);
+        setState(() {
+          _loading = false;
+        });
+      } else {
+        setState(() {
+          _error = true;
+          _loading = false;
         });
       }
     } catch (e) {
@@ -67,6 +69,7 @@ class _GalleryPageState extends State<GalleryPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final gallery = ref.watch(galleryCacheProvider)[widget.uri];
     if (_loading) {
       return Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
@@ -75,15 +78,14 @@ class _GalleryPageState extends State<GalleryPage> {
         ),
       );
     }
-    if (_error || _gallery == null) {
+    if (_error || gallery == null) {
       return Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
         body: const Center(child: Text('Failed to load gallery.')),
       );
     }
-    final gallery = _gallery!;
     final isLoggedIn = widget.currentUserDid != null;
-    final galleryItems = gallery.items.where((item) => item.thumb.isNotEmpty).toList();
+    final galleryItems = gallery.items.where((item) => item.thumb?.isNotEmpty ?? false).toList();
 
     return Stack(
       children: [
@@ -113,7 +115,7 @@ class _GalleryPageState extends State<GalleryPage> {
                       isScrollControlled: true,
                       builder: (context) => CreateGalleryPage(gallery: gallery),
                     );
-                    _fetchGallery();
+                    _maybeFetchGallery();
                   },
                 ),
             ],
@@ -127,7 +129,7 @@ class _GalleryPageState extends State<GalleryPage> {
                   children: [
                     const SizedBox(height: 10),
                     Text(
-                      gallery.title.isNotEmpty ? gallery.title : 'Gallery',
+                      gallery.title?.isNotEmpty == true ? gallery.title! : 'Gallery',
                       style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(height: 10),
@@ -150,10 +152,12 @@ class _GalleryPageState extends State<GalleryPage> {
                             backgroundColor: theme.colorScheme.surfaceContainerHighest,
                             backgroundImage:
                                 gallery.creator?.avatar != null &&
-                                    gallery.creator!.avatar.isNotEmpty
+                                    gallery.creator!.avatar?.isNotEmpty == true
                                 ? null
                                 : null,
-                            child: (gallery.creator == null || gallery.creator!.avatar.isEmpty)
+                            child:
+                                (gallery.creator == null ||
+                                    (gallery.creator!.avatar?.isNotEmpty != true))
                                 ? Icon(
                                     Icons.account_circle,
                                     size: 24,
@@ -161,7 +165,7 @@ class _GalleryPageState extends State<GalleryPage> {
                                   )
                                 : ClipOval(
                                     child: AppImage(
-                                      url: gallery.creator!.avatar,
+                                      url: gallery.creator!.avatar!,
                                       width: 36,
                                       height: 36,
                                       fit: BoxFit.cover,
@@ -212,11 +216,11 @@ class _GalleryPageState extends State<GalleryPage> {
                 ),
               ),
               const SizedBox(height: 12),
-              if (gallery.description.isNotEmpty)
+              if ((gallery.description?.isNotEmpty ?? false))
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8).copyWith(bottom: 8),
                   child: FacetedText(
-                    text: gallery.description,
+                    text: gallery.description ?? '',
                     facets: gallery.facets,
                     style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface),
                     linkStyle: theme.textTheme.bodyMedium?.copyWith(

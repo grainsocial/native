@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:grain/app_theme.dart';
 import 'package:grain/models/gallery.dart';
+import 'package:grain/providers/gallery_cache_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../screens/comments_page.dart';
 
-class GalleryActionButtons extends StatelessWidget {
+class GalleryActionButtons extends ConsumerWidget {
   final Gallery gallery;
   final String? currentUserDid;
   final BuildContext parentContext;
@@ -27,16 +29,20 @@ class GalleryActionButtons extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final isFav = gallery.viewer != null && gallery.viewer!['fav'] != null;
+    final isFav = gallery.viewer != null && gallery.viewer?.fav != null;
     return isLoggedIn
         ? Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               InkWell(
                 borderRadius: BorderRadius.circular(10),
-                onTap: onFavorite ?? () {},
+                onTap:
+                    onFavorite ??
+                    () async {
+                      await ref.read(galleryCacheProvider.notifier).toggleFavorite(gallery.uri);
+                    },
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
                   child: Row(

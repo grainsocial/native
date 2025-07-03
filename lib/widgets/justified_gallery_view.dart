@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:grain/models/gallery.dart';
+import 'package:grain/models/gallery_photo.dart';
 import 'package:grain/widgets/app_image.dart';
 
 class JustifiedGalleryView extends StatelessWidget {
@@ -79,12 +79,17 @@ List<List<_JustifiedImage>> _computeRows(
   double aspectSum = 0;
   for (var i = 0; i < items.length; i++) {
     final item = items[i];
-    final imgW = item.width.toDouble();
-    final imgH = item.height.toDouble();
+    // Use aspectRatio model if available, fallback to 4:3
+    final imgW = (item.aspectRatio != null && item.aspectRatio!.width > 0)
+        ? item.aspectRatio!.width.toDouble()
+        : 4.0;
+    final imgH = (item.aspectRatio != null && item.aspectRatio!.height > 0)
+        ? item.aspectRatio!.height.toDouble()
+        : 3.0;
     final aspect = imgW / imgH;
     currentRow.add(
       _JustifiedImage(
-        thumb: item.thumb,
+        thumb: item.thumb ?? '',
         displayWidth: 0, // placeholder, will be set later
         displayHeight: 0, // placeholder, will be set later
         originalIndex: i,
@@ -99,9 +104,15 @@ List<List<_JustifiedImage>> _computeRows(
       final rowHeight = estRowHeight.clamp(80.0, maxRowHeight);
       for (var j = 0; j < currentRow.length; j++) {
         final img = items[i - currentRow.length + 1 + j];
-        final width = rowHeight * (img.width / img.height);
+        final imgW2 = (img.aspectRatio != null && img.aspectRatio!.width > 0)
+            ? img.aspectRatio!.width.toDouble()
+            : 4.0;
+        final imgH2 = (img.aspectRatio != null && img.aspectRatio!.height > 0)
+            ? img.aspectRatio!.height.toDouble()
+            : 3.0;
+        final width = rowHeight * (imgW2 / imgH2);
         currentRow[j] = _JustifiedImage(
-          thumb: img.thumb,
+          thumb: img.thumb ?? '',
           displayWidth: width,
           displayHeight: rowHeight.toDouble(),
           originalIndex: i - currentRow.length + 1 + j,

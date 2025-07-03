@@ -77,13 +77,13 @@ class _NotificationsPageState extends State<NotificationsPage> {
     return ListTile(
       leading: CircleAvatar(
         backgroundColor: theme.colorScheme.surfaceVariant,
-        backgroundImage: author.avatar.isNotEmpty ? NetworkImage(author.avatar) : null,
-        child: author.avatar.isEmpty
+        backgroundImage: (author.avatar?.isNotEmpty ?? false) ? NetworkImage(author.avatar!) : null,
+        child: (author.avatar?.isEmpty ?? true)
             ? Icon(Icons.account_circle, color: theme.iconTheme.color)
             : null,
       ),
       title: Text(
-        author.displayName.isNotEmpty ? author.displayName : '@${author.handle}',
+        (author.displayName?.isNotEmpty ?? false) ? author.displayName! : '@${author.handle}',
         style: theme.textTheme.bodyLarge,
       ),
       subtitle: Text(

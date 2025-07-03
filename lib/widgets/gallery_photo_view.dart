@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:grain/models/gallery.dart';
+import 'package:grain/models/gallery_photo.dart';
 import 'package:grain/widgets/app_image.dart';
 
 class GalleryPhotoView extends StatefulWidget {
@@ -71,13 +71,13 @@ class _GalleryPhotoViewState extends State<GalleryPhotoView> {
                   ),
                 ),
               ),
-              if (photo.alt.isNotEmpty)
+              if (photo.alt != null && photo.alt?.isNotEmpty == true)
                 Container(
                   width: double.infinity,
                   color: Colors.black.withOpacity(0.7),
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                   child: Text(
-                    photo.alt,
+                    photo.alt!,
                     style: const TextStyle(color: Colors.white, fontSize: 16),
                     textAlign: TextAlign.center,
                   ),

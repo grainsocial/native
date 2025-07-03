@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:grain/api.dart';
 import 'package:grain/models/comment.dart';
 import 'package:grain/models/gallery.dart';
+import 'package:grain/models/gallery_photo.dart';
 import 'package:grain/screens/profile_page.dart';
 import 'package:grain/utils.dart';
 import 'package:grain/widgets/app_image.dart';
@@ -169,7 +170,7 @@ class _CommentsPageState extends State<CommentsPage> {
                     padding: const EdgeInsets.fromLTRB(12, 12, 12, 100),
                     children: [
                       if (_gallery != null)
-                        Text(_gallery!.title, style: theme.textTheme.titleMedium),
+                        Text(_gallery!.title ?? '', style: theme.textTheme.titleMedium),
                       const SizedBox(height: 12),
                       _CommentsList(
                         comments: _comments,
@@ -509,7 +510,8 @@ class _CommentTile extends StatelessWidget {
                   },
                 ),
                 if (comment.focus != null &&
-                    (comment.focus!.thumb.isNotEmpty || comment.focus!.fullsize.isNotEmpty))
+                    ((comment.focus!.thumb?.isNotEmpty ?? false) ||
+                        (comment.focus!.fullsize?.isNotEmpty ?? false)))
                   Padding(
                     padding: const EdgeInsets.only(top: 8.0),
                     child: Align(
@@ -517,8 +519,12 @@ class _CommentTile extends StatelessWidget {
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 180, maxHeight: 180),
                         child: AspectRatio(
-                          aspectRatio: (comment.focus!.width > 0 && comment.focus!.height > 0)
-                              ? comment.focus!.width / comment.focus!.height
+                          aspectRatio:
+                              (comment.focus!.aspectRatio != null &&
+                                  (comment.focus!.aspectRatio!.width > 0 &&
+                                      comment.focus!.aspectRatio!.height > 0))
+                              ? comment.focus!.aspectRatio!.width /
+                                    comment.focus!.aspectRatio!.height
                               : 1.0,
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(8),
@@ -531,13 +537,12 @@ class _CommentTile extends StatelessWidget {
                                         thumb: comment.focus!.thumb,
                                         fullsize: comment.focus!.fullsize,
                                         alt: comment.focus!.alt,
-                                        width: comment.focus!.width,
-                                        height: comment.focus!.height,
+                                        aspectRatio: comment.focus!.aspectRatio,
                                       ),
                                     )
                                   : null,
                               child: AppImage(
-                                url: comment.focus!.thumb.isNotEmpty
+                                url: (comment.focus!.thumb?.isNotEmpty ?? false)
                                     ? comment.focus!.thumb
                                     : comment.focus!.fullsize,
                                 fit: BoxFit.cover,

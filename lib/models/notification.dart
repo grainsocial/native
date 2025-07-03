@@ -1,36 +1,22 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
+
 import 'profile.dart';
 
-class Notification {
-  final String uri;
-  final String cid;
-  final Profile author;
-  final Map<String, dynamic> record;
-  final String reason;
-  final String? reasonSubject;
-  final bool isRead;
-  final String indexedAt;
+part 'notification.freezed.dart';
+part 'notification.g.dart';
 
-  Notification({
-    required this.uri,
-    required this.cid,
-    required this.author,
-    required this.record,
-    required this.reason,
-    this.reasonSubject,
-    required this.isRead,
-    required this.indexedAt,
-  });
+@freezed
+class Notification with _$Notification {
+  const factory Notification({
+    required String uri,
+    required String cid,
+    required Profile author,
+    required Map<String, dynamic> record,
+    required String reason,
+    String? reasonSubject,
+    required bool isRead,
+    required String indexedAt,
+  }) = _Notification;
 
-  factory Notification.fromJson(Map<String, dynamic> json) {
-    return Notification(
-      uri: json['uri'] as String,
-      cid: json['cid'] as String,
-      author: Profile.fromJson(json['author'] as Map<String, dynamic>),
-      record: json['record'] as Map<String, dynamic>,
-      reason: json['reason'] as String,
-      reasonSubject: json['reasonSubject'] as String?,
-      isRead: json['isRead'] as bool? ?? false,
-      indexedAt: json['indexedAt'] as String,
-    );
-  }
+  factory Notification.fromJson(Map<String, dynamic> json) => _$NotificationFromJson(json);
 }

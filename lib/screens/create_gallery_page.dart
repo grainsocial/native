@@ -40,14 +40,14 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
   void initState() {
     super.initState();
     if (widget.gallery != null) {
-      _titleController.text = widget.gallery!.title;
-      _descController.text = widget.gallery!.description;
+      _titleController.text = widget.gallery?.title ?? '';
+      _descController.text = widget.gallery?.description ?? '';
       // Load existing images
       Future.microtask(() async {
         final List<GalleryImage> loadedImages = [];
         for (final item in widget.gallery!.items) {
           try {
-            final response = await HttpClient().getUrl(Uri.parse(item.thumb));
+            final response = await HttpClient().getUrl(Uri.parse(item.thumb ?? ''));
             final file = await response.close().then((res) async {
               final bytes = await consolidateHttpClientResponseBytes(res);
               final tempDir = await getTemporaryDirectory();

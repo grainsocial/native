@@ -123,7 +123,7 @@ class _ExplorePageState extends State<ExplorePage> {
       itemBuilder: (context, index) {
         final profile = results[index];
         return ListTile(
-          leading: profile.avatar.isNotEmpty
+          leading: profile.avatar?.isNotEmpty == true
               ? ClipOval(
                   child: AppImage(url: profile.avatar, width: 32, height: 32, fit: BoxFit.cover),
                 )
@@ -133,7 +133,7 @@ class _ExplorePageState extends State<ExplorePage> {
                   child: Icon(Icons.account_circle, color: theme.iconTheme.color),
                 ),
           title: Text(
-            profile.displayName.isNotEmpty ? profile.displayName : '@${profile.handle}',
+            profile.displayName?.isNotEmpty == true ? profile.displayName! : '@${profile.handle}',
             style: theme.textTheme.bodyLarge,
           ),
           subtitle: profile.handle.isNotEmpty

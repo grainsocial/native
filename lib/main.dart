@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:grain/api.dart';
 import 'package:grain/app_logger.dart';
 import 'package:grain/app_theme.dart';
@@ -23,7 +24,7 @@ class AppConfig {
 Future<void> main() async {
   await AppConfig.init();
   appLogger.i('🚀 App started');
-  runApp(const MyApp());
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends StatefulWidget {

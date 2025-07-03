@@ -1,21 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:grain/api.dart';
-import 'package:grain/models/gallery.dart';
 import 'package:grain/utils.dart';
 import 'package:grain/widgets/app_image.dart';
 import 'package:grain/widgets/gallery_action_buttons.dart';
 import 'package:grain/widgets/gallery_preview.dart';
 
+import '../providers/gallery_cache_provider.dart';
 import '../screens/gallery_page.dart';
 import '../screens/profile_page.dart';
 
-class TimelineItemWidget extends StatelessWidget {
-  final Gallery gallery;
+class TimelineItemWidget extends ConsumerWidget {
+  final String galleryUri;
   final VoidCallback? onProfileTap;
-  const TimelineItemWidget({super.key, required this.gallery, this.onProfileTap});
+  const TimelineItemWidget({super.key, required this.galleryUri, this.onProfileTap});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final gallery = ref.watch(galleryCacheProvider)[galleryUri];
+    if (gallery == null) {
+      return const SizedBox.shrink(); // or a loading/placeholder widget
+    }
     final actor = gallery.creator;
     final createdAt = gallery.createdAt;
     final theme = Theme.of(context);
@@ -42,7 +47,7 @@ class TimelineItemWidget extends StatelessWidget {
                 child: CircleAvatar(
                   radius: 18,
                   backgroundColor: theme.scaffoldBackgroundColor,
-                  child: (actor != null && actor.avatar.isNotEmpty)
+                  child: (actor != null && (actor.avatar?.isNotEmpty ?? false))
                       ? ClipOval(
                           child: AppImage(
                             url: actor.avatar,
@@ -64,8 +69,8 @@ class TimelineItemWidget extends StatelessWidget {
                   children: [
                     Flexible(
                       child: Text(
-                        actor != null && actor.displayName.isNotEmpty
-                            ? actor.displayName
+                        actor != null && (actor.displayName?.isNotEmpty ?? false)
+                            ? actor.displayName ?? ''
                             : (actor != null ? '@${actor.handle}' : ''),
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w600,
@@ -117,19 +122,19 @@ class TimelineItemWidget extends StatelessWidget {
           )
         else
           const SizedBox.shrink(),
-        if (gallery.title.isNotEmpty)
+        if (gallery.title?.isNotEmpty == true)
           Padding(
             padding: const EdgeInsets.only(top: 8, left: 8, right: 8),
             child: Text(
-              gallery.title,
+              gallery.title ?? '',
               style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
           ),
-        if (gallery.description.isNotEmpty)
+        if (gallery.description?.isNotEmpty == true)
           Padding(
             padding: const EdgeInsets.only(top: 4, left: 8, right: 8),
             child: Text(
-              gallery.description,
+              gallery.description ?? '',
               style: theme.textTheme.bodySmall?.copyWith(
                 fontSize: 13,
                 color: theme.colorScheme.onSurfaceVariant,

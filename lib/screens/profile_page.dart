@@ -108,7 +108,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
     if ((profile?.description ?? '').isNotEmpty) {
       try {
         final desc = profile != null ? profile.description : '';
-        descriptionFacets = await _extractFacets(desc);
+        descriptionFacets = await _extractFacets(desc ?? '');
       } catch (_) {
         descriptionFacets = null;
       }
@@ -325,7 +325,8 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                               if (_galleries.isNotEmpty && index < _galleries.length) {
                                 final gallery = _galleries[index];
                                 final hasPhoto =
-                                    gallery.items.isNotEmpty && gallery.items[0].thumb.isNotEmpty;
+                                    gallery.items.isNotEmpty &&
+                                    (gallery.items[0].thumb?.isNotEmpty ?? false);
                                 return GestureDetector(
                                   onTap: () {
                                     if (gallery.uri.isNotEmpty) {
@@ -348,7 +349,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                                         ? AppImage(url: gallery.items[0].thumb, fit: BoxFit.cover)
                                         : Center(
                                             child: Text(
-                                              gallery.title,
+                                              gallery.title ?? '',
                                               style: TextStyle(
                                                 fontSize: 12,
                                                 color: theme.colorScheme.onSurfaceVariant,
@@ -402,7 +403,8 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                               itemBuilder: (context, index) {
                                 final gallery = _favs[index];
                                 final hasPhoto =
-                                    gallery.items.isNotEmpty && gallery.items[0].thumb.isNotEmpty;
+                                    gallery.items.isNotEmpty &&
+                                    (gallery.items[0].thumb?.isNotEmpty ?? false);
                                 return GestureDetector(
                                   onTap: () {
                                     if (gallery.uri.isNotEmpty) {
@@ -425,7 +427,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                                         ? AppImage(url: gallery.items[0].thumb, fit: BoxFit.cover)
                                         : Center(
                                             child: Text(
-                                              gallery.title,
+                                              gallery.title ?? '',
                                               style: TextStyle(
                                                 fontSize: 12,
                                                 color: theme.colorScheme.onSurfaceVariant,
