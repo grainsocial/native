@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:grain/api.dart';
+import 'package:grain/screens/hashtag_page.dart';
 import 'package:grain/utils.dart';
 import 'package:grain/widgets/app_image.dart';
+import 'package:grain/widgets/faceted_text.dart';
 import 'package:grain/widgets/gallery_action_buttons.dart';
 import 'package:grain/widgets/gallery_preview.dart';
 
@@ -133,11 +135,22 @@ class TimelineItemWidget extends ConsumerWidget {
         if (gallery.description?.isNotEmpty == true)
           Padding(
             padding: const EdgeInsets.only(top: 4, left: 8, right: 8),
-            child: Text(
-              gallery.description ?? '',
-              style: theme.textTheme.bodySmall?.copyWith(
-                fontSize: 13,
-                color: theme.colorScheme.onSurfaceVariant,
+            child: FacetedText(
+              text: gallery.description ?? '',
+              facets: gallery.facets,
+              style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              linkStyle: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.w600,
+              ),
+              onMentionTap: (did) {
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (context) => ProfilePage(did: did)));
+              },
+              onTagTap: (tag) => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => HashtagPage(hashtag: tag)),
               ),
             ),
           ),

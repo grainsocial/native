@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:grain/api.dart';
 import 'package:grain/app_theme.dart';
 import 'package:grain/models/gallery.dart';
+import 'package:grain/screens/hashtag_page.dart';
 import 'package:grain/widgets/app_image.dart';
 import 'package:grain/widgets/faceted_text.dart';
 
@@ -245,9 +246,10 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                                   onLinkTap: (url) {
                                     // TODO: Implement WebViewPage navigation
                                   },
-                                  onTagTap: (tag) {
-                                    // TODO: Implement hashtag navigation
-                                  },
+                                  onTagTap: (tag) => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => HashtagPage(hashtag: tag)),
+                                  ),
                                   linkStyle: TextStyle(
                                     color: Theme.of(context).colorScheme.primary,
                                     fontWeight: FontWeight.w600,

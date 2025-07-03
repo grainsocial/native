@@ -4,6 +4,7 @@ import 'package:grain/api.dart';
 import 'package:grain/models/gallery_photo.dart';
 import 'package:grain/providers/gallery_cache_provider.dart';
 import 'package:grain/screens/create_gallery_page.dart';
+import 'package:grain/screens/hashtag_page.dart';
 import 'package:grain/screens/profile_page.dart';
 import 'package:grain/widgets/app_image.dart';
 import 'package:grain/widgets/faceted_text.dart';
@@ -237,9 +238,10 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
                     onLinkTap: (url) {
                       // TODO: Implement or use your WebViewPage
                     },
-                    onTagTap: (tag) {
-                      // TODO: Implement hashtag navigation
-                    },
+                    onTagTap: (tag) => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => HashtagPage(hashtag: tag)),
+                    ),
                   ),
                 ),
               if (isLoggedIn)

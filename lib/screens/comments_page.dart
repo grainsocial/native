@@ -4,6 +4,7 @@ import 'package:grain/api.dart';
 import 'package:grain/models/comment.dart';
 import 'package:grain/models/gallery.dart';
 import 'package:grain/models/gallery_photo.dart';
+import 'package:grain/screens/hashtag_page.dart';
 import 'package:grain/screens/profile_page.dart';
 import 'package:grain/utils.dart';
 import 'package:grain/widgets/app_image.dart';
@@ -505,9 +506,10 @@ class _CommentTile extends StatelessWidget {
                     //   context,
                     // ).push(MaterialPageRoute(builder: (context) => WebViewPage(url: url)));
                   },
-                  onTagTap: (tag) {
-                    // TODO: Implement hashtag navigation
-                  },
+                  onTagTap: (tag) => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => HashtagPage(hashtag: tag)),
+                  ),
                 ),
                 if (comment.focus != null &&
                     ((comment.focus!.thumb?.isNotEmpty ?? false) ||
