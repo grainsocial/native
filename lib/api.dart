@@ -146,7 +146,7 @@ class ApiService {
     appLogger.i('Fetching gallery thread for uri: $uri');
     final response = await http.get(
       Uri.parse('$_apiUrl/xrpc/social.grain.gallery.getGalleryThread?uri=$uri'),
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'application/json', 'Authorization': "Bearer $_accessToken"},
     );
     if (response.statusCode != 200) {
       appLogger.w('Failed to fetch gallery thread: \\${response.statusCode} \\${response.body}');

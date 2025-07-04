@@ -33,14 +33,16 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
     _maybeFetchGallery();
   }
 
-  Future<void> _maybeFetchGallery() async {
-    final cached = ref.read(galleryCacheProvider)[widget.uri];
-    if (cached != null) {
-      setState(() {
-        _loading = false;
-        _error = false;
-      });
-      return;
+  Future<void> _maybeFetchGallery({bool forceRefresh = false}) async {
+    if (!forceRefresh) {
+      final cached = ref.read(galleryCacheProvider)[widget.uri];
+      if (cached != null) {
+        setState(() {
+          _loading = false;
+          _error = false;
+        });
+        return;
+      }
     }
     setState(() {
       _loading = true;
@@ -121,62 +123,25 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
                 ),
             ],
           ),
-          body: ListView(
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 10),
-                    Text(
-                      gallery.title?.isNotEmpty == true ? gallery.title! : 'Gallery',
-                      style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        GestureDetector(
-                          onTap: gallery.creator != null && gallery.creator!.did.isNotEmpty
-                              ? () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          ProfilePage(did: gallery.creator!.did, showAppBar: true),
-                                    ),
-                                  );
-                                }
-                              : null,
-                          child: CircleAvatar(
-                            radius: 18,
-                            backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                            backgroundImage:
-                                gallery.creator?.avatar != null &&
-                                    gallery.creator!.avatar?.isNotEmpty == true
-                                ? null
-                                : null,
-                            child:
-                                (gallery.creator == null ||
-                                    (gallery.creator!.avatar?.isNotEmpty != true))
-                                ? Icon(
-                                    Icons.account_circle,
-                                    size: 24,
-                                    color: theme.colorScheme.onSurface.withOpacity(0.4),
-                                  )
-                                : ClipOval(
-                                    child: AppImage(
-                                      url: gallery.creator!.avatar!,
-                                      width: 36,
-                                      height: 36,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: GestureDetector(
+          body: RefreshIndicator(
+            onRefresh: () => _maybeFetchGallery(forceRefresh: true),
+            child: ListView(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 10),
+                      Text(
+                        gallery.title?.isNotEmpty == true ? gallery.title! : 'Gallery',
+                        style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          GestureDetector(
                             onTap: gallery.creator != null && gallery.creator!.did.isNotEmpty
                                 ? () {
                                     Navigator.of(context).push(
@@ -189,90 +154,134 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
                                     );
                                   }
                                 : null,
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Text(
-                                  gallery.creator?.displayName ?? '',
-                                  style: theme.textTheme.bodyLarge?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                if ((gallery.creator?.displayName ?? '').isNotEmpty &&
-                                    (gallery.creator?.handle ?? '').isNotEmpty)
-                                  const SizedBox(width: 8),
-                                Text(
-                                  '@${gallery.creator?.handle ?? ''}',
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: theme.hintColor,
-                                  ),
-                                ),
-                              ],
+                            child: CircleAvatar(
+                              radius: 18,
+                              backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                              backgroundImage:
+                                  gallery.creator?.avatar != null &&
+                                      gallery.creator!.avatar?.isNotEmpty == true
+                                  ? null
+                                  : null,
+                              child:
+                                  (gallery.creator == null ||
+                                      (gallery.creator!.avatar?.isNotEmpty != true))
+                                  ? Icon(
+                                      Icons.account_circle,
+                                      size: 24,
+                                      color: theme.colorScheme.onSurface.withOpacity(0.4),
+                                    )
+                                  : ClipOval(
+                                      child: AppImage(
+                                        url: gallery.creator!.avatar!,
+                                        width: 36,
+                                        height: 36,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-              if ((gallery.description?.isNotEmpty ?? false))
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8).copyWith(bottom: 8),
-                  child: FacetedText(
-                    text: gallery.description ?? '',
-                    facets: gallery.facets,
-                    style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface),
-                    linkStyle: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    onMentionTap: (did) {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => ProfilePage(did: did, showAppBar: true),
-                        ),
-                      );
-                    },
-                    onLinkTap: (url) {
-                      // TODO: Implement or use your WebViewPage
-                    },
-                    onTagTap: (tag) => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => HashtagPage(hashtag: tag)),
-                    ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: gallery.creator != null && gallery.creator!.did.isNotEmpty
+                                  ? () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (context) => ProfilePage(
+                                            did: gallery.creator!.did,
+                                            showAppBar: true,
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  : null,
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    gallery.creator?.displayName ?? '',
+                                    style: theme.textTheme.bodyLarge?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  if ((gallery.creator?.displayName ?? '').isNotEmpty &&
+                                      (gallery.creator?.handle ?? '').isNotEmpty)
+                                    const SizedBox(width: 8),
+                                  Text(
+                                    '@${gallery.creator?.handle ?? ''}',
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: theme.hintColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-              if (isLoggedIn)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: GalleryActionButtons(
-                    gallery: gallery,
-                    parentContext: context,
-                    currentUserDid: widget.currentUserDid,
-                    isLoggedIn: isLoggedIn,
+                const SizedBox(height: 12),
+                if ((gallery.description?.isNotEmpty ?? false))
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8).copyWith(bottom: 8),
+                    child: FacetedText(
+                      text: gallery.description ?? '',
+                      facets: gallery.facets,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurface,
+                      ),
+                      linkStyle: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      onMentionTap: (did) {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => ProfilePage(did: did, showAppBar: true),
+                          ),
+                        );
+                      },
+                      onLinkTap: (url) {
+                        // TODO: Implement or use your WebViewPage
+                      },
+                      onTagTap: (tag) => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => HashtagPage(hashtag: tag)),
+                      ),
+                    ),
                   ),
-                ),
-              const SizedBox(height: 8),
-              // Gallery items grid (edge-to-edge)
-              if (galleryItems.isNotEmpty)
-                JustifiedGalleryView(
-                  items: galleryItems,
-                  onImageTap: (index) {
-                    if (index >= 0 && index < galleryItems.length) {
-                      setState(() {
-                        _selectedPhoto = galleryItems[index];
-                        _selectedPhotoIndex = index;
-                      });
-                    }
-                  },
-                ),
-              if (galleryItems.isEmpty)
-                Center(
-                  child: Text('No photos in this gallery.', style: theme.textTheme.bodyMedium),
-                ),
-            ],
+                if (isLoggedIn)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: GalleryActionButtons(
+                      gallery: gallery,
+                      parentContext: context,
+                      currentUserDid: widget.currentUserDid,
+                      isLoggedIn: isLoggedIn,
+                    ),
+                  ),
+                const SizedBox(height: 8),
+                // Gallery items grid (edge-to-edge)
+                if (galleryItems.isNotEmpty)
+                  JustifiedGalleryView(
+                    items: galleryItems,
+                    onImageTap: (index) {
+                      if (index >= 0 && index < galleryItems.length) {
+                        setState(() {
+                          _selectedPhoto = galleryItems[index];
+                          _selectedPhotoIndex = index;
+                        });
+                      }
+                    },
+                  ),
+                if (galleryItems.isEmpty)
+                  Center(
+                    child: Text('No photos in this gallery.', style: theme.textTheme.bodyMedium),
+                  ),
+              ],
+            ),
           ),
         ),
         if (_selectedPhoto != null && _selectedPhotoIndex != null)

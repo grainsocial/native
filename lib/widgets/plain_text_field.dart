@@ -36,37 +36,47 @@ class PlainTextField extends StatelessWidget {
         const SizedBox(height: 6),
         Container(
           decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerHighest,
+            color: theme.brightness == Brightness.dark ? Colors.grey[850] : Colors.grey[200],
             borderRadius: BorderRadius.circular(8),
           ),
           child: Focus(
             child: Builder(
               builder: (context) {
                 final isFocused = Focus.of(context).hasFocus;
-                return AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: isFocused ? theme.colorScheme.primary : theme.dividerColor,
-                      width: isFocused ? 2 : 1,
+                return Stack(
+                  children: [
+                    // TextField with internal padding
+                    TextField(
+                      controller: controller,
+                      maxLines: maxLines,
+                      enabled: enabled,
+                      keyboardType: keyboardType,
+                      onChanged: onChanged,
+                      style: theme.textTheme.bodyMedium?.copyWith(fontSize: 15),
+                      decoration: InputDecoration(
+                        hintText: hintText,
+                        hintStyle: theme.textTheme.bodyMedium?.copyWith(color: theme.hintColor),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        isDense: true,
+                      ),
                     ),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: TextField(
-                    controller: controller,
-                    maxLines: maxLines,
-                    enabled: enabled,
-                    keyboardType: keyboardType,
-                    onChanged: onChanged,
-                    style: theme.textTheme.bodyMedium?.copyWith(fontSize: 15),
-                    decoration: InputDecoration(
-                      hintText: hintText,
-                      hintStyle: theme.textTheme.bodyMedium?.copyWith(color: theme.hintColor),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                      isDense: true,
+                    // Border overlay
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: isFocused ? theme.colorScheme.primary : theme.dividerColor,
+                              width: isFocused ? 2 : 0,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 );
               },
             ),

@@ -1,144 +1,55 @@
-import 'package:bluesky_text/bluesky_text.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:grain/api.dart';
 import 'package:grain/models/comment.dart';
-import 'package:grain/models/gallery.dart';
 import 'package:grain/models/gallery_photo.dart';
+import 'package:grain/providers/gallery_thread_cache_provider.dart';
 import 'package:grain/screens/hashtag_page.dart';
 import 'package:grain/screens/profile_page.dart';
 import 'package:grain/utils.dart';
+import 'package:grain/widgets/app_button.dart';
 import 'package:grain/widgets/app_image.dart';
 import 'package:grain/widgets/faceted_text.dart';
 import 'package:grain/widgets/gallery_photo_view.dart';
 
-class CommentsPage extends StatefulWidget {
+class CommentsPage extends ConsumerStatefulWidget {
   final String galleryUri;
   const CommentsPage({super.key, required this.galleryUri});
 
   @override
-  State<CommentsPage> createState() => _CommentsPageState();
+  ConsumerState<CommentsPage> createState() => _CommentsPageState();
 }
 
-class _CommentsPageState extends State<CommentsPage> {
-  bool _loading = true;
-  bool _error = false;
-  Gallery? _gallery;
-  List<Comment> _comments = [];
+class _CommentsPageState extends ConsumerState<CommentsPage> {
   GalleryPhoto? _selectedPhoto;
-  bool _showInputBar = false;
-  final TextEditingController _replyController = TextEditingController();
-  final FocusNode _replyFocusNode = FocusNode();
-  String? _replyTo;
 
-  @override
-  void initState() {
-    super.initState();
-    _fetchThread();
-  }
-
-  @override
-  void dispose() {
-    _replyController.dispose();
-    _replyFocusNode.dispose();
-    super.dispose();
-  }
-
-  Future<void> _fetchThread() async {
-    setState(() {
-      _loading = true;
-      _error = false;
-    });
-    try {
-      final thread = await apiService.getGalleryThread(uri: widget.galleryUri);
-      setState(() {
-        _gallery = thread?.gallery;
-        _comments = thread?.comments ?? [];
-        _loading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _error = true;
-        _loading = false;
-      });
-    }
-  }
-
-  void _showReplyBar({String? replyTo, String? mention}) {
-    setState(() {
-      _showInputBar = true;
-      _replyTo = replyTo;
-    });
-    if (mention != null && mention.isNotEmpty) {
-      _replyController.text = mention;
-      _replyController.selection = TextSelection.fromPosition(
-        TextPosition(offset: _replyController.text.length),
-      );
-    } else {
-      _replyController.clear();
-    }
-    Future.delayed(const Duration(milliseconds: 100), () {
-      if (mounted) FocusScope.of(context).requestFocus(_replyFocusNode);
-    });
-  }
-
-  void _hideReplyBar() {
-    setState(() {
-      _showInputBar = false;
-      _replyController.clear();
-      _replyTo = null;
-    });
-    FocusScope.of(context).unfocus();
-  }
-
-  Future<void> handleDeleteComment(Comment comment) async {
-    final confirmed = await showDialog<bool>(
+  void _showCommentInputSheet(
+    BuildContext context,
+    WidgetRef ref, {
+    String? replyTo,
+    String? mention,
+  }) {
+    showModalBottomSheet(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete Comment'),
-        content: const Text('Are you sure you want to delete this comment?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Delete')),
-        ],
+      isScrollControlled: true,
+      builder: (sheetContext) => CommentInputSheet(
+        initialText: mention ?? '',
+        onSubmit: (text) async {
+          await ref
+              .read(galleryThreadProvider(widget.galleryUri).notifier)
+              .createComment(text: text.trim(), replyTo: replyTo);
+          if (!sheetContext.mounted) {
+            return;
+          }
+          Navigator.of(sheetContext).pop();
+        },
       ),
     );
-    if (confirmed != true) return;
-    final scaffold = ScaffoldMessenger.of(context);
-    scaffold.removeCurrentSnackBar();
-    scaffold.showSnackBar(const SnackBar(content: Text('Deleting comment...')));
-    final deleted = await apiService.deleteRecord(comment.uri);
-    if (!deleted) {
-      scaffold.removeCurrentSnackBar();
-      scaffold.showSnackBar(const SnackBar(content: Text('Failed to delete comment.')));
-      return;
-    }
-    final expectedCount = _comments.length - 1;
-    final thread = await apiService.pollGalleryThreadComments(
-      galleryUri: widget.galleryUri,
-      expectedCount: expectedCount,
-    );
-    if (thread != null) {
-      setState(() {
-        _gallery = thread.gallery;
-        _comments = thread.comments;
-      });
-    } else {
-      await _fetchThread();
-    }
-    scaffold.removeCurrentSnackBar();
-    scaffold.showSnackBar(const SnackBar(content: Text('Comment deleted.')));
-  }
-
-  // Extract facets using the async BlueskyText/entities/toFacets pattern
-  Future<List<Map<String, dynamic>>> _extractFacets(String text) async {
-    final blueskyText = BlueskyText(text);
-    final entities = blueskyText.entities;
-    final facets = await entities.toFacets();
-    return List<Map<String, dynamic>>.from(facets);
   }
 
   @override
   Widget build(BuildContext context) {
+    final threadState = ref.watch(galleryThreadProvider(widget.galleryUri));
     final theme = Theme.of(context);
     return Stack(
       children: [
@@ -155,194 +66,147 @@ class _CommentsPageState extends State<CommentsPage> {
           ),
           body: GestureDetector(
             behavior: HitTestBehavior.translucent,
-            onTap: () {
-              if (_showInputBar) _hideReplyBar();
-            },
-            child: _loading
+            child: threadState.loading
                 ? Center(
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
                       color: theme.colorScheme.primary,
                     ),
                   )
-                : _error
-                ? Center(child: Text('Failed to load comments.', style: theme.textTheme.bodyMedium))
-                : ListView(
-                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 100),
-                    children: [
-                      if (_gallery != null)
-                        Text(_gallery!.title ?? '', style: theme.textTheme.titleMedium),
-                      const SizedBox(height: 12),
-                      _CommentsList(
-                        comments: _comments,
-                        onPhotoTap: (photo) {
-                          setState(() {
-                            _selectedPhoto = photo;
-                          });
-                        },
-                        onReply: (replyTo, {mention}) =>
-                            _showReplyBar(replyTo: replyTo, mention: mention),
-                        onDelete: handleDeleteComment,
-                      ),
-                    ],
-                  ),
-          ),
-          bottomNavigationBar: _showInputBar
-              ? AnimatedPadding(
-                  duration: const Duration(milliseconds: 150),
-                  curve: Curves.easeOut,
-                  padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-                  child: Builder(
-                    builder: (context) {
-                      final keyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
-                      return Padding(
-                        padding: EdgeInsets.only(bottom: keyboardOpen ? 0 : 12),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Divider(height: 1, thickness: 1, color: theme.dividerColor),
-                            Container(
-                              color: theme.colorScheme.surfaceContainer,
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Expanded(
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: theme.colorScheme.surfaceContainerHighest
-                                            .withOpacity(0.95),
-                                        borderRadius: BorderRadius.circular(18),
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 18,
-                                        vertical: 12,
-                                      ),
-                                      child: ConstrainedBox(
-                                        constraints: const BoxConstraints(
-                                          minHeight: 40,
-                                          maxHeight: 120,
-                                        ),
-                                        child: Scrollbar(
-                                          child: TextField(
-                                            controller: _replyController,
-                                            focusNode: _replyFocusNode,
-                                            autofocus: true,
-                                            minLines: 1,
-                                            maxLines: 5,
-                                            textInputAction: TextInputAction.newline,
-                                            decoration: const InputDecoration(
-                                              hintText: 'Write a reply...',
-                                              border: InputBorder.none,
-                                              isCollapsed: true,
-                                            ),
-                                            style: theme.textTheme.bodyLarge,
-                                            onSubmitted: (value) async {
-                                              if (value.trim().isEmpty) return;
-                                              final text = value.trim();
-                                              final facets = await _extractFacets(text);
-                                              final uri = await apiService.createComment(
-                                                text: text,
-                                                subject: widget.galleryUri,
-                                                replyTo: _replyTo,
-                                                facets: facets,
-                                              );
-                                              if (uri != null) {
-                                                final thread = await apiService
-                                                    .pollGalleryThreadComments(
-                                                      galleryUri: widget.galleryUri,
-                                                      expectedCount: _comments.length + 1,
-                                                    );
-                                                if (thread != null) {
-                                                  setState(() {
-                                                    _gallery = thread.gallery;
-                                                    _comments = thread.comments;
-                                                  });
-                                                } else {
-                                                  await _fetchThread();
-                                                }
-                                              }
-                                              _hideReplyBar();
-                                            },
-                                          ),
-                                        ),
-                                      ),
-                                    ),
+                : threadState.error
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text('Failed to load comments.', style: theme.textTheme.bodyMedium),
+                        if (threadState.errorMessage != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: Text(
+                              threadState.errorMessage!,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.error,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () => ref
+                              .read(galleryThreadProvider(widget.galleryUri).notifier)
+                              .fetchThread(),
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  )
+                : RefreshIndicator(
+                    onRefresh: () async {
+                      await ref.read(galleryThreadProvider(widget.galleryUri).notifier).fetchThread();
+                    },
+                    child: ListView(
+                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 100),
+                      children: [
+                        if (threadState.gallery != null)
+                          Text(threadState.gallery!.title ?? '', style: theme.textTheme.titleMedium),
+                        const SizedBox(height: 12),
+                        _CommentsList(
+                          comments: threadState.comments,
+                          onPhotoTap: (photo) {
+                            setState(() => _selectedPhoto = photo);
+                          },
+                          onReply: (replyTo, {mention}) => _showCommentInputSheet(
+                            context,
+                            ref,
+                            replyTo: replyTo,
+                            mention: mention,
+                          ),
+                          onDelete: (comment) async {
+                            final confirmed = await showDialog<bool>(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                title: const Text('Delete Comment'),
+                                content: const Text('Are you sure you want to delete this comment?'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.of(ctx).pop(false),
+                                    child: const Text('Cancel'),
                                   ),
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    margin: const EdgeInsets.only(right: 10, bottom: 8),
-                                    decoration: BoxDecoration(
-                                      color: theme.colorScheme.primary,
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                    child: IconButton(
-                                      icon: Icon(Icons.send, color: theme.colorScheme.onPrimary),
-                                      onPressed: () async {
-                                        final value = _replyController.text.trim();
-                                        if (value.isEmpty) return;
-                                        final facets = await _extractFacets(value);
-                                        final uri = await apiService.createComment(
-                                          text: value,
-                                          subject: widget.galleryUri,
-                                          replyTo: _replyTo,
-                                          facets: facets,
-                                        );
-                                        if (uri != null) {
-                                          final thread = await apiService.pollGalleryThreadComments(
-                                            galleryUri: widget.galleryUri,
-                                            expectedCount: _comments.length + 1,
-                                          );
-                                          if (thread != null) {
-                                            setState(() {
-                                              _gallery = thread.gallery;
-                                              _comments = thread.comments;
-                                            });
-                                          } else {
-                                            await _fetchThread();
-                                          }
-                                        }
-                                        _hideReplyBar();
-                                      },
-                                    ),
+                                  TextButton(
+                                    onPressed: () => Navigator.of(ctx).pop(true),
+                                    child: const Text('Delete'),
                                   ),
                                 ],
                               ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                )
-              : Container(
-                  color: theme.colorScheme.surface,
-                  child: SafeArea(
-                    child: GestureDetector(
-                      onTap: _showReplyBar,
-                      child: Container(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                        child: Container(
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(22),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.reply, color: theme.iconTheme.color, size: 20),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Add a reply...',
-                                style: theme.textTheme.bodyMedium?.copyWith(color: theme.hintColor),
+                            );
+                            if (confirmed != true) return;
+                            if (!context.mounted) return;
+                            // Inline loading SnackBar
+                            ScaffoldMessenger.of(context).removeCurrentSnackBar();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Row(
+                                  children: [
+                                    const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    const Text('Deleting comment...'),
+                                  ],
+                                ),
+                                duration: const Duration(minutes: 1),
                               ),
-                            ],
-                          ),
+                            );
+
+                            final deleted = await ref
+                                .read(galleryThreadProvider(widget.galleryUri).notifier)
+                                .deleteComment(comment);
+
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).removeCurrentSnackBar();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  deleted ? 'Comment deleted.' : 'Failed to delete comment.',
+                                ),
+                              ),
+                            );
+                          },
                         ),
-                      ),
+                      ],
+                    ),
+                  ),
+          ),
+          bottomNavigationBar: Container(
+            color: theme.colorScheme.surface,
+            child: SafeArea(
+              child: GestureDetector(
+                onTap: () => _showCommentInputSheet(context, ref),
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: Container(
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(22),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.reply, color: theme.iconTheme.color, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Add a reply...',
+                          style: theme.textTheme.bodyMedium?.copyWith(color: theme.hintColor),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-          // Show photo view overlay if needed
+              ),
+            ),
+          ),
           extendBody: true,
           extendBodyBehindAppBar: false,
         ),
@@ -355,6 +219,96 @@ class _CommentsPageState extends State<CommentsPage> {
             ),
           ),
       ],
+    );
+  }
+}
+
+class CommentInputSheet extends StatefulWidget {
+  final String initialText;
+  final Future<void> Function(String text) onSubmit;
+  const CommentInputSheet({super.key, this.initialText = '', required this.onSubmit});
+
+  @override
+  State<CommentInputSheet> createState() => _CommentInputSheetState();
+}
+
+class _CommentInputSheetState extends State<CommentInputSheet> {
+  late TextEditingController _controller;
+  bool _posting = false;
+  String _currentText = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialText);
+    _currentText = widget.initialText;
+    _controller.addListener(_onTextChanged);
+  }
+
+  void _onTextChanged() {
+    if (_currentText != _controller.text) {
+      setState(() {
+        _currentText = _controller.text;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_onTextChanged);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+        left: 16,
+        right: 16,
+        top: 16,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              TextButton(
+                onPressed: _posting ? null : () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              AppButton(
+                borderRadius: 22,
+                label: 'Post',
+                loading: _posting,
+                onPressed: !_posting && _currentText.trim().isNotEmpty
+                    ? () async {
+                        setState(() => _posting = true);
+                        await widget.onSubmit(_currentText.trim());
+                      }
+                    : null,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _controller,
+            minLines: 2,
+            maxLines: 6,
+            autofocus: true,
+            decoration: const InputDecoration(
+              hintText: 'Write your comment...',
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              disabledBorder: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -583,8 +537,10 @@ class _CommentTile extends StatelessWidget {
                           ),
                         ),
                       ),
-                    if (comment.author['did'] == (apiService.currentUser?.did ?? '')) ...[
+                    if (comment.replyTo == null &&
+                        comment.author['did'] == (apiService.currentUser?.did ?? ''))
                       const SizedBox(width: 16),
+                    if (comment.author['did'] == (apiService.currentUser?.did ?? ''))
                       TextButton(
                         style: TextButton.styleFrom(
                           padding: EdgeInsets.zero,
@@ -602,7 +558,6 @@ class _CommentTile extends StatelessWidget {
                           ),
                         ),
                       ),
-                    ],
                   ],
                 ),
               ],

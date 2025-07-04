@@ -195,8 +195,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                                   // Follow/Unfollow button
                                   if (profile.did != apiService.currentUser?.did)
                                     SizedBox(
-                                      height: 28,
                                       child: AppButton(
+                                        size: AppButtonSize.small,
                                         variant: profile.viewer?.following?.isNotEmpty == true
                                             ? AppButtonVariant.secondary
                                             : AppButtonVariant.primary,
@@ -208,11 +208,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                                                 apiService.currentUser?.did,
                                               );
                                         },
-                                        borderRadius: 8,
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 14,
-                                          vertical: 0,
-                                        ),
                                         label: (profile.viewer?.following?.isNotEmpty == true)
                                             ? 'Following'
                                             : 'Follow',

@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 
 enum AppButtonVariant { primary, secondary }
 
+enum AppButtonSize { normal, small }
+
 class AppButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
   final bool loading;
   final AppButtonVariant variant;
+  final AppButtonSize size;
   final IconData? icon;
   final double height;
   final double borderRadius;
@@ -19,6 +22,7 @@ class AppButton extends StatelessWidget {
     this.onPressed,
     this.loading = false,
     this.variant = AppButtonVariant.primary,
+    this.size = AppButtonSize.normal,
     this.icon,
     this.height = 44,
     this.borderRadius = 6,
@@ -36,8 +40,17 @@ class AppButton extends StatelessWidget {
     final Color primaryText = theme.colorScheme.onPrimary;
     final bool isPrimary = variant == AppButtonVariant.primary;
 
+    final double resolvedHeight = size == AppButtonSize.small ? 32 : height;
+    final double resolvedFontSize = size == AppButtonSize.small ? 14 : fontSize;
+    final double resolvedBorderRadius = size == AppButtonSize.small ? 5 : borderRadius;
+    final EdgeInsetsGeometry resolvedPadding =
+        padding ??
+        (size == AppButtonSize.small
+            ? const EdgeInsets.symmetric(horizontal: 14, vertical: 0)
+            : const EdgeInsets.symmetric(horizontal: 16));
+
     return SizedBox(
-      height: height,
+      height: resolvedHeight,
       child: ElevatedButton(
         onPressed: loading ? null : onPressed,
         style: ElevatedButton.styleFrom(
@@ -45,13 +58,13 @@ class AppButton extends StatelessWidget {
           foregroundColor: isPrimary ? primaryText : secondaryText,
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(borderRadius),
+            borderRadius: BorderRadius.circular(resolvedBorderRadius),
             side: isPrimary ? BorderSide.none : BorderSide(color: secondaryBorder, width: 1),
           ),
-          padding: padding ?? const EdgeInsets.symmetric(horizontal: 16),
+          padding: resolvedPadding,
           textStyle: theme.textTheme.labelLarge?.copyWith(
             fontWeight: FontWeight.w600,
-            fontSize: fontSize,
+            fontSize: resolvedFontSize,
           ),
         ),
         child: loading
@@ -74,8 +87,9 @@ class AppButton extends StatelessWidget {
                   Text(
                     label,
                     style: theme.textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      fontSize: fontSize,
+                      color: isPrimary ? primaryText : secondaryText,
+                      fontWeight: FontWeight.w700,
+                      fontSize: resolvedFontSize,
                     ),
                   ),
                 ],

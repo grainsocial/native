@@ -33,14 +33,20 @@ class ProfileCache extends _$ProfileCache {
       // Unfollow
       final success = await apiService.deleteRecord(followUri);
       if (success) {
-        final updatedProfile = profile.copyWith(viewer: viewer?.copyWith(following: null));
+        final updatedProfile = profile.copyWith(
+          viewer: viewer?.copyWith(following: null),
+          followersCount: (profile.followersCount ?? 1) - 1,
+        );
         state = {...state, followeeDid: updatedProfile};
       }
     } else {
       // Follow
       final newFollowUri = await apiService.createFollow(followeeDid: followeeDid);
       if (newFollowUri != null) {
-        final updatedProfile = profile.copyWith(viewer: viewer?.copyWith(following: newFollowUri));
+        final updatedProfile = profile.copyWith(
+          viewer: viewer?.copyWith(following: newFollowUri),
+          followersCount: (profile.followersCount ?? 0) + 1,
+        );
         state = {...state, followeeDid: updatedProfile};
       }
     }
