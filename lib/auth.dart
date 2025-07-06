@@ -81,6 +81,16 @@ class Auth {
     }
     return session;
   }
+
+  Future<void> clearSession() async {
+    // Remove session from secure storage
+    await _storage.delete(key: 'atproto_session');
+    // Remove access token from secure storage and memory
+    await apiService.setToken(null);
+    // Optionally clear any in-memory session/user data
+    apiService.currentUser = null;
+    // If you add a session property to ApiService, clear it here as well
+  }
 }
 
 final auth = Auth();

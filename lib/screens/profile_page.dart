@@ -138,8 +138,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
     if (_loading) {
       return Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        body: const Center(
-          child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primaryColor),
+        body: Center(
+          child: CircularProgressIndicator(strokeWidth: 2, color: theme.colorScheme.primary),
         ),
       );
     }
@@ -319,10 +319,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                   children: [
                     // Galleries tab, edge-to-edge grid
                     _galleriesLoading
-                        ? const Center(
+                        ? Center(
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: AppTheme.primaryColor,
+                              color: theme.colorScheme.primary,
                             ),
                           )
                         : _galleries.isEmpty

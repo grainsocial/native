@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:grain/api.dart';
 import 'package:grain/app_logger.dart';
 import 'package:grain/app_theme.dart';
+import 'package:grain/auth.dart';
 import 'package:grain/screens/home_page.dart';
 import 'package:grain/screens/splash_page.dart';
 
@@ -67,7 +68,8 @@ class _MyAppState extends State<MyApp> {
     await apiService.fetchCurrentUser();
   }
 
-  void handleSignOut() {
+  void handleSignOut() async {
+    await auth.clearSession(); // Clear session data
     setState(() {
       isSignedIn = false;
     });
@@ -75,19 +77,24 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    Widget home;
     if (_loading) {
-      return const MaterialApp(
-        home: Scaffold(body: Center(child: CircularProgressIndicator())),
+      home = Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primaryColor),
+        ),
       );
+    } else {
+      home = isSignedIn
+          ? MyHomePage(title: 'Grain', onSignOut: handleSignOut)
+          : SplashPage(onSignIn: handleSignIn);
     }
     return MaterialApp(
       title: 'Grain',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
-      home: isSignedIn
-          ? MyHomePage(title: 'Grain', onSignOut: handleSignOut)
-          : SplashPage(onSignIn: handleSignIn),
+      home: home,
     );
   }
 }

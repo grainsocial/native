@@ -76,9 +76,7 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
     if (_loading) {
       return Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
-        body: const Center(
-          child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF0EA5E9)),
-        ),
+        body: Center(child: CircularProgressIndicator(strokeWidth: 2, color: theme.primaryColor)),
       );
     }
     if (_error || gallery == null) {
