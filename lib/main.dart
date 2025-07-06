@@ -23,6 +23,7 @@ class AppConfig {
 
 Future<void> main() async {
   await AppConfig.init();
+  await apiService.loadToken(); // Restore access token before app starts
   appLogger.i('🚀 App started');
   runApp(const ProviderScope(child: MyApp()));
 }
@@ -36,7 +37,26 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   bool isSignedIn = false;
+  bool _loading = true;
   String? displayName;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkToken();
+  }
+
+  Future<void> _checkToken() async {
+    await apiService.loadToken();
+    if (apiService.hasToken) {
+      await apiService.fetchSession();
+      await apiService.fetchCurrentUser();
+    }
+    setState(() {
+      isSignedIn = apiService.hasToken;
+      _loading = false;
+    });
+  }
 
   void handleSignIn() async {
     setState(() {
@@ -55,6 +75,11 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return const MaterialApp(
+        home: Scaffold(body: Center(child: CircularProgressIndicator())),
+      );
+    }
     return MaterialApp(
       title: 'Grain',
       theme: AppTheme.lightTheme,

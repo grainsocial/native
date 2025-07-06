@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:at_uri/at_uri.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:grain/app_logger.dart';
 import 'package:grain/dpop_client.dart';
 import 'package:grain/main.dart';
@@ -17,6 +18,7 @@ import 'models/notification.dart' as grain;
 import 'models/profile.dart';
 
 class ApiService {
+  static const _storage = FlutterSecureStorage();
   String? _accessToken;
   Profile? currentUser;
   Profile? loadedProfile;
@@ -24,9 +26,20 @@ class ApiService {
 
   String get _apiUrl => AppConfig.apiUrl;
 
-  setToken(String? token) {
-    _accessToken = token;
+  Future<void> loadToken() async {
+    _accessToken = await _storage.read(key: 'access_token');
   }
+
+  Future<void> setToken(String? token) async {
+    _accessToken = token;
+    if (token != null) {
+      await _storage.write(key: 'access_token', value: token);
+    } else {
+      await _storage.delete(key: 'access_token');
+    }
+  }
+
+  bool get hasToken => _accessToken != null && _accessToken!.isNotEmpty;
 
   Future<AtprotoSession?> fetchSession() async {
     if (_accessToken == null) return null;
