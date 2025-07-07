@@ -3,8 +3,12 @@ String formatRelativeTime(String isoString) {
   if (date == null) return '';
   final now = DateTime.now();
   final diff = now.difference(date);
-  if (diff.inSeconds < 60) return '${diff.inSeconds}s ago';
-  if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-  if (diff.inHours < 24) return '${diff.inHours}h ago';
-  return '${diff.inDays}d ago';
+  final weeks = diff.inDays ~/ 7;
+  if (weeks > 0) return '${weeks}w';
+  final days = diff.inDays;
+  if (days > 0) return '${days}d';
+  final hours = diff.inHours;
+  if (hours > 0) return '${hours}h';
+  final minutes = diff.inMinutes;
+  return '${minutes < 1 ? 1 : minutes}m';
 }

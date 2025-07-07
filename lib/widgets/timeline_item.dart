@@ -68,41 +68,47 @@ class TimelineItemWidget extends ConsumerWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Flexible(
-                      child: Text(
-                        actor != null && (actor.displayName?.isNotEmpty ?? false)
-                            ? actor.displayName ?? ''
-                            : (actor != null ? '@${actor.handle}' : ''),
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
+                      child: Text.rich(
+                        TextSpan(
+                          children: [
+                            if (actor != null && (actor.displayName?.isNotEmpty ?? false))
+                              TextSpan(
+                                text: actor.displayName,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            if (actor != null && actor.handle.isNotEmpty)
+                              TextSpan(
+                                text: (actor.displayName?.isNotEmpty ?? false)
+                                    ? ' @${actor.handle}'
+                                    : '@${actor.handle}',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  fontSize: 14,
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                  fontWeight: FontWeight.normal,
+                                ),
+                              ),
+                          ],
                         ),
                         overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
                       ),
                     ),
-                    if (actor != null && actor.handle.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 6),
-                        child: Text(
-                          '@${actor.handle}',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            fontSize: 14,
-                            color: theme.colorScheme.onSurfaceVariant,
-                            fontWeight: FontWeight.normal,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                        ),
+                    Text(
+                      formatRelativeTime(createdAt ?? ''),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontSize: 14,
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
+                      textAlign: TextAlign.right,
+                    ),
                   ],
-                ),
-              ),
-              Text(
-                formatRelativeTime(createdAt ?? ''),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  fontSize: 12,
-                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
