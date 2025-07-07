@@ -11,6 +11,7 @@ import 'package:grain/widgets/faceted_text.dart';
 import 'package:grain/widgets/gallery_action_buttons.dart';
 import 'package:grain/widgets/gallery_photo_view.dart';
 import 'package:grain/widgets/justified_gallery_view.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class GalleryPage extends ConsumerStatefulWidget {
   final String uri;
@@ -241,8 +242,11 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
                           ),
                         );
                       },
-                      onLinkTap: (url) {
-                        // TODO: Implement or use your WebViewPage
+                      onLinkTap: (url) async {
+                        final uri = Uri.parse(url);
+                        if (!await launchUrl(uri)) {
+                          throw Exception('Could not launch $url');
+                        }
                       },
                       onTagTap: (tag) => Navigator.push(
                         context,

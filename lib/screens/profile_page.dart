@@ -10,6 +10,7 @@ import 'package:grain/widgets/app_button.dart';
 import 'package:grain/widgets/app_image.dart';
 import 'package:grain/widgets/edit_profile_sheet.dart';
 import 'package:grain/widgets/faceted_text.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'gallery_page.dart';
 
@@ -297,8 +298,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                                           ),
                                         );
                                       },
-                                      onLinkTap: (url) {
-                                        // TODO: Implement WebViewPage navigation
+                                      onLinkTap: (url) async {
+                                        final uri = Uri.parse(url);
+                                        if (!await launchUrl(uri)) {
+                                          throw Exception('Could not launch $url');
+                                        }
                                       },
                                       onTagTap: (tag) => Navigator.push(
                                         context,

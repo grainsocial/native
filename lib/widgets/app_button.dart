@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum AppButtonVariant { primary, secondary }
+enum AppButtonVariant { primary, secondary, text }
 
 enum AppButtonSize { normal, small }
 
@@ -8,6 +8,7 @@ class AppButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
   final bool loading;
+  final bool disabled;
   final AppButtonVariant variant;
   final AppButtonSize size;
   final IconData? icon;
@@ -21,6 +22,7 @@ class AppButton extends StatelessWidget {
     required this.label,
     this.onPressed,
     this.loading = false,
+    this.disabled = false,
     this.variant = AppButtonVariant.primary,
     this.size = AppButtonSize.normal,
     this.icon,
@@ -39,6 +41,7 @@ class AppButton extends StatelessWidget {
     final Color secondaryText = theme.colorScheme.onSurface;
     final Color primaryText = theme.colorScheme.onPrimary;
     final bool isPrimary = variant == AppButtonVariant.primary;
+    final bool isText = variant == AppButtonVariant.text;
 
     final double resolvedHeight = size == AppButtonSize.small ? 32 : height;
     final double resolvedFontSize = size == AppButtonSize.small ? 14 : fontSize;
@@ -49,12 +52,39 @@ class AppButton extends StatelessWidget {
             ? const EdgeInsets.symmetric(horizontal: 14, vertical: 0)
             : const EdgeInsets.symmetric(horizontal: 16));
 
+    if (isText) {
+      return SizedBox(
+        height: resolvedHeight,
+        child: TextButton(
+          onPressed: (loading || disabled) ? null : onPressed,
+          style: TextButton.styleFrom(
+            padding: resolvedPadding,
+            foregroundColor: disabled ? secondaryText.withOpacity(0.5) : secondaryText,
+            textStyle: theme.textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+              fontSize: resolvedFontSize,
+            ),
+          ),
+          child: Text(
+            label,
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: disabled ? primaryColor.withOpacity(0.5) : primaryColor,
+              fontWeight: FontWeight.w600,
+              fontSize: resolvedFontSize,
+            ),
+          ),
+        ),
+      );
+    }
+
     return SizedBox(
       height: resolvedHeight,
       child: ElevatedButton(
-        onPressed: loading ? null : onPressed,
+        onPressed: (loading || disabled) ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: isPrimary ? primaryColor : secondaryColor,
+          backgroundColor: isPrimary
+              ? (disabled ? primaryColor.withOpacity(0.5) : primaryColor)
+              : (disabled ? secondaryColor.withOpacity(0.5) : secondaryColor),
           foregroundColor: isPrimary ? primaryText : secondaryText,
           elevation: 0,
           shape: RoundedRectangleBorder(

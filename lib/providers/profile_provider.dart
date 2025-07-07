@@ -42,22 +42,25 @@ class ProfileNotifier extends _$ProfileNotifier {
     }).toList();
   }
 
+  // Extract facet computation and filtering for reuse
+  Future<List<Map<String, dynamic>>?> computeAndFilterFacets(String? description) async {
+    final desc = description ?? '';
+    if (desc.isEmpty) return null;
+    try {
+      final blueskyText = BlueskyText(desc);
+      final entities = blueskyText.entities;
+      final computedFacets = await entities.toFacets();
+      return _filterValidFacets(computedFacets, desc);
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<ProfileWithGalleries?> _fetchProfile(String did) async {
     final profile = await apiService.fetchProfile(did: did);
     final galleries = await apiService.fetchActorGalleries(did: did);
     if (profile != null) {
-      List<Map<String, dynamic>>? facets;
-      final desc = profile.description ?? '';
-      if (desc.isNotEmpty) {
-        try {
-          final blueskyText = BlueskyText(desc);
-          final entities = blueskyText.entities;
-          final computedFacets = await entities.toFacets();
-          facets = _filterValidFacets(computedFacets, desc);
-        } catch (_) {
-          facets = null;
-        }
-      }
+      final facets = await computeAndFilterFacets(profile.description);
       return ProfileWithGalleries(
         profile: profile.copyWith(descriptionFacets: facets),
         galleries: galleries,
@@ -76,6 +79,16 @@ class ProfileNotifier extends _$ProfileNotifier {
     required String description,
     dynamic avatarFile,
   }) async {
+    final currentProfile = state.value?.profile;
+    final isUnchanged =
+        currentProfile != null &&
+        currentProfile.displayName == displayName &&
+        currentProfile.description == description &&
+        avatarFile == null;
+    if (isUnchanged) {
+      // No changes, skip API call
+      return true;
+    }
     File? file;
     if (avatarFile is XFile) {
       file = File(avatarFile.path);
@@ -106,9 +119,15 @@ class ProfileNotifier extends _$ProfileNotifier {
       // Always assign a new instance to state
       if (updated != null) {
         final galleries = await apiService.fetchActorGalleries(did: did);
+        final facets = await computeAndFilterFacets(updated.description);
         // Update the gallery cache provider
         ref.read(galleryCacheProvider.notifier).setGalleriesForActor(did, galleries);
-        state = AsyncValue.data(ProfileWithGalleries(profile: updated, galleries: galleries));
+        state = AsyncValue.data(
+          ProfileWithGalleries(
+            profile: updated.copyWith(descriptionFacets: facets),
+            galleries: galleries,
+          ),
+        );
       } else {
         state = const AsyncValue.data(null);
       }

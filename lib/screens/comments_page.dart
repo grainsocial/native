@@ -11,6 +11,7 @@ import 'package:grain/widgets/app_button.dart';
 import 'package:grain/widgets/app_image.dart';
 import 'package:grain/widgets/faceted_text.dart';
 import 'package:grain/widgets/gallery_photo_view.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class CommentsPage extends ConsumerStatefulWidget {
   final String galleryUri;
@@ -102,13 +103,18 @@ class _CommentsPageState extends ConsumerState<CommentsPage> {
                   )
                 : RefreshIndicator(
                     onRefresh: () async {
-                      await ref.read(galleryThreadProvider(widget.galleryUri).notifier).fetchThread();
+                      await ref
+                          .read(galleryThreadProvider(widget.galleryUri).notifier)
+                          .fetchThread();
                     },
                     child: ListView(
                       padding: const EdgeInsets.fromLTRB(12, 12, 12, 100),
                       children: [
                         if (threadState.gallery != null)
-                          Text(threadState.gallery!.title ?? '', style: theme.textTheme.titleMedium),
+                          Text(
+                            threadState.gallery!.title ?? '',
+                            style: theme.textTheme.titleMedium,
+                          ),
                         const SizedBox(height: 12),
                         _CommentsList(
                           comments: threadState.comments,
@@ -126,7 +132,9 @@ class _CommentsPageState extends ConsumerState<CommentsPage> {
                               context: context,
                               builder: (ctx) => AlertDialog(
                                 title: const Text('Delete Comment'),
-                                content: const Text('Are you sure you want to delete this comment?'),
+                                content: const Text(
+                                  'Are you sure you want to delete this comment?',
+                                ),
                                 actions: [
                                   TextButton(
                                     onPressed: () => Navigator.of(ctx).pop(false),
@@ -455,10 +463,11 @@ class _CommentTile extends StatelessWidget {
                       context,
                     ).push(MaterialPageRoute(builder: (context) => ProfilePage(did: did)));
                   },
-                  onLinkTap: (url) {
-                    // Navigator.of(
-                    //   context,
-                    // ).push(MaterialPageRoute(builder: (context) => WebViewPage(url: url)));
+                  onLinkTap: (url) async {
+                    final uri = Uri.parse(url);
+                    if (!await launchUrl(uri)) {
+                      throw Exception('Could not launch $url');
+                    }
                   },
                   onTagTap: (tag) => Navigator.push(
                     context,

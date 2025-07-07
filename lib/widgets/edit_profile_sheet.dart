@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:grain/widgets/app_button.dart';
 import 'package:grain/widgets/plain_text_field.dart';
 import 'package:image_picker/image_picker.dart';
@@ -94,7 +95,8 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
                         AppButton(
                           label: 'Cancel',
                           size: AppButtonSize.small,
-                          variant: AppButtonVariant.secondary,
+                          variant: AppButtonVariant.text,
+                          disabled: _saving,
                           onPressed: widget.onCancel ?? () => Navigator.of(context).maybePop(),
                         ),
                         Text(
@@ -103,10 +105,13 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
                         ),
                         AppButton(
                           label: 'Save',
-                          size: AppButtonSize.small,
                           variant: AppButtonVariant.primary,
                           loading: _saving,
                           onPressed: _saving ? null : _onSave,
+                          height: 36,
+                          fontSize: 15,
+                          borderRadius: 22,
+                          padding: const EdgeInsets.symmetric(horizontal: 18),
                         ),
                       ],
                     ),
@@ -145,7 +150,7 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
                                 shape: BoxShape.circle,
                               ),
                               padding: const EdgeInsets.all(6),
-                              child: Icon(Icons.edit, color: Colors.white, size: 18),
+                              child: Icon(FontAwesomeIcons.camera, color: Colors.white, size: 12),
                             ),
                           ),
                         ],
@@ -166,7 +171,7 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
                             PlainTextField(
                               label: 'Description',
                               controller: _descriptionController,
-                              maxLines: 3,
+                              maxLines: 6,
                             ),
                           ],
                         ),

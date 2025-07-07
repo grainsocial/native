@@ -195,9 +195,12 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    TextButton(
+                    AppButton(
+                      label: 'Cancel',
+                      size: AppButtonSize.small,
+                      variant: AppButtonVariant.text,
+                      disabled: _submitting,
                       onPressed: _submitting ? null : () => Navigator.of(context).pop(),
-                      child: Text('Cancel'),
                     ),
                     Text(
                       widget.gallery == null ? 'New Gallery' : 'Edit Gallery',
