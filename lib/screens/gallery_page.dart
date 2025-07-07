@@ -112,11 +112,7 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
                   icon: const Icon(Icons.edit),
                   tooltip: 'Edit Gallery',
                   onPressed: () async {
-                    await showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      builder: (context) => CreateGalleryPage(gallery: gallery),
-                    );
+                    await showCreateGallerySheet(context, gallery: gallery);
                     _maybeFetchGallery();
                   },
                 ),

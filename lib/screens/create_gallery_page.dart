@@ -2,8 +2,10 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:grain/api.dart';
 import 'package:grain/models/gallery.dart';
 import 'package:grain/photo_manip.dart';
@@ -178,159 +180,174 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final double maxHeight =
-        MediaQuery.of(context).size.height - kToolbarHeight - MediaQuery.of(context).padding.top;
 
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxHeight: maxHeight),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        child: Container(
-          color: theme.colorScheme.surface,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    AppButton(
-                      label: 'Cancel',
-                      size: AppButtonSize.small,
-                      variant: AppButtonVariant.text,
-                      disabled: _submitting,
-                      onPressed: _submitting ? null : () => Navigator.of(context).pop(),
-                    ),
-                    Text(
-                      widget.gallery == null ? 'New Gallery' : 'Edit Gallery',
-                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                    ),
-                    AppButton(
-                      label: widget.gallery == null ? 'Create' : 'Save',
-                      onPressed: _submitting ? null : _submit,
-                      loading: _submitting,
-                      variant: AppButtonVariant.primary,
-                      height: 36,
-                      fontSize: 15,
-                      borderRadius: 22,
-                      padding: const EdgeInsets.symmetric(horizontal: 18),
-                    ),
-                  ],
+    return CupertinoPageScaffold(
+      backgroundColor: theme.colorScheme.surface,
+      navigationBar: CupertinoNavigationBar(
+        backgroundColor: theme.colorScheme.surface,
+        border: Border(bottom: BorderSide(color: theme.dividerColor, width: 1)),
+        middle: Text(
+          widget.gallery == null ? 'New Gallery' : 'Edit Gallery',
+          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        leading: CupertinoButton(
+          padding: EdgeInsets.zero,
+          onPressed: _submitting ? null : () => Navigator.of(context).pop(),
+          child: Text(
+            'Cancel',
+            style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.w600),
+          ),
+        ),
+        trailing: CupertinoButton(
+          padding: EdgeInsets.zero,
+          onPressed: _submitting ? null : _submit,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                widget.gallery == null ? 'Create' : 'Save',
+                style: TextStyle(
+                  color: _submitting ? theme.disabledColor : theme.colorScheme.primary,
+                  fontWeight: FontWeight.w600,
                 ),
-                const SizedBox(height: 16),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom + 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        PlainTextField(
-                          label: 'Title',
-                          controller: _titleController,
-                          hintText: 'Enter a title',
-                        ),
-                        const SizedBox(height: 16),
-                        PlainTextField(
-                          label: 'Description',
-                          controller: _descController,
-                          maxLines: 3,
-                          hintText: 'Enter a description',
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            AppButton(
-                              label: 'Add Images',
-                              onPressed: _pickImages,
-                              icon: Icons.photo_library,
-                              variant: AppButtonVariant.secondary,
-                              height: 40,
-                              fontSize: 15,
-                              borderRadius: 6,
-                            ),
-                          ],
-                        ),
-                        if (_images.isNotEmpty) ...[
-                          const SizedBox(height: 16),
-                          GridView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 3,
-                              crossAxisSpacing: 8,
-                              mainAxisSpacing: 8,
-                            ),
-                            itemCount: _images.length,
-                            itemBuilder: (context, index) {
-                              final galleryImage = _images[index];
-                              return Stack(
-                                children: [
-                                  Positioned.fill(
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: theme.colorScheme.surfaceContainerHighest,
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(8),
-                                        child: Image.file(
-                                          File(galleryImage.file.path),
-                                          fit: BoxFit.cover,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  if (galleryImage.isExisting)
-                                    Positioned(
-                                      left: 2,
-                                      top: 2,
-                                      child: Container(
-                                        padding: const EdgeInsets.all(2),
-                                        decoration: BoxDecoration(
-                                          color: theme.colorScheme.secondary.withOpacity(0.7),
-                                          borderRadius: BorderRadius.circular(4),
-                                        ),
-                                        child: Icon(
-                                          Icons.check_circle,
-                                          color: theme.colorScheme.onSecondary,
-                                          size: 16,
-                                        ),
-                                      ),
-                                    ),
-                                  Positioned(
-                                    top: 2,
-                                    right: 2,
-                                    child: GestureDetector(
-                                      onTap: () => _removeImage(index),
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          color: theme.colorScheme.surfaceTint.withOpacity(0.7),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: Icon(
-                                          Icons.close,
-                                          color: theme.colorScheme.onSurface,
-                                          size: 18,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
-                        ],
-                      ],
-                    ),
+              ),
+              if (_submitting) ...[
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+                    semanticsLabel: widget.gallery == null ? 'Creating' : 'Saving',
                   ),
                 ),
               ],
-            ),
+            ],
+          ),
+        ),
+      ),
+      child: SafeArea(
+        bottom: true,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              PlainTextField(
+                label: 'Title',
+                controller: _titleController,
+                hintText: 'Enter a title',
+              ),
+              const SizedBox(height: 16),
+              PlainTextField(
+                label: 'Description',
+                controller: _descController,
+                maxLines: 3,
+                hintText: 'Enter a description',
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  AppButton(
+                    label: 'Add Images',
+                    onPressed: _pickImages,
+                    icon: Icons.photo_library,
+                    variant: AppButtonVariant.secondary,
+                    height: 40,
+                    fontSize: 15,
+                    borderRadius: 6,
+                  ),
+                ],
+              ),
+              if (_images.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 8,
+                  ),
+                  itemCount: _images.length,
+                  itemBuilder: (context, index) {
+                    final galleryImage = _images[index];
+                    return Stack(
+                      children: [
+                        Positioned.fill(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.file(File(galleryImage.file.path), fit: BoxFit.cover),
+                            ),
+                          ),
+                        ),
+                        if (galleryImage.isExisting)
+                          Positioned(
+                            left: 2,
+                            top: 2,
+                            child: Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.secondary.withOpacity(0.7),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Icon(
+                                Icons.check_circle,
+                                color: theme.colorScheme.onSecondary,
+                                size: 16,
+                              ),
+                            ),
+                          ),
+                        Positioned(
+                          top: 2,
+                          right: 2,
+                          child: GestureDetector(
+                            onTap: () => _removeImage(index),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.surfaceTint.withOpacity(0.7),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.close,
+                                color: theme.colorScheme.onSurface,
+                                size: 18,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ],
           ),
         ),
       ),
     );
   }
+}
+
+Future<void> showCreateGallerySheet(BuildContext context, {Gallery? gallery}) async {
+  final theme = Theme.of(context);
+  await showCupertinoSheet(
+    context: context,
+    useNestedNavigation: false,
+    pageBuilder: (context) => Material(
+      type: MaterialType.transparency,
+      child: CreateGalleryPage(gallery: gallery),
+    ),
+  );
+  // Restore status bar style or any other cleanup
+  SystemChrome.setSystemUIOverlayStyle(
+    theme.brightness == Brightness.dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+  );
 }

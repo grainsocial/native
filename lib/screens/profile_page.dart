@@ -211,26 +211,23 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                                             size: AppButtonSize.small,
                                             variant: AppButtonVariant.secondary,
                                             onPressed: () async {
-                                              final bottomSheetContext = context;
-                                              await showModalBottomSheet<Map<String, dynamic>>(
-                                                context: bottomSheetContext,
-                                                isScrollControlled: true,
-                                                backgroundColor: Colors.transparent,
-                                                builder: (sheetContext) => EditProfileSheet(
-                                                  initialDisplayName: profile.displayName,
-                                                  initialDescription: profile.description,
-                                                  initialAvatarUrl: profile.avatar,
-                                                  onSave:
-                                                      (displayName, description, avatarFile) async {
-                                                        await _handleProfileSave(
-                                                          profile.did,
-                                                          displayName,
-                                                          description,
-                                                          avatarFile,
-                                                        );
-                                                      },
-                                                  onCancel: () => Navigator.of(sheetContext).pop(),
-                                                ),
+                                              showEditProfileSheet(
+                                                context,
+                                                initialDisplayName: profile.displayName,
+                                                initialDescription: profile.description,
+                                                initialAvatarUrl: profile.avatar,
+                                                onSave:
+                                                    (displayName, description, avatarFile) async {
+                                                      await _handleProfileSave(
+                                                        profile.did,
+                                                        displayName,
+                                                        description,
+                                                        avatarFile,
+                                                      );
+                                                    },
+                                                onCancel: () {
+                                                  Navigator.of(context).maybePop();
+                                                },
                                               );
                                             },
                                             label: 'Edit profile',
