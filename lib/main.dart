@@ -49,12 +49,24 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> _checkToken() async {
     await apiService.loadToken();
+    bool valid = false;
     if (apiService.hasToken) {
-      await apiService.fetchSession();
-      await apiService.fetchCurrentUser();
+      try {
+        final session = await apiService.fetchSession();
+        if (session != null) {
+          await apiService.fetchCurrentUser();
+          valid = true;
+        } else {
+          // Session fetch failed, clear session
+          await auth.clearSession();
+        }
+      } catch (e) {
+        // Error fetching session, clear session
+        await auth.clearSession();
+      }
     }
     setState(() {
-      isSignedIn = apiService.hasToken;
+      isSignedIn = valid;
       _loading = false;
     });
   }
