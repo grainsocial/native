@@ -18,6 +18,7 @@ class Profile with _$Profile {
     int? followsCount,
     int? galleryCount,
     ProfileViewer? viewer,
+    List<String>? cameras,
     // Added field for description facets used on profile page
     List<Map<String, dynamic>>? descriptionFacets,
   }) = _Profile;

@@ -24,7 +24,7 @@ class AppTheme {
     dividerColor: Colors.grey[300],
     colorScheme: ColorScheme.light(
       primary: primaryColor,
-      surface: Colors.white,
+      surface: Colors.grey[200]!,
       onSurface: Colors.black87,
       onSurfaceVariant: Colors.black54,
       onPrimary: Colors.white,

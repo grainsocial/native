@@ -11,8 +11,8 @@ class GalleryPreview extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final Color bgColor = theme.brightness == Brightness.dark
-        ? Colors.grey[900]!
-        : Colors.grey[100]!;
+        ? Colors.grey[850]!
+        : Colors.grey[200]!;
     final photos = gallery.items
         .where((item) => item.thumb != null && item.thumb!.isNotEmpty)
         .toList();

@@ -285,6 +285,35 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                                                       0)
                                             .toString(),
                                   ),
+                                  if ((profile.cameras?.isNotEmpty ?? false)) ...[
+                                    const SizedBox(height: 16),
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 4,
+                                      children: profile.cameras!
+                                          .map(
+                                            (camera) => Container(
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 12,
+                                                vertical: 4,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: theme.colorScheme.surface,
+                                                borderRadius: BorderRadius.circular(999),
+                                              ),
+                                              child: Text(
+                                                '📷 $camera',
+                                                style: TextStyle(
+                                                  color: theme.colorScheme.onSurface,
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ),
+                                          )
+                                          .toList(),
+                                    ),
+                                  ],
                                   if ((profile.description ?? '').isNotEmpty) ...[
                                     const SizedBox(height: 16),
                                     FacetedText(

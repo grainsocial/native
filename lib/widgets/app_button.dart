@@ -37,7 +37,6 @@ class AppButton extends StatelessWidget {
     final theme = Theme.of(context);
     final Color primaryColor = theme.colorScheme.primary;
     final Color secondaryColor = theme.colorScheme.surfaceContainerHighest;
-    final Color secondaryBorder = theme.dividerColor;
     final Color secondaryText = theme.colorScheme.onSurface;
     final Color primaryText = theme.colorScheme.onPrimary;
     final bool isPrimary = variant == AppButtonVariant.primary;
@@ -87,10 +86,7 @@ class AppButton extends StatelessWidget {
               : (disabled ? secondaryColor.withOpacity(0.5) : secondaryColor),
           foregroundColor: isPrimary ? primaryText : secondaryText,
           elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(resolvedBorderRadius),
-            side: isPrimary ? BorderSide.none : BorderSide(color: secondaryBorder, width: 1),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(resolvedBorderRadius)),
           padding: resolvedPadding,
           textStyle: theme.textTheme.labelLarge?.copyWith(
             fontWeight: FontWeight.w600,

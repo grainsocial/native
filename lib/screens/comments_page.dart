@@ -283,9 +283,12 @@ class _CommentInputSheetState extends State<CommentInputSheet> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              TextButton(
+              AppButton(
+                label: 'Cancel',
+                variant: AppButtonVariant.text,
+                size: AppButtonSize.small,
+                disabled: _posting,
                 onPressed: _posting ? null : () => Navigator.pop(context),
-                child: const Text('Cancel'),
               ),
               AppButton(
                 borderRadius: 22,

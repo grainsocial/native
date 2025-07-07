@@ -36,7 +36,7 @@ class PlainTextField extends StatelessWidget {
         const SizedBox(height: 6),
         Container(
           decoration: BoxDecoration(
-            color: theme.brightness == Brightness.dark ? Colors.grey[850] : Colors.grey[200],
+            color: theme.brightness == Brightness.dark ? Colors.grey[850] : Colors.grey[300],
             borderRadius: BorderRadius.circular(8),
           ),
           child: Focus(
