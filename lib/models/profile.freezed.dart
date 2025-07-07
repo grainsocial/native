@@ -30,7 +30,10 @@ mixin _$Profile {
   int? get followersCount => throw _privateConstructorUsedError;
   int? get followsCount => throw _privateConstructorUsedError;
   int? get galleryCount => throw _privateConstructorUsedError;
-  ProfileViewer? get viewer => throw _privateConstructorUsedError;
+  ProfileViewer? get viewer =>
+      throw _privateConstructorUsedError; // Added field for description facets used on profile page
+  List<Map<String, dynamic>>? get descriptionFacets =>
+      throw _privateConstructorUsedError;
 
   /// Serializes this Profile to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -57,6 +60,7 @@ abstract class $ProfileCopyWith<$Res> {
     int? followsCount,
     int? galleryCount,
     ProfileViewer? viewer,
+    List<Map<String, dynamic>>? descriptionFacets,
   });
 
   $ProfileViewerCopyWith<$Res>? get viewer;
@@ -87,6 +91,7 @@ class _$ProfileCopyWithImpl<$Res, $Val extends Profile>
     Object? followsCount = freezed,
     Object? galleryCount = freezed,
     Object? viewer = freezed,
+    Object? descriptionFacets = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -130,6 +135,10 @@ class _$ProfileCopyWithImpl<$Res, $Val extends Profile>
                 ? _value.viewer
                 : viewer // ignore: cast_nullable_to_non_nullable
                       as ProfileViewer?,
+            descriptionFacets: freezed == descriptionFacets
+                ? _value.descriptionFacets
+                : descriptionFacets // ignore: cast_nullable_to_non_nullable
+                      as List<Map<String, dynamic>>?,
           )
           as $Val,
     );
@@ -169,6 +178,7 @@ abstract class _$$ProfileImplCopyWith<$Res> implements $ProfileCopyWith<$Res> {
     int? followsCount,
     int? galleryCount,
     ProfileViewer? viewer,
+    List<Map<String, dynamic>>? descriptionFacets,
   });
 
   @override
@@ -199,6 +209,7 @@ class __$$ProfileImplCopyWithImpl<$Res>
     Object? followsCount = freezed,
     Object? galleryCount = freezed,
     Object? viewer = freezed,
+    Object? descriptionFacets = freezed,
   }) {
     return _then(
       _$ProfileImpl(
@@ -242,6 +253,10 @@ class __$$ProfileImplCopyWithImpl<$Res>
             ? _value.viewer
             : viewer // ignore: cast_nullable_to_non_nullable
                   as ProfileViewer?,
+        descriptionFacets: freezed == descriptionFacets
+            ? _value._descriptionFacets
+            : descriptionFacets // ignore: cast_nullable_to_non_nullable
+                  as List<Map<String, dynamic>>?,
       ),
     );
   }
@@ -261,7 +276,8 @@ class _$ProfileImpl implements _Profile {
     this.followsCount,
     this.galleryCount,
     this.viewer,
-  });
+    final List<Map<String, dynamic>>? descriptionFacets,
+  }) : _descriptionFacets = descriptionFacets;
 
   factory _$ProfileImpl.fromJson(Map<String, dynamic> json) =>
       _$$ProfileImplFromJson(json);
@@ -286,10 +302,22 @@ class _$ProfileImpl implements _Profile {
   final int? galleryCount;
   @override
   final ProfileViewer? viewer;
+  // Added field for description facets used on profile page
+  final List<Map<String, dynamic>>? _descriptionFacets;
+  // Added field for description facets used on profile page
+  @override
+  List<Map<String, dynamic>>? get descriptionFacets {
+    final value = _descriptionFacets;
+    if (value == null) return null;
+    if (_descriptionFacets is EqualUnmodifiableListView)
+      return _descriptionFacets;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
 
   @override
   String toString() {
-    return 'Profile(cid: $cid, did: $did, handle: $handle, displayName: $displayName, description: $description, avatar: $avatar, followersCount: $followersCount, followsCount: $followsCount, galleryCount: $galleryCount, viewer: $viewer)';
+    return 'Profile(cid: $cid, did: $did, handle: $handle, displayName: $displayName, description: $description, avatar: $avatar, followersCount: $followersCount, followsCount: $followsCount, galleryCount: $galleryCount, viewer: $viewer, descriptionFacets: $descriptionFacets)';
   }
 
   @override
@@ -311,7 +339,11 @@ class _$ProfileImpl implements _Profile {
                 other.followsCount == followsCount) &&
             (identical(other.galleryCount, galleryCount) ||
                 other.galleryCount == galleryCount) &&
-            (identical(other.viewer, viewer) || other.viewer == viewer));
+            (identical(other.viewer, viewer) || other.viewer == viewer) &&
+            const DeepCollectionEquality().equals(
+              other._descriptionFacets,
+              _descriptionFacets,
+            ));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -328,6 +360,7 @@ class _$ProfileImpl implements _Profile {
     followsCount,
     galleryCount,
     viewer,
+    const DeepCollectionEquality().hash(_descriptionFacets),
   );
 
   /// Create a copy of Profile
@@ -356,6 +389,7 @@ abstract class _Profile implements Profile {
     final int? followsCount,
     final int? galleryCount,
     final ProfileViewer? viewer,
+    final List<Map<String, dynamic>>? descriptionFacets,
   }) = _$ProfileImpl;
 
   factory _Profile.fromJson(Map<String, dynamic> json) = _$ProfileImpl.fromJson;
@@ -379,7 +413,9 @@ abstract class _Profile implements Profile {
   @override
   int? get galleryCount;
   @override
-  ProfileViewer? get viewer;
+  ProfileViewer? get viewer; // Added field for description facets used on profile page
+  @override
+  List<Map<String, dynamic>>? get descriptionFacets;
 
   /// Create a copy of Profile
   /// with the given fields replaced by the non-null parameter values.

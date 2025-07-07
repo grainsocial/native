@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:bluesky_text/bluesky_text.dart';
 import 'package:grain/api.dart';
 import 'package:grain/models/profile.dart';
 import 'package:grain/models/profile_with_galleries.dart';
@@ -16,11 +17,51 @@ class ProfileNotifier extends _$ProfileNotifier {
     return _fetchProfile(did);
   }
 
+  // @TODO: Facets don't always render correctly.
+  List<Map<String, dynamic>>? _filterValidFacets(
+    List<Map<String, dynamic>>? computedFacets,
+    String desc,
+  ) {
+    if (computedFacets == null) return null;
+    return computedFacets.where((facet) {
+      final index = facet['index'];
+      if (index is Map) {
+        final start = index['byteStart'] ?? 0;
+        final end = index['byteEnd'] ?? 0;
+        return start is int && end is int && start >= 0 && end > start && end <= desc.length;
+      }
+      final start = facet['index'] ?? facet['offset'] ?? 0;
+      final end = facet['end'];
+      final length = facet['length'];
+      if (end is int && start is int) {
+        return start >= 0 && end > start && end <= desc.length;
+      } else if (length is int && start is int) {
+        return start >= 0 && length > 0 && start + length <= desc.length;
+      }
+      return false;
+    }).toList();
+  }
+
   Future<ProfileWithGalleries?> _fetchProfile(String did) async {
     final profile = await apiService.fetchProfile(did: did);
     final galleries = await apiService.fetchActorGalleries(did: did);
     if (profile != null) {
-      return ProfileWithGalleries(profile: profile, galleries: galleries);
+      List<Map<String, dynamic>>? facets;
+      final desc = profile.description ?? '';
+      if (desc.isNotEmpty) {
+        try {
+          final blueskyText = BlueskyText(desc);
+          final entities = blueskyText.entities;
+          final computedFacets = await entities.toFacets();
+          facets = _filterValidFacets(computedFacets, desc);
+        } catch (_) {
+          facets = null;
+        }
+      }
+      return ProfileWithGalleries(
+        profile: profile.copyWith(descriptionFacets: facets),
+        galleries: galleries,
+      );
     }
     return null;
   }

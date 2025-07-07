@@ -74,8 +74,6 @@ class _MyAppState extends State<MyApp> {
   }
 
   void handleSignIn() async {
-    final container = ProviderScope.containerOf(context, listen: false);
-
     setState(() {
       isSignedIn = true;
     });
@@ -87,7 +85,7 @@ class _MyAppState extends State<MyApp> {
   void handleSignOut(BuildContext context) async {
     final container = ProviderScope.containerOf(context, listen: false);
     await auth.clearSession(); // Clear session data
-    // Invalidate Riverpod providers for profile and gallery state
+    // Invalidate Riverpod providers for profile state
     container.invalidate(profileNotifierProvider);
     // Add any other providers you want to invalidate here
     setState(() {

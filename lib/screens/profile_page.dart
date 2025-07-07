@@ -1,4 +1,3 @@
-import 'package:bluesky_text/bluesky_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:grain/api.dart';
@@ -133,17 +132,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
         }
         final profile = profileWithGalleries.profile;
         final galleries = profileWithGalleries.galleries;
-        Future<List<Map<String, dynamic>>?> getDescriptionFacets() async {
-          final desc = profile.description ?? '';
-          if (desc.isEmpty) return null;
-          try {
-            final blueskyText = BlueskyText(desc);
-            final entities = blueskyText.entities;
-            return await entities.toFacets();
-          } catch (_) {
-            return null;
-          }
-        }
 
         return Scaffold(
           backgroundColor: theme.scaffoldBackgroundColor,
@@ -298,35 +286,30 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                                   ),
                                   if ((profile.description ?? '').isNotEmpty) ...[
                                     const SizedBox(height: 16),
-                                    FutureBuilder<List<Map<String, dynamic>>?>(
-                                      future: getDescriptionFacets(),
-                                      builder: (context, snapshot) {
-                                        return FacetedText(
-                                          text: profile.description ?? '',
-                                          facets: snapshot.data,
-                                          onMentionTap: (didOrHandle) {
-                                            Navigator.of(context).push(
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    ProfilePage(did: didOrHandle, showAppBar: true),
-                                              ),
-                                            );
-                                          },
-                                          onLinkTap: (url) {
-                                            // TODO: Implement WebViewPage navigation
-                                          },
-                                          onTagTap: (tag) => Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (_) => HashtagPage(hashtag: tag),
-                                            ),
-                                          ),
-                                          linkStyle: TextStyle(
-                                            color: Theme.of(context).colorScheme.primary,
-                                            fontWeight: FontWeight.w600,
+                                    FacetedText(
+                                      text: profile.description ?? '',
+                                      facets: profile.descriptionFacets,
+                                      onMentionTap: (didOrHandle) {
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                ProfilePage(did: didOrHandle, showAppBar: true),
                                           ),
                                         );
                                       },
+                                      onLinkTap: (url) {
+                                        // TODO: Implement WebViewPage navigation
+                                      },
+                                      onTagTap: (tag) => Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => HashtagPage(hashtag: tag),
+                                        ),
+                                      ),
+                                      linkStyle: TextStyle(
+                                        color: Theme.of(context).colorScheme.primary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                     ),
                                   ],
                                   const SizedBox(height: 24),

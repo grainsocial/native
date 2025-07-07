@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:grain/api.dart';
@@ -397,6 +398,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             ? FloatingActionButton(
                 shape: const CircleBorder(),
                 onPressed: () {
+                  HapticFeedback.mediumImpact();
                   showModalBottomSheet(
                     context: context,
                     isScrollControlled: true,

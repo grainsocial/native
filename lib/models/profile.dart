@@ -18,6 +18,8 @@ class Profile with _$Profile {
     int? followsCount,
     int? galleryCount,
     ProfileViewer? viewer,
+    // Added field for description facets used on profile page
+    List<Map<String, dynamic>>? descriptionFacets,
   }) = _Profile;
 
   factory Profile.fromJson(Map<String, dynamic> json) => _$ProfileFromJson(json);
