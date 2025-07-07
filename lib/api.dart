@@ -7,6 +7,7 @@ import 'package:grain/app_logger.dart';
 import 'package:grain/dpop_client.dart';
 import 'package:grain/main.dart';
 import 'package:grain/models/atproto_session.dart';
+import 'package:grain/photo_manip.dart';
 import 'package:http/http.dart' as http;
 import 'package:jose/jose.dart';
 import 'package:mime/mime.dart';
@@ -590,6 +591,77 @@ class ApiService {
       return false;
     }
     appLogger.i('Deleted record $uri');
+    return true;
+  }
+
+  /// Updates the current user's profile (displayName, description, avatar).
+  /// If avatarFile is provided, uploads it as a blob and sets avatar.
+  /// Returns true on success, false on failure.
+  Future<bool> updateProfile({
+    required String displayName,
+    required String description,
+    File? avatarFile,
+  }) async {
+    final session = await auth.getValidSession();
+    if (session == null) {
+      appLogger.w('No valid session for updateProfile');
+      return false;
+    }
+    final dpopClient = DpopHttpClient(dpopKey: session.dpopJwk);
+    final issuer = session.issuer;
+    final did = session.subject;
+    // Fetch the raw profile record from atproto getRecord endpoint
+    final getUrl = Uri.parse(
+      '$issuer/xrpc/com.atproto.repo.getRecord?repo=$did&collection=social.grain.actor.profile&rkey=self',
+    );
+    final getResp = await dpopClient.send(
+      method: 'GET',
+      url: getUrl,
+      accessToken: session.accessToken,
+      headers: {'Content-Type': 'application/json'},
+    );
+    if (getResp.statusCode != 200) {
+      appLogger.w(
+        'Failed to fetch raw profile record for update: \\${getResp.statusCode} \\${getResp.body}',
+      );
+      return false;
+    }
+    final recordJson = jsonDecode(getResp.body) as Map<String, dynamic>;
+    var avatar = recordJson['value']?['avatar'];
+    // If avatarFile is provided, upload it and set avatar
+    if (avatarFile != null) {
+      try {
+        // Resize avatar before upload using photo_manip
+        final resizeResult = await resizeImage(file: avatarFile);
+        final blobResult = await uploadBlob(resizeResult.file);
+        if (blobResult != null && blobResult['blob'] != null) {
+          avatar = blobResult['blob'];
+        }
+      } catch (e) {
+        appLogger.w('Failed to upload avatar: $e');
+      }
+    }
+    // Update the profile record
+    final url = Uri.parse('$issuer/xrpc/com.atproto.repo.putRecord');
+    final record = {
+      'collection': 'social.grain.actor.profile',
+      'repo': did,
+      'rkey': 'self',
+      'record': {'displayName': displayName, 'description': description, 'avatar': avatar},
+    };
+    appLogger.i('Updating profile: $record');
+    final response = await dpopClient.send(
+      method: 'POST',
+      url: url,
+      accessToken: session.accessToken,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(record),
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      appLogger.w('Failed to update profile: \\${response.statusCode} \\${response.body}');
+      return false;
+    }
+    appLogger.i('Profile updated successfully');
     return true;
   }
 }

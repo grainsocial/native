@@ -8,6 +8,7 @@ part 'profile.g.dart';
 @freezed
 class Profile with _$Profile {
   const factory Profile({
+    required String cid,
     required String did,
     required String handle,
     String? displayName,

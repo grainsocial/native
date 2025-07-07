@@ -9,6 +9,8 @@ import 'package:grain/auth.dart';
 import 'package:grain/screens/home_page.dart';
 import 'package:grain/screens/splash_page.dart';
 
+import 'providers/profile_provider.dart';
+
 class AppConfig {
   static late final String apiUrl;
 
@@ -72,6 +74,8 @@ class _MyAppState extends State<MyApp> {
   }
 
   void handleSignIn() async {
+    final container = ProviderScope.containerOf(context, listen: false);
+
     setState(() {
       isSignedIn = true;
     });
@@ -80,8 +84,12 @@ class _MyAppState extends State<MyApp> {
     await apiService.fetchCurrentUser();
   }
 
-  void handleSignOut() async {
+  void handleSignOut(BuildContext context) async {
+    final container = ProviderScope.containerOf(context, listen: false);
     await auth.clearSession(); // Clear session data
+    // Invalidate Riverpod providers for profile and gallery state
+    container.invalidate(profileNotifierProvider);
+    // Add any other providers you want to invalidate here
     setState(() {
       isSignedIn = false;
     });
@@ -98,7 +106,7 @@ class _MyAppState extends State<MyApp> {
       );
     } else {
       home = isSignedIn
-          ? MyHomePage(title: 'Grain', onSignOut: handleSignOut)
+          ? MyHomePage(title: 'Grain', onSignOut: () => handleSignOut(context))
           : SplashPage(onSignIn: handleSignIn);
     }
     return MaterialApp(

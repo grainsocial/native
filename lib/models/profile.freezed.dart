@@ -21,6 +21,7 @@ Profile _$ProfileFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$Profile {
+  String get cid => throw _privateConstructorUsedError;
   String get did => throw _privateConstructorUsedError;
   String get handle => throw _privateConstructorUsedError;
   String? get displayName => throw _privateConstructorUsedError;
@@ -46,6 +47,7 @@ abstract class $ProfileCopyWith<$Res> {
       _$ProfileCopyWithImpl<$Res, Profile>;
   @useResult
   $Res call({
+    String cid,
     String did,
     String handle,
     String? displayName,
@@ -75,6 +77,7 @@ class _$ProfileCopyWithImpl<$Res, $Val extends Profile>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? cid = null,
     Object? did = null,
     Object? handle = null,
     Object? displayName = freezed,
@@ -87,6 +90,10 @@ class _$ProfileCopyWithImpl<$Res, $Val extends Profile>
   }) {
     return _then(
       _value.copyWith(
+            cid: null == cid
+                ? _value.cid
+                : cid // ignore: cast_nullable_to_non_nullable
+                      as String,
             did: null == did
                 ? _value.did
                 : did // ignore: cast_nullable_to_non_nullable
@@ -152,6 +159,7 @@ abstract class _$$ProfileImplCopyWith<$Res> implements $ProfileCopyWith<$Res> {
   @override
   @useResult
   $Res call({
+    String cid,
     String did,
     String handle,
     String? displayName,
@@ -181,6 +189,7 @@ class __$$ProfileImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? cid = null,
     Object? did = null,
     Object? handle = null,
     Object? displayName = freezed,
@@ -193,6 +202,10 @@ class __$$ProfileImplCopyWithImpl<$Res>
   }) {
     return _then(
       _$ProfileImpl(
+        cid: null == cid
+            ? _value.cid
+            : cid // ignore: cast_nullable_to_non_nullable
+                  as String,
         did: null == did
             ? _value.did
             : did // ignore: cast_nullable_to_non_nullable
@@ -238,6 +251,7 @@ class __$$ProfileImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$ProfileImpl implements _Profile {
   const _$ProfileImpl({
+    required this.cid,
     required this.did,
     required this.handle,
     this.displayName,
@@ -252,6 +266,8 @@ class _$ProfileImpl implements _Profile {
   factory _$ProfileImpl.fromJson(Map<String, dynamic> json) =>
       _$$ProfileImplFromJson(json);
 
+  @override
+  final String cid;
   @override
   final String did;
   @override
@@ -273,7 +289,7 @@ class _$ProfileImpl implements _Profile {
 
   @override
   String toString() {
-    return 'Profile(did: $did, handle: $handle, displayName: $displayName, description: $description, avatar: $avatar, followersCount: $followersCount, followsCount: $followsCount, galleryCount: $galleryCount, viewer: $viewer)';
+    return 'Profile(cid: $cid, did: $did, handle: $handle, displayName: $displayName, description: $description, avatar: $avatar, followersCount: $followersCount, followsCount: $followsCount, galleryCount: $galleryCount, viewer: $viewer)';
   }
 
   @override
@@ -281,6 +297,7 @@ class _$ProfileImpl implements _Profile {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$ProfileImpl &&
+            (identical(other.cid, cid) || other.cid == cid) &&
             (identical(other.did, did) || other.did == did) &&
             (identical(other.handle, handle) || other.handle == handle) &&
             (identical(other.displayName, displayName) ||
@@ -301,6 +318,7 @@ class _$ProfileImpl implements _Profile {
   @override
   int get hashCode => Object.hash(
     runtimeType,
+    cid,
     did,
     handle,
     displayName,
@@ -328,6 +346,7 @@ class _$ProfileImpl implements _Profile {
 
 abstract class _Profile implements Profile {
   const factory _Profile({
+    required final String cid,
     required final String did,
     required final String handle,
     final String? displayName,
@@ -341,6 +360,8 @@ abstract class _Profile implements Profile {
 
   factory _Profile.fromJson(Map<String, dynamic> json) = _$ProfileImpl.fromJson;
 
+  @override
+  String get cid;
   @override
   String get did;
   @override

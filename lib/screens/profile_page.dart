@@ -4,10 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:grain/api.dart';
 import 'package:grain/app_theme.dart';
 import 'package:grain/models/gallery.dart';
-import 'package:grain/providers/profile_cache_provider.dart';
+import 'package:grain/models/profile_with_galleries.dart';
+import 'package:grain/providers/profile_provider.dart';
 import 'package:grain/screens/hashtag_page.dart';
 import 'package:grain/widgets/app_button.dart';
 import 'package:grain/widgets/app_image.dart';
+import 'package:grain/widgets/edit_profile_sheet.dart';
 import 'package:grain/widgets/faceted_text.dart';
 
 import 'gallery_page.dart';
@@ -23,21 +25,9 @@ class ProfilePage extends ConsumerStatefulWidget {
 }
 
 class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProviderStateMixin {
-  dynamic _profile;
-  bool _loading = true;
-  List<Gallery> _galleries = [];
   List<Gallery> _favs = [];
   TabController? _tabController;
   bool _favsLoading = false;
-  bool _galleriesLoading = false;
-  List<Map<String, dynamic>>? _descriptionFacets;
-
-  Future<List<Map<String, dynamic>>> _extractFacets(String text) async {
-    final blueskyText = BlueskyText(text);
-    final entities = blueskyText.entities;
-    final facets = await entities.toFacets();
-    return List<Map<String, dynamic>>.from(facets);
-  }
 
   @override
   void initState() {
@@ -46,7 +36,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
     final isOwnProfile = (apiService.currentUser?.did == did);
     _tabController = TabController(length: isOwnProfile ? 2 : 1, vsync: this);
     _tabController!.addListener(_onTabChanged);
-    _fetchProfileAndGalleries();
   }
 
   @override
@@ -63,7 +52,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
           _favsLoading = true;
         });
       }
-      String? did = (_profile ?? widget.profile)?.did;
+      String? did = widget.did ?? widget.profile?.did;
       if (did != null && did.isNotEmpty) {
         try {
           final favs = await apiService.getActorFavs(did: did);
@@ -91,40 +80,28 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
     }
   }
 
-  Future<void> _fetchProfileAndGalleries() async {
-    if (mounted) {
-      setState(() {
-        _loading = true;
-      });
-    }
-    String? did = widget.did ?? widget.profile?.did;
-    if (did == null || did.isEmpty) {
-      if (mounted) {
-        setState(() {
-          _loading = false;
-        });
-      }
-      return;
-    }
-    // Use the profileCacheProvider to fetch and cache the profile
-    final profile = await ref.read(profileCacheProvider.notifier).fetch(did);
-    final galleries = await apiService.fetchActorGalleries(did: did);
-    List<Map<String, dynamic>>? descriptionFacets;
-    if ((profile?.description ?? '').isNotEmpty) {
-      try {
-        final desc = profile != null ? profile.description : '';
-        descriptionFacets = await _extractFacets(desc ?? '');
-      } catch (_) {
-        descriptionFacets = null;
-      }
-    }
-    if (mounted) {
-      setState(() {
-        _profile = profile;
-        _galleries = galleries;
-        _descriptionFacets = descriptionFacets;
-        _loading = false;
-      });
+  // Refactored: Just pop the sheet after save, don't return edited values
+  Future<void> _handleProfileSave(
+    String did,
+    String displayName,
+    String description,
+    dynamic avatarFile,
+  ) async {
+    final notifier = ref.read(profileNotifierProvider(did).notifier);
+    final success = await notifier.updateProfile(
+      displayName: displayName,
+      description: description,
+      avatarFile: avatarFile,
+    );
+    if (!mounted) return;
+    if (success) {
+      Navigator.of(context).pop();
+      if (mounted) setState(() {}); // Force widget rebuild after modal closes
+    } else {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Failed to update profile')));
     }
   }
 
@@ -132,351 +109,433 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final did = widget.did ?? widget.profile?.did;
-    final profile = did != null
-        ? ref.watch(profileCacheProvider)[did] ?? _profile ?? widget.profile
-        : _profile ?? widget.profile;
-    if (_loading) {
-      return Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+    final asyncProfile = did != null
+        ? ref.watch(profileNotifierProvider(did))
+        : const AsyncValue<ProfileWithGalleries?>.loading();
+
+    return asyncProfile.when(
+      loading: () => Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
         body: Center(
           child: CircularProgressIndicator(strokeWidth: 2, color: theme.colorScheme.primary),
         ),
-      );
-    }
-    if (profile == null) {
-      return const Center(child: Text('No profile data'));
-    }
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: widget.showAppBar
-          ? AppBar(
-              backgroundColor: theme.appBarTheme.backgroundColor,
-              surfaceTintColor: theme.appBarTheme.backgroundColor,
-              bottom: PreferredSize(
-                preferredSize: const Size.fromHeight(1),
-                child: Container(color: theme.dividerColor, height: 1),
-              ),
-              leading: const BackButton(),
-            )
-          : null,
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            Expanded(
-              child: NestedScrollView(
-                headerSliverBuilder: (context, innerBoxIsScrolled) => [
-                  SliverToBoxAdapter(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(height: 16),
-                              Row(
+      ),
+      error: (err, stack) => Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        body: Center(child: Text('Failed to load profile')),
+      ),
+      data: (profileWithGalleries) {
+        if (profileWithGalleries == null) {
+          return Scaffold(
+            backgroundColor: theme.scaffoldBackgroundColor,
+            body: Center(child: Text('Profile not found')),
+          );
+        }
+        final profile = profileWithGalleries.profile;
+        final galleries = profileWithGalleries.galleries;
+        Future<List<Map<String, dynamic>>?> getDescriptionFacets() async {
+          final desc = profile.description ?? '';
+          if (desc.isEmpty) return null;
+          try {
+            final blueskyText = BlueskyText(desc);
+            final entities = blueskyText.entities;
+            return await entities.toFacets();
+          } catch (_) {
+            return null;
+          }
+        }
+
+        return Scaffold(
+          backgroundColor: theme.scaffoldBackgroundColor,
+          appBar: widget.showAppBar
+              ? AppBar(
+                  backgroundColor: theme.appBarTheme.backgroundColor,
+                  surfaceTintColor: theme.appBarTheme.backgroundColor,
+                  bottom: PreferredSize(
+                    preferredSize: const Size.fromHeight(1),
+                    child: Container(color: theme.dividerColor, height: 1),
+                  ),
+                  leading: const BackButton(),
+                )
+              : null,
+          body: SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                Expanded(
+                  child: NestedScrollView(
+                    headerSliverBuilder: (context, innerBoxIsScrolled) => [
+                      SliverToBoxAdapter(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // Avatar
-                                  if (profile.avatar != null)
-                                    ClipOval(
-                                      child: AppImage(
-                                        url: profile.avatar,
-                                        width: 64,
-                                        height: 64,
-                                        fit: BoxFit.cover,
-                                      ),
-                                    )
-                                  else
-                                    const Icon(Icons.account_circle, size: 64, color: Colors.grey),
-                                  const Spacer(),
-                                  // Follow/Unfollow button
-                                  if (profile.did != apiService.currentUser?.did)
-                                    SizedBox(
-                                      child: AppButton(
-                                        size: AppButtonSize.small,
-                                        variant: profile.viewer?.following?.isNotEmpty == true
-                                            ? AppButtonVariant.secondary
-                                            : AppButtonVariant.primary,
-                                        onPressed: () async {
-                                          await ref
-                                              .read(profileCacheProvider.notifier)
-                                              .toggleFollow(
-                                                profile.did,
-                                                apiService.currentUser?.did,
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      // Avatar
+                                      if (profile.avatar != null)
+                                        ClipOval(
+                                          child: AppImage(
+                                            url: profile.avatar,
+                                            width: 64,
+                                            height: 64,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        )
+                                      else
+                                        const Icon(
+                                          Icons.account_circle,
+                                          size: 64,
+                                          color: Colors.grey,
+                                        ),
+                                      const Spacer(),
+                                      // Follow/Unfollow button
+                                      if (profile.did != apiService.currentUser?.did)
+                                        SizedBox(
+                                          child: AppButton(
+                                            size: AppButtonSize.small,
+                                            variant: profile.viewer?.following?.isNotEmpty == true
+                                                ? AppButtonVariant.secondary
+                                                : AppButtonVariant.primary,
+                                            onPressed: () async {
+                                              await ref
+                                                  .read(
+                                                    profileNotifierProvider(profile.did).notifier,
+                                                  )
+                                                  .toggleFollow(apiService.currentUser?.did);
+                                            },
+                                            label: (profile.viewer?.following?.isNotEmpty == true)
+                                                ? 'Following'
+                                                : 'Follow',
+                                          ),
+                                        )
+                                      // Edit Profile button for current user
+                                      else
+                                        SizedBox(
+                                          child: AppButton(
+                                            size: AppButtonSize.small,
+                                            variant: AppButtonVariant.secondary,
+                                            onPressed: () async {
+                                              final bottomSheetContext = context;
+                                              await showModalBottomSheet<Map<String, dynamic>>(
+                                                context: bottomSheetContext,
+                                                isScrollControlled: true,
+                                                backgroundColor: Colors.transparent,
+                                                builder: (sheetContext) => EditProfileSheet(
+                                                  initialDisplayName: profile.displayName,
+                                                  initialDescription: profile.description,
+                                                  initialAvatarUrl: profile.avatar,
+                                                  onSave:
+                                                      (displayName, description, avatarFile) async {
+                                                        await _handleProfileSave(
+                                                          profile.did,
+                                                          displayName,
+                                                          description,
+                                                          avatarFile,
+                                                        );
+                                                      },
+                                                  onCancel: () => Navigator.of(sheetContext).pop(),
+                                                ),
                                               );
-                                        },
-                                        label: (profile.viewer?.following?.isNotEmpty == true)
-                                            ? 'Following'
-                                            : 'Follow',
-                                      ),
+                                            },
+                                            label: 'Edit profile',
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    profile.displayName ?? '',
+                                    style: const TextStyle(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.w800,
                                     ),
+                                    textAlign: TextAlign.left,
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '@${profile.handle}',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Theme.of(context).brightness == Brightness.dark
+                                          ? Colors.grey[400]
+                                          : Colors.grey[700],
+                                    ),
+                                    textAlign: TextAlign.left,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  _ProfileStatsRow(
+                                    followers:
+                                        (profile.followersCount is int
+                                                ? profile.followersCount
+                                                : int.tryParse(
+                                                        profile.followersCount?.toString() ?? '0',
+                                                      ) ??
+                                                      0)
+                                            .toString(),
+                                    following:
+                                        (profile.followsCount is int
+                                                ? profile.followsCount
+                                                : int.tryParse(
+                                                        profile.followsCount?.toString() ?? '0',
+                                                      ) ??
+                                                      0)
+                                            .toString(),
+                                    galleries:
+                                        (profile.galleryCount is int
+                                                ? profile.galleryCount
+                                                : int.tryParse(
+                                                        profile.galleryCount?.toString() ?? '0',
+                                                      ) ??
+                                                      0)
+                                            .toString(),
+                                  ),
+                                  if ((profile.description ?? '').isNotEmpty) ...[
+                                    const SizedBox(height: 16),
+                                    FutureBuilder<List<Map<String, dynamic>>?>(
+                                      future: getDescriptionFacets(),
+                                      builder: (context, snapshot) {
+                                        return FacetedText(
+                                          text: profile.description ?? '',
+                                          facets: snapshot.data,
+                                          onMentionTap: (didOrHandle) {
+                                            Navigator.of(context).push(
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    ProfilePage(did: didOrHandle, showAppBar: true),
+                                              ),
+                                            );
+                                          },
+                                          onLinkTap: (url) {
+                                            // TODO: Implement WebViewPage navigation
+                                          },
+                                          onTagTap: (tag) => Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) => HashtagPage(hashtag: tag),
+                                            ),
+                                          ),
+                                          linkStyle: TextStyle(
+                                            color: Theme.of(context).colorScheme.primary,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ],
+                                  const SizedBox(height: 24),
                                 ],
                               ),
-                              const SizedBox(height: 8),
-                              Text(
-                                profile.displayName ?? '',
-                                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800),
-                                textAlign: TextAlign.left,
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                '@${profile.handle ?? ''}',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Theme.of(context).brightness == Brightness.dark
-                                      ? Colors.grey[400]
-                                      : Colors.grey[700],
+                            ),
+                            // TabBar with no horizontal padding
+                            Container(
+                              color: theme.scaffoldBackgroundColor,
+                              child: TabBar(
+                                dividerColor: theme.disabledColor,
+                                controller: _tabController,
+                                indicator: UnderlineTabIndicator(
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.primaryColor,
+                                    width: 3,
+                                  ),
+                                  insets: EdgeInsets.zero,
                                 ),
-                                textAlign: TextAlign.left,
+                                indicatorSize: TabBarIndicatorSize.tab,
+                                labelColor: theme.colorScheme.onSurface,
+                                unselectedLabelColor: theme.colorScheme.onSurfaceVariant,
+                                labelStyle: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16,
+                                ),
+                                tabs: [
+                                  const Tab(text: 'Galleries'),
+                                  if (apiService.currentUser?.did == profile.did)
+                                    const Tab(text: 'Favs'),
+                                ],
                               ),
-                              const SizedBox(height: 12),
-                              _ProfileStatsRow(
-                                followers:
-                                    (profile.followersCount is int
-                                            ? profile.followersCount
-                                            : int.tryParse(
-                                                    profile.followersCount?.toString() ?? '0',
-                                                  ) ??
-                                                  0)
-                                        .toString(),
-                                following:
-                                    (profile.followsCount is int
-                                            ? profile.followsCount
-                                            : int.tryParse(
-                                                    profile.followsCount?.toString() ?? '0',
-                                                  ) ??
-                                                  0)
-                                        .toString(),
-                                galleries:
-                                    (profile.galleryCount is int
-                                            ? profile.galleryCount
-                                            : int.tryParse(
-                                                    profile.galleryCount?.toString() ?? '0',
-                                                  ) ??
-                                                  0)
-                                        .toString(),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    body: TabBarView(
+                      controller: _tabController,
+                      children: [
+                        // Galleries tab, edge-to-edge grid
+                        galleries.isEmpty
+                            ? GridView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                padding: EdgeInsets.zero,
+                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 3,
+                                  childAspectRatio: 3 / 4,
+                                  crossAxisSpacing: 2,
+                                  mainAxisSpacing: 2,
+                                ),
+                                itemCount: 12, // Enough to fill the screen
+                                itemBuilder: (context, index) {
+                                  return Container(
+                                    color: theme.colorScheme.surfaceContainerHighest,
+                                  );
+                                },
+                              )
+                            : GridView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                padding: EdgeInsets.zero,
+                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 3,
+                                  childAspectRatio: 3 / 4,
+                                  crossAxisSpacing: 2,
+                                  mainAxisSpacing: 2,
+                                ),
+                                itemCount: (galleries.length < 12 ? 12 : galleries.length),
+                                itemBuilder: (context, index) {
+                                  if (galleries.isNotEmpty && index < galleries.length) {
+                                    final gallery = galleries[index];
+                                    final hasPhoto =
+                                        gallery.items.isNotEmpty &&
+                                        (gallery.items[0].thumb?.isNotEmpty ?? false);
+                                    return GestureDetector(
+                                      onTap: () {
+                                        if (gallery.uri.isNotEmpty) {
+                                          Navigator.of(context).push(
+                                            MaterialPageRoute(
+                                              builder: (context) => GalleryPage(
+                                                uri: gallery.uri,
+                                                currentUserDid: apiService.currentUser?.did ?? '',
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      },
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.surfaceContainerHighest,
+                                        ),
+                                        clipBehavior: Clip.antiAlias,
+                                        child: hasPhoto
+                                            ? AppImage(
+                                                url: gallery.items[0].thumb,
+                                                fit: BoxFit.cover,
+                                              )
+                                            : Center(
+                                                child: Text(
+                                                  gallery.title ?? '',
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    color: theme.colorScheme.onSurfaceVariant,
+                                                  ),
+                                                  textAlign: TextAlign.center,
+                                                ),
+                                              ),
+                                      ),
+                                    );
+                                  }
+                                  // Placeholder for empty slots
+                                  return Container(
+                                    color: theme.colorScheme.surfaceContainerHighest,
+                                  );
+                                },
                               ),
-                              if ((profile.description ?? '').isNotEmpty) ...[
-                                const SizedBox(height: 16),
-                                FacetedText(
-                                  text: profile.description,
-                                  facets: _descriptionFacets,
-                                  onMentionTap: (didOrHandle) {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            ProfilePage(did: didOrHandle, showAppBar: true),
+                        // Favs tab
+                        if (apiService.currentUser?.did == profile.did)
+                          (_favsLoading
+                              ? const Center(
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                )
+                              : _favs.isEmpty
+                              ? GridView.builder(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  padding: EdgeInsets.zero,
+                                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 3,
+                                    childAspectRatio: 3 / 4,
+                                    crossAxisSpacing: 2,
+                                    mainAxisSpacing: 2,
+                                  ),
+                                  itemCount: 12, // Enough to fill the screen
+                                  itemBuilder: (context, index) {
+                                    return Container(
+                                      color: theme.colorScheme.surfaceContainerHighest,
+                                    );
+                                  },
+                                )
+                              : GridView.builder(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  padding: EdgeInsets.zero,
+                                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 3,
+                                    childAspectRatio: 3 / 4,
+                                    crossAxisSpacing: 2,
+                                    mainAxisSpacing: 2,
+                                  ),
+                                  itemCount: _favs.length,
+                                  itemBuilder: (context, index) {
+                                    final gallery = _favs[index];
+                                    final hasPhoto =
+                                        gallery.items.isNotEmpty &&
+                                        (gallery.items[0].thumb?.isNotEmpty ?? false);
+                                    return GestureDetector(
+                                      onTap: () {
+                                        if (gallery.uri.isNotEmpty) {
+                                          Navigator.of(context).push(
+                                            MaterialPageRoute(
+                                              builder: (context) => GalleryPage(
+                                                uri: gallery.uri,
+                                                currentUserDid: apiService.currentUser?.did ?? '',
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      },
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: theme.colorScheme.surfaceContainerHighest,
+                                        ),
+                                        clipBehavior: Clip.antiAlias,
+                                        child: hasPhoto
+                                            ? AppImage(
+                                                url: gallery.items[0].thumb,
+                                                fit: BoxFit.cover,
+                                              )
+                                            : Center(
+                                                child: Text(
+                                                  gallery.title ?? '',
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    color: theme.colorScheme.onSurfaceVariant,
+                                                  ),
+                                                  textAlign: TextAlign.center,
+                                                ),
+                                              ),
                                       ),
                                     );
                                   },
-                                  onLinkTap: (url) {
-                                    // TODO: Implement WebViewPage navigation
-                                  },
-                                  onTagTap: (tag) => Navigator.push(
-                                    context,
-                                    MaterialPageRoute(builder: (_) => HashtagPage(hashtag: tag)),
-                                  ),
-                                  linkStyle: TextStyle(
-                                    color: Theme.of(context).colorScheme.primary,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                              const SizedBox(height: 24),
-                            ],
-                          ),
-                        ),
-                        // TabBar with no horizontal padding
-                        Container(
-                          color: theme.scaffoldBackgroundColor,
-                          child: TabBar(
-                            dividerColor: theme.disabledColor,
-                            controller: _tabController,
-                            indicator: UnderlineTabIndicator(
-                              borderSide: const BorderSide(color: AppTheme.primaryColor, width: 3),
-                              insets: EdgeInsets.zero,
-                            ),
-                            indicatorSize: TabBarIndicatorSize.tab,
-                            labelColor: theme.colorScheme.onSurface,
-                            unselectedLabelColor: theme.colorScheme.onSurfaceVariant,
-                            labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
-                            tabs: [
-                              const Tab(text: 'Galleries'),
-                              if (apiService.currentUser?.did == profile.did)
-                                const Tab(text: 'Favs'),
-                            ],
-                          ),
-                        ),
+                                )),
                       ],
                     ),
                   ),
-                ],
-                body: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    // Galleries tab, edge-to-edge grid
-                    _galleriesLoading
-                        ? Center(
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: theme.colorScheme.primary,
-                            ),
-                          )
-                        : _galleries.isEmpty
-                        ? GridView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            padding: EdgeInsets.zero,
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 3,
-                              childAspectRatio: 3 / 4,
-                              crossAxisSpacing: 2,
-                              mainAxisSpacing: 2,
-                            ),
-                            itemCount: 12, // Enough to fill the screen
-                            itemBuilder: (context, index) {
-                              return Container(color: theme.colorScheme.surfaceContainerHighest);
-                            },
-                          )
-                        : GridView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            padding: EdgeInsets.zero,
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 3,
-                              childAspectRatio: 3 / 4,
-                              crossAxisSpacing: 2,
-                              mainAxisSpacing: 2,
-                            ),
-                            itemCount: (_galleries.length < 12 ? 12 : _galleries.length),
-                            itemBuilder: (context, index) {
-                              if (_galleries.isNotEmpty && index < _galleries.length) {
-                                final gallery = _galleries[index];
-                                final hasPhoto =
-                                    gallery.items.isNotEmpty &&
-                                    (gallery.items[0].thumb?.isNotEmpty ?? false);
-                                return GestureDetector(
-                                  onTap: () {
-                                    if (gallery.uri.isNotEmpty) {
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder: (context) => GalleryPage(
-                                            uri: gallery.uri,
-                                            currentUserDid: apiService.currentUser?.did ?? '',
-                                          ),
-                                        ),
-                                      );
-                                    }
-                                  },
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                                    ),
-                                    clipBehavior: Clip.antiAlias,
-                                    child: hasPhoto
-                                        ? AppImage(url: gallery.items[0].thumb, fit: BoxFit.cover)
-                                        : Center(
-                                            child: Text(
-                                              gallery.title ?? '',
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                color: theme.colorScheme.onSurfaceVariant,
-                                              ),
-                                              textAlign: TextAlign.center,
-                                            ),
-                                          ),
-                                  ),
-                                );
-                              }
-                              // Placeholder for empty slots
-                              return Container(color: theme.colorScheme.surfaceContainerHighest);
-                            },
-                          ),
-                    // Favs tab
-                    if (apiService.currentUser?.did == profile.did)
-                      (_favsLoading
-                          ? const Center(
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: AppTheme.primaryColor,
-                              ),
-                            )
-                          : _favs.isEmpty
-                          ? GridView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              padding: EdgeInsets.zero,
-                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 3,
-                                childAspectRatio: 3 / 4,
-                                crossAxisSpacing: 2,
-                                mainAxisSpacing: 2,
-                              ),
-                              itemCount: 12, // Enough to fill the screen
-                              itemBuilder: (context, index) {
-                                return Container(color: theme.colorScheme.surfaceContainerHighest);
-                              },
-                            )
-                          : GridView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              padding: EdgeInsets.zero,
-                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 3,
-                                childAspectRatio: 3 / 4,
-                                crossAxisSpacing: 2,
-                                mainAxisSpacing: 2,
-                              ),
-                              itemCount: _favs.length,
-                              itemBuilder: (context, index) {
-                                final gallery = _favs[index];
-                                final hasPhoto =
-                                    gallery.items.isNotEmpty &&
-                                    (gallery.items[0].thumb?.isNotEmpty ?? false);
-                                return GestureDetector(
-                                  onTap: () {
-                                    if (gallery.uri.isNotEmpty) {
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder: (context) => GalleryPage(
-                                            uri: gallery.uri,
-                                            currentUserDid: apiService.currentUser?.did ?? '',
-                                          ),
-                                        ),
-                                      );
-                                    }
-                                  },
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: theme.colorScheme.surfaceContainerHighest,
-                                    ),
-                                    clipBehavior: Clip.antiAlias,
-                                    child: hasPhoto
-                                        ? AppImage(url: gallery.items[0].thumb, fit: BoxFit.cover)
-                                        : Center(
-                                            child: Text(
-                                              gallery.title ?? '',
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                color: theme.colorScheme.onSurfaceVariant,
-                                              ),
-                                              textAlign: TextAlign.center,
-                                            ),
-                                          ),
-                                  ),
-                                );
-                              },
-                            )),
-                  ],
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

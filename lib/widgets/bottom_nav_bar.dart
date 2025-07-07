@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:grain/api.dart';
 import 'package:grain/app_theme.dart';
+import 'package:grain/models/profile_with_galleries.dart';
+import 'package:grain/providers/profile_provider.dart';
 import 'package:grain/widgets/app_image.dart';
 
-class BottomNavBar extends StatelessWidget {
+class BottomNavBar extends ConsumerWidget {
   final int navIndex;
   final VoidCallback onHome;
   final VoidCallback onExplore;
   final VoidCallback onNotifications;
   final VoidCallback onProfile;
-  final String? avatarUrl;
 
   const BottomNavBar({
     super.key,
@@ -18,11 +21,20 @@ class BottomNavBar extends StatelessWidget {
     required this.onExplore,
     required this.onNotifications,
     required this.onProfile,
-    this.avatarUrl,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final did = apiService.currentUser?.did;
+    final asyncProfile = did != null
+        ? ref.watch(profileNotifierProvider(did))
+        : const AsyncValue<ProfileWithGalleries?>.loading();
+
+    final avatarUrl = asyncProfile.maybeWhen(
+      data: (profileWithGalleries) => profileWithGalleries?.profile.avatar,
+      orElse: () => null,
+    );
+
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
@@ -104,7 +116,7 @@ class BottomNavBar extends StatelessWidget {
                 child: Transform.translate(
                   offset: const Offset(0, -10),
                   child: Center(
-                    child: avatarUrl != null && avatarUrl!.isNotEmpty
+                    child: avatarUrl != null && avatarUrl.isNotEmpty
                         ? Container(
                             width: 28,
                             height: 28,
@@ -117,7 +129,7 @@ class BottomNavBar extends StatelessWidget {
                                 : null,
                             child: ClipOval(
                               child: AppImage(
-                                url: avatarUrl!,
+                                url: avatarUrl,
                                 width: 24,
                                 height: 24,
                                 fit: BoxFit.cover,

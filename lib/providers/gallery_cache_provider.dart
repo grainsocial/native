@@ -27,6 +27,11 @@ class GalleryCache extends _$GalleryCache {
 
   Gallery? getGallery(String uri) => state[uri];
 
+  void setGalleriesForActor(String did, List<Gallery> galleries) {
+    setGalleries(galleries);
+    // Optionally, you could keep a mapping of actor DID to gallery URIs if needed
+  }
+
   Future<void> toggleFavorite(String uri) async {
     // Fetch the latest gallery from the API to ensure up-to-date favorite state
     final latestGallery = await apiService.getGallery(uri: uri);

@@ -392,7 +392,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               showExplore = false;
             });
           },
-          avatarUrl: apiService.currentUser?.avatar,
         ),
         floatingActionButton: (!showProfile && !showNotifications && !showExplore)
             ? FloatingActionButton(
@@ -498,7 +497,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             showExplore = false;
           });
         },
-        avatarUrl: apiService.currentUser?.avatar,
       ),
     );
   }
