@@ -106,6 +106,52 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
     }
   }
 
+  void _showAvatarFullscreen(String avatarUrl) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.95),
+      builder: (context) {
+        final size = MediaQuery.of(context).size;
+        final diameter = size.width;
+        return Stack(
+          children: [
+            GestureDetector(
+              onTap: () => Navigator.of(context).pop(),
+              child: Center(
+                child: Hero(
+                  tag: 'profile-avatar',
+                  child: ClipOval(
+                    child: SizedBox(
+                      width: diameter,
+                      height: diameter,
+                      child: AppImage(
+                        url: avatarUrl,
+                        fit: BoxFit.cover,
+                        width: diameter,
+                        height: diameter,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 40,
+              right: 24,
+              child: SafeArea(
+                child: IconButton(
+                  icon: Icon(Icons.close_rounded, color: Colors.white, size: 36),
+                  onPressed: () => Navigator.of(context).pop(),
+                  tooltip: 'Close',
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -170,12 +216,18 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                                     children: [
                                       // Avatar
                                       if (profile.avatar != null)
-                                        ClipOval(
-                                          child: AppImage(
-                                            url: profile.avatar,
-                                            width: 64,
-                                            height: 64,
-                                            fit: BoxFit.cover,
+                                        GestureDetector(
+                                          onTap: () => _showAvatarFullscreen(profile.avatar!),
+                                          child: Hero(
+                                            tag: 'profile-avatar',
+                                            child: ClipOval(
+                                              child: AppImage(
+                                                url: profile.avatar,
+                                                width: 64,
+                                                height: 64,
+                                                fit: BoxFit.cover,
+                                              ),
+                                            ),
                                           ),
                                         )
                                       else
