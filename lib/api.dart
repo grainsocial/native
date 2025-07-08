@@ -443,7 +443,7 @@ class ApiService {
     required String text,
     List<Map<String, dynamic>>? facets,
     required String subject,
-    Map<String, dynamic>? focus,
+    String? focus, // Now a String (photo URI)
     String? replyTo,
   }) async {
     final session = await auth.getValidSession();
@@ -462,7 +462,7 @@ class ApiService {
         'text': text,
         if (facets != null) 'facets': facets,
         'subject': subject,
-        if (focus != null) 'focus': focus,
+        if (focus != null) 'focus': focus, // focus is now a String
         if (replyTo != null) 'replyTo': replyTo,
         'createdAt': DateTime.now().toUtc().toIso8601String(),
       },

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:grain/api.dart';
 import 'package:grain/models/gallery_photo.dart';
 import 'package:grain/providers/gallery_cache_provider.dart';
+import 'package:grain/screens/comments_page.dart';
 import 'package:grain/screens/create_gallery_page.dart';
 import 'package:grain/screens/hashtag_page.dart';
 import 'package:grain/screens/profile_page.dart';
@@ -311,6 +312,20 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
                         _selectedPhotoIndex = null;
                       });
                     },
+                    onCommentPosted: (galleryUri) async {
+                      setState(() => _selectedPhoto = null); // Remove overlay
+                      await Future.delayed(const Duration(milliseconds: 200));
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => CommentsPage(galleryUri: galleryUri),
+                            ),
+                          );
+                        }
+                      });
+                    },
+                    gallery: gallery, // Pass the gallery object
                   ),
                 ),
               ],

@@ -7,7 +7,7 @@ import 'package:grain/providers/gallery_thread_cache_provider.dart';
 import 'package:grain/screens/hashtag_page.dart';
 import 'package:grain/screens/profile_page.dart';
 import 'package:grain/utils.dart';
-import 'package:grain/widgets/app_button.dart';
+import 'package:grain/widgets/add_comment_sheet.dart';
 import 'package:grain/widgets/app_image.dart';
 import 'package:grain/widgets/faceted_text.dart';
 import 'package:grain/widgets/gallery_photo_view.dart';
@@ -24,27 +24,27 @@ class CommentsPage extends ConsumerStatefulWidget {
 class _CommentsPageState extends ConsumerState<CommentsPage> {
   GalleryPhoto? _selectedPhoto;
 
-  void _showCommentInputSheet(
-    BuildContext context,
-    WidgetRef ref, {
-    String? replyTo,
-    String? mention,
-  }) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (sheetContext) => CommentInputSheet(
-        initialText: mention ?? '',
-        onSubmit: (text) async {
-          await ref
-              .read(galleryThreadProvider(widget.galleryUri).notifier)
-              .createComment(text: text.trim(), replyTo: replyTo);
-          if (!sheetContext.mounted) {
-            return;
+  void _showCommentInputSheet(BuildContext context, WidgetRef ref, {Comment? replyToComment}) {
+    final threadState = ref.read(galleryThreadProvider(widget.galleryUri));
+    // Pass replyTo as a Map for compatibility with add_comment_sheet
+    final replyTo = replyToComment != null
+        ? {
+            'author': replyToComment.author,
+            'focus': replyToComment.focus,
+            'text': replyToComment.text,
           }
-          Navigator.of(sheetContext).pop();
-        },
-      ),
+        : null;
+    showAddCommentSheet(
+      context,
+      initialText: '', // Always blank
+      onSubmit: (text) async {
+        await ref
+            .read(galleryThreadProvider(widget.galleryUri).notifier)
+            .createComment(text: text.trim(), replyTo: replyToComment?.uri);
+      },
+      onCancel: () => Navigator.of(context).maybePop(),
+      gallery: threadState.gallery,
+      replyTo: replyTo,
     );
   }
 
@@ -121,12 +121,8 @@ class _CommentsPageState extends ConsumerState<CommentsPage> {
                           onPhotoTap: (photo) {
                             setState(() => _selectedPhoto = photo);
                           },
-                          onReply: (replyTo, {mention}) => _showCommentInputSheet(
-                            context,
-                            ref,
-                            replyTo: replyTo,
-                            mention: mention,
-                          ),
+                          onReply: (comment, {mention}) =>
+                              _showCommentInputSheet(context, ref, replyToComment: comment),
                           onDelete: (comment) async {
                             final confirmed = await showDialog<bool>(
                               context: context,
@@ -174,6 +170,8 @@ class _CommentsPageState extends ConsumerState<CommentsPage> {
 
                             if (!context.mounted) return;
                             ScaffoldMessenger.of(context).removeCurrentSnackBar();
+                            await Future.delayed(const Duration(milliseconds: 120));
+                            if (!context.mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
@@ -224,6 +222,7 @@ class _CommentsPageState extends ConsumerState<CommentsPage> {
               photos: [_selectedPhoto!],
               initialIndex: 0,
               onClose: () => setState(() => _selectedPhoto = null),
+              showAddCommentButton: false,
             ),
           ),
       ],
@@ -231,103 +230,10 @@ class _CommentsPageState extends ConsumerState<CommentsPage> {
   }
 }
 
-class CommentInputSheet extends StatefulWidget {
-  final String initialText;
-  final Future<void> Function(String text) onSubmit;
-  const CommentInputSheet({super.key, this.initialText = '', required this.onSubmit});
-
-  @override
-  State<CommentInputSheet> createState() => _CommentInputSheetState();
-}
-
-class _CommentInputSheetState extends State<CommentInputSheet> {
-  late TextEditingController _controller;
-  bool _posting = false;
-  String _currentText = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(text: widget.initialText);
-    _currentText = widget.initialText;
-    _controller.addListener(_onTextChanged);
-  }
-
-  void _onTextChanged() {
-    if (_currentText != _controller.text) {
-      setState(() {
-        _currentText = _controller.text;
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.removeListener(_onTextChanged);
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-        left: 16,
-        right: 16,
-        top: 16,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              AppButton(
-                label: 'Cancel',
-                variant: AppButtonVariant.text,
-                size: AppButtonSize.small,
-                disabled: _posting,
-                onPressed: _posting ? null : () => Navigator.pop(context),
-              ),
-              AppButton(
-                borderRadius: 22,
-                label: 'Post',
-                loading: _posting,
-                onPressed: !_posting && _currentText.trim().isNotEmpty
-                    ? () async {
-                        setState(() => _posting = true);
-                        await widget.onSubmit(_currentText.trim());
-                      }
-                    : null,
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _controller,
-            minLines: 2,
-            maxLines: 6,
-            autofocus: true,
-            decoration: const InputDecoration(
-              hintText: 'Write your comment...',
-              border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: InputBorder.none,
-              disabledBorder: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _CommentsList extends StatelessWidget {
   final List<Comment> comments;
   final void Function(GalleryPhoto photo) onPhotoTap;
-  final void Function(String replyTo, {String? mention}) onReply;
+  final void Function(Comment replyToComment, {String? mention}) onReply;
   final void Function(Comment comment) onDelete;
   const _CommentsList({
     required this.comments,
@@ -376,11 +282,7 @@ class _CommentsList extends StatelessWidget {
           _CommentTile(
             comment: comment,
             onPhotoTap: onPhotoTap,
-            onReply: (replyTo, {mention}) {
-              // Only two levels: replyTo should always be the top-level parent
-              final parent = _findTopLevelParent(comment, byUri);
-              onReply(parent.uri, mention: mention);
-            },
+            onReply: (c, {mention}) => onReply(comment, mention: mention),
             onDelete: onDelete,
           ),
           if (repliesByParent[comment.uri] != null)
@@ -421,7 +323,7 @@ class _CommentsList extends StatelessWidget {
 class _CommentTile extends StatelessWidget {
   final Comment comment;
   final void Function(GalleryPhoto photo)? onPhotoTap;
-  final void Function(String replyTo, {String? mention})? onReply;
+  final void Function(Comment replyToComment, {String? mention})? onReply;
   final void Function(Comment comment)? onDelete;
   const _CommentTile({required this.comment, this.onPhotoTap, this.onReply, this.onDelete});
 
@@ -539,7 +441,7 @@ class _CommentTile extends StatelessWidget {
                         onPressed: () {
                           final handle = comment.author['handle'] ?? '';
                           final mention = handle.isNotEmpty ? '@$handle ' : '';
-                          if (onReply != null) onReply!(comment.uri, mention: mention);
+                          if (onReply != null) onReply!(comment, mention: mention);
                         },
                         child: Text(
                           'Reply',

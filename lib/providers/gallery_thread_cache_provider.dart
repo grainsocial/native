@@ -72,7 +72,7 @@ class GalleryThread extends _$GalleryThread {
     return List<Map<String, dynamic>>.from(facets);
   }
 
-  Future<bool> createComment({required String text, String? replyTo}) async {
+  Future<bool> createComment({required String text, String? replyTo, String? focus}) async {
     try {
       final facetsList = await _extractFacets(text);
       final facets = facetsList.isEmpty ? null : facetsList;
@@ -81,6 +81,7 @@ class GalleryThread extends _$GalleryThread {
         subject: galleryUri,
         replyTo: replyTo,
         facets: facets,
+        focus: focus,
       );
       if (uri != null) {
         final thread = await apiService.pollGalleryThreadComments(
