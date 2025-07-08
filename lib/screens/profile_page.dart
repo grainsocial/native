@@ -10,6 +10,7 @@ import 'package:grain/widgets/app_button.dart';
 import 'package:grain/widgets/app_image.dart';
 import 'package:grain/widgets/edit_profile_sheet.dart';
 import 'package:grain/widgets/faceted_text.dart';
+import 'package:grain/widgets/camera_pills.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'gallery_page.dart';
@@ -284,32 +285,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                                   ),
                                   if ((profile.cameras?.isNotEmpty ?? false)) ...[
                                     const SizedBox(height: 16),
-                                    Wrap(
-                                      spacing: 8,
-                                      runSpacing: 4,
-                                      children: profile.cameras!
-                                          .map(
-                                            (camera) => Container(
-                                              padding: const EdgeInsets.symmetric(
-                                                horizontal: 12,
-                                                vertical: 4,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                color: theme.colorScheme.surface,
-                                                borderRadius: BorderRadius.circular(999),
-                                              ),
-                                              child: Text(
-                                                '📷 $camera',
-                                                style: TextStyle(
-                                                  color: theme.colorScheme.onSurface,
-                                                  fontWeight: FontWeight.w500,
-                                                  fontSize: 12,
-                                                ),
-                                              ),
-                                            ),
-                                          )
-                                          .toList(),
-                                    ),
+                                    CameraPills(cameras: profile.cameras!),
                                   ],
                                   if ((profile.description ?? '').isNotEmpty) ...[
                                     const SizedBox(height: 16),

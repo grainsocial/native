@@ -32,6 +32,7 @@ mixin _$Gallery {
   int? get commentCount => throw _privateConstructorUsedError;
   GalleryViewer? get viewer => throw _privateConstructorUsedError;
   List<Map<String, dynamic>>? get facets => throw _privateConstructorUsedError;
+  List<String>? get cameras => throw _privateConstructorUsedError;
 
   /// Serializes this Gallery to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -59,6 +60,7 @@ abstract class $GalleryCopyWith<$Res> {
     int? commentCount,
     GalleryViewer? viewer,
     List<Map<String, dynamic>>? facets,
+    List<String>? cameras,
   });
 
   $ProfileCopyWith<$Res>? get creator;
@@ -91,6 +93,7 @@ class _$GalleryCopyWithImpl<$Res, $Val extends Gallery>
     Object? commentCount = freezed,
     Object? viewer = freezed,
     Object? facets = freezed,
+    Object? cameras = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -138,6 +141,10 @@ class _$GalleryCopyWithImpl<$Res, $Val extends Gallery>
                 ? _value.facets
                 : facets // ignore: cast_nullable_to_non_nullable
                       as List<Map<String, dynamic>>?,
+            cameras: freezed == cameras
+                ? _value.cameras
+                : cameras // ignore: cast_nullable_to_non_nullable
+                      as List<String>?,
           )
           as $Val,
     );
@@ -192,6 +199,7 @@ abstract class _$$GalleryImplCopyWith<$Res> implements $GalleryCopyWith<$Res> {
     int? commentCount,
     GalleryViewer? viewer,
     List<Map<String, dynamic>>? facets,
+    List<String>? cameras,
   });
 
   @override
@@ -225,6 +233,7 @@ class __$$GalleryImplCopyWithImpl<$Res>
     Object? commentCount = freezed,
     Object? viewer = freezed,
     Object? facets = freezed,
+    Object? cameras = freezed,
   }) {
     return _then(
       _$GalleryImpl(
@@ -272,6 +281,10 @@ class __$$GalleryImplCopyWithImpl<$Res>
             ? _value._facets
             : facets // ignore: cast_nullable_to_non_nullable
                   as List<Map<String, dynamic>>?,
+        cameras: freezed == cameras
+            ? _value._cameras
+            : cameras // ignore: cast_nullable_to_non_nullable
+                  as List<String>?,
       ),
     );
   }
@@ -292,8 +305,10 @@ class _$GalleryImpl implements _Gallery {
     this.commentCount,
     this.viewer,
     final List<Map<String, dynamic>>? facets,
+    final List<String>? cameras,
   }) : _items = items,
-       _facets = facets;
+       _facets = facets,
+       _cameras = cameras;
 
   factory _$GalleryImpl.fromJson(Map<String, dynamic> json) =>
       _$$GalleryImplFromJson(json);
@@ -334,9 +349,19 @@ class _$GalleryImpl implements _Gallery {
     return EqualUnmodifiableListView(value);
   }
 
+  final List<String>? _cameras;
+  @override
+  List<String>? get cameras {
+    final value = _cameras;
+    if (value == null) return null;
+    if (_cameras is EqualUnmodifiableListView) return _cameras;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
   @override
   String toString() {
-    return 'Gallery(uri: $uri, cid: $cid, title: $title, description: $description, items: $items, creator: $creator, createdAt: $createdAt, favCount: $favCount, commentCount: $commentCount, viewer: $viewer, facets: $facets)';
+    return 'Gallery(uri: $uri, cid: $cid, title: $title, description: $description, items: $items, creator: $creator, createdAt: $createdAt, favCount: $favCount, commentCount: $commentCount, viewer: $viewer, facets: $facets, cameras: $cameras)';
   }
 
   @override
@@ -358,7 +383,8 @@ class _$GalleryImpl implements _Gallery {
             (identical(other.commentCount, commentCount) ||
                 other.commentCount == commentCount) &&
             (identical(other.viewer, viewer) || other.viewer == viewer) &&
-            const DeepCollectionEquality().equals(other._facets, _facets));
+            const DeepCollectionEquality().equals(other._facets, _facets) &&
+            const DeepCollectionEquality().equals(other._cameras, _cameras));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -376,6 +402,7 @@ class _$GalleryImpl implements _Gallery {
     commentCount,
     viewer,
     const DeepCollectionEquality().hash(_facets),
+    const DeepCollectionEquality().hash(_cameras),
   );
 
   /// Create a copy of Gallery
@@ -405,6 +432,7 @@ abstract class _Gallery implements Gallery {
     final int? commentCount,
     final GalleryViewer? viewer,
     final List<Map<String, dynamic>>? facets,
+    final List<String>? cameras,
   }) = _$GalleryImpl;
 
   factory _Gallery.fromJson(Map<String, dynamic> json) = _$GalleryImpl.fromJson;
@@ -431,6 +459,8 @@ abstract class _Gallery implements Gallery {
   GalleryViewer? get viewer;
   @override
   List<Map<String, dynamic>>? get facets;
+  @override
+  List<String>? get cameras;
 
   /// Create a copy of Gallery
   /// with the given fields replaced by the non-null parameter values.

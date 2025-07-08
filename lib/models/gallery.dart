@@ -21,6 +21,7 @@ class Gallery with _$Gallery {
     int? commentCount,
     GalleryViewer? viewer,
     List<Map<String, dynamic>>? facets,
+    List<String>? cameras,
   }) = _Gallery;
 
   factory Gallery.fromJson(Map<String, dynamic> json) => _$GalleryFromJson(json);

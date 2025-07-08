@@ -7,6 +7,7 @@ import 'package:grain/screens/create_gallery_page.dart';
 import 'package:grain/screens/hashtag_page.dart';
 import 'package:grain/screens/profile_page.dart';
 import 'package:grain/widgets/app_image.dart';
+import 'package:grain/widgets/camera_pills.dart';
 import 'package:grain/widgets/faceted_text.dart';
 import 'package:grain/widgets/gallery_action_buttons.dart';
 import 'package:grain/widgets/gallery_photo_view.dart';
@@ -249,6 +250,11 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
                         MaterialPageRoute(builder: (_) => HashtagPage(hashtag: tag)),
                       ),
                     ),
+                  ),
+                if ((gallery.cameras?.isNotEmpty ?? false))
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    child: CameraPills(cameras: gallery.cameras!),
                   ),
                 if (isLoggedIn)
                   Padding(

@@ -27,6 +27,9 @@ _$GalleryImpl _$$GalleryImplFromJson(Map<String, dynamic> json) =>
       facets: (json['facets'] as List<dynamic>?)
           ?.map((e) => e as Map<String, dynamic>)
           .toList(),
+      cameras: (json['cameras'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
     );
 
 Map<String, dynamic> _$$GalleryImplToJson(_$GalleryImpl instance) =>
@@ -42,4 +45,5 @@ Map<String, dynamic> _$$GalleryImplToJson(_$GalleryImpl instance) =>
       'commentCount': instance.commentCount,
       'viewer': instance.viewer,
       'facets': instance.facets,
+      'cameras': instance.cameras,
     };
