@@ -8,9 +8,9 @@ import 'package:grain/providers/profile_provider.dart';
 import 'package:grain/screens/hashtag_page.dart';
 import 'package:grain/widgets/app_button.dart';
 import 'package:grain/widgets/app_image.dart';
+import 'package:grain/widgets/camera_pills.dart';
 import 'package:grain/widgets/edit_profile_sheet.dart';
 import 'package:grain/widgets/faceted_text.dart';
-import 'package:grain/widgets/camera_pills.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'gallery_page.dart';
