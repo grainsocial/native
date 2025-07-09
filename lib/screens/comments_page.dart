@@ -59,11 +59,7 @@ class _CommentsPageState extends ConsumerState<CommentsPage> {
           appBar: AppBar(
             backgroundColor: theme.appBarTheme.backgroundColor,
             surfaceTintColor: theme.appBarTheme.backgroundColor,
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(1),
-              child: Container(color: theme.dividerColor, height: 1),
-            ),
-            title: Text('Comments', style: theme.appBarTheme.titleTextStyle),
+            title: Text('Comments'),
           ),
           body: GestureDetector(
             behavior: HitTestBehavior.translucent,

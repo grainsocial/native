@@ -40,14 +40,10 @@ class _HashtagPageState extends ConsumerState<HashtagPage> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(color: theme.dividerColor, height: 1),
-        ),
         backgroundColor: theme.appBarTheme.backgroundColor,
         surfaceTintColor: theme.appBarTheme.backgroundColor,
         elevation: 0.5,
-        title: Text('#${widget.hashtag}', style: theme.appBarTheme.titleTextStyle),
+        title: Text('#${widget.hashtag}'),
       ),
       body: _loading
           ? Center(

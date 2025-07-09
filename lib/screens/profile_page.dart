@@ -13,6 +13,8 @@ import 'package:grain/widgets/edit_profile_sheet.dart';
 import 'package:grain/widgets/faceted_text.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'followers_page.dart';
+import 'follows_page.dart';
 import 'gallery_page.dart';
 
 class ProfilePage extends ConsumerStatefulWidget {
@@ -187,10 +189,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
               ? AppBar(
                   backgroundColor: theme.appBarTheme.backgroundColor,
                   surfaceTintColor: theme.appBarTheme.backgroundColor,
-                  bottom: PreferredSize(
-                    preferredSize: const Size.fromHeight(1),
-                    child: Container(color: theme.dividerColor, height: 1),
-                  ),
                   leading: const BackButton(),
                 )
               : null,
@@ -334,6 +332,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                                                       ) ??
                                                       0)
                                             .toString(),
+                                    did: profile.did,
                                   ),
                                   if ((profile.cameras?.isNotEmpty ?? false)) ...[
                                     const SizedBox(height: 16),
@@ -585,10 +584,12 @@ class _ProfileStatsRow extends StatelessWidget {
   final String followers;
   final String following;
   final String galleries;
+  final String did;
   const _ProfileStatsRow({
     required this.followers,
     required this.following,
     required this.galleries,
+    required this.did,
   });
 
   @override
@@ -605,13 +606,35 @@ class _ProfileStatsRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.start,
       children: [
-        Text(followers, style: styleCount),
-        const SizedBox(width: 4),
-        Text('followers', style: styleLabel),
+        GestureDetector(
+          onTap: () {
+            Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => FollowersPage(actorDid: did)));
+          },
+          child: Row(
+            children: [
+              Text(followers, style: styleCount),
+              const SizedBox(width: 4),
+              Text('followers', style: styleLabel),
+            ],
+          ),
+        ),
         const SizedBox(width: 16),
-        Text(following, style: styleCount),
-        const SizedBox(width: 4),
-        Text('following', style: styleLabel),
+        GestureDetector(
+          onTap: () {
+            Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => FollowsPage(actorDid: did)));
+          },
+          child: Row(
+            children: [
+              Text(following, style: styleCount),
+              const SizedBox(width: 4),
+              Text('following', style: styleLabel),
+            ],
+          ),
+        ),
         const SizedBox(width: 16),
         Text(galleries, style: styleCount),
         const SizedBox(width: 4),

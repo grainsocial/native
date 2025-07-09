@@ -315,7 +315,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                 snap: false,
                 pinned: true,
                 elevation: 0.5,
-                title: Text(widget.title, style: theme.appBarTheme.titleTextStyle),
+                title: Text(widget.title),
                 leading: Builder(
                   builder: (context) => IconButton(
                     icon: const Icon(Icons.menu),

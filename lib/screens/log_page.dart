@@ -11,12 +11,8 @@ class LogPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Logs', style: theme.appBarTheme.titleTextStyle),
+        title: Text('Logs'),
         backgroundColor: theme.appBarTheme.backgroundColor,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(color: theme.dividerColor, height: 1),
-        ),
         actions: [
           IconButton(
             icon: Icon(Icons.delete, color: theme.iconTheme.color),

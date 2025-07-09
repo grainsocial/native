@@ -98,14 +98,7 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
           appBar: AppBar(
             backgroundColor: theme.appBarTheme.backgroundColor,
             surfaceTintColor: theme.appBarTheme.backgroundColor,
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(1),
-              child: Container(color: theme.dividerColor, height: 1),
-            ),
-            title: Text(
-              'Gallery',
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-            ),
+            title: Text('Gallery'),
             iconTheme: theme.appBarTheme.iconTheme,
             titleTextStyle: theme.appBarTheme.titleTextStyle,
             actions: [

@@ -13,6 +13,8 @@ import 'package:jose/jose.dart';
 import 'package:mime/mime.dart';
 
 import './auth.dart';
+import 'models/followers_result.dart';
+import 'models/follows_result.dart';
 import 'models/gallery.dart';
 import 'models/gallery_thread.dart';
 import 'models/notification.dart' as grain;
@@ -663,6 +665,36 @@ class ApiService {
     }
     appLogger.i('Profile updated successfully');
     return true;
+  }
+
+  /// Fetch followers for a given actor DID
+  Future<FollowersResult> getFollowers({
+    required String actor,
+    String? cursor,
+    int limit = 50,
+  }) async {
+    final uri = Uri.parse(
+      '$_apiUrl/xrpc/social.grain.graph.getFollowers?actor=$actor&limit=$limit${cursor != null ? '&cursor=$cursor' : ''}',
+    );
+    final response = await http.get(uri, headers: {'Content-Type': 'application/json'});
+    if (response.statusCode != 200) {
+      throw Exception('Failed to fetch followers: \\${response.statusCode} \\${response.body}');
+    }
+    final json = jsonDecode(response.body);
+    return FollowersResult.fromJson(json);
+  }
+
+  /// Fetch follows for a given actor DID
+  Future<FollowsResult> getFollows({required String actor, String? cursor, int limit = 50}) async {
+    final uri = Uri.parse(
+      '$_apiUrl/xrpc/social.grain.graph.getFollows?actor=$actor&limit=$limit${cursor != null ? '&cursor=$cursor' : ''}',
+    );
+    final response = await http.get(uri, headers: {'Content-Type': 'application/json'});
+    if (response.statusCode != 200) {
+      throw Exception('Failed to fetch follows: \\${response.statusCode} \\${response.body}');
+    }
+    final json = jsonDecode(response.body);
+    return FollowsResult.fromJson(json);
   }
 }
 
