@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:grain/api.dart';
 import 'package:grain/models/gallery_photo.dart';
 import 'package:grain/providers/gallery_thread_cache_provider.dart';
+import 'package:grain/widgets/add_comment_button.dart';
 import 'package:grain/widgets/add_comment_sheet.dart';
 import 'package:grain/widgets/app_image.dart';
 
@@ -97,88 +97,50 @@ class _GalleryPhotoViewState extends ConsumerState<GalleryPhotoView> {
                   top: false,
                   child: Padding(
                     padding: const EdgeInsets.only(top: 8, left: 16, right: 16, bottom: 8),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey[900],
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-                          textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
-                          elevation: 0,
-                        ),
-                        onPressed: () async {
-                          final photo = widget.photos[_currentIndex];
-                          final creator = widget.gallery?.creator;
-                          final replyTo = {
-                            'author': creator != null
-                                ? {
-                                    'avatar': creator.avatar,
-                                    'displayName': creator.displayName,
-                                    'handle': creator.handle,
-                                  }
-                                : {'avatar': null, 'displayName': '', 'handle': ''},
-                            'focus': photo,
-                            'text': '',
-                          };
-                          bool commentPosted = false;
-                          await showAddCommentSheet(
-                            context,
-                            gallery: null,
-                            replyTo: replyTo,
-                            initialText: '',
-                            onSubmit: (text) async {
-                              final photo = widget.photos[_currentIndex];
-                              final gallery = widget.gallery;
-                              final subject = gallery?.uri;
-                              final focus = photo.uri;
-                              if (subject == null || focus == null) {
-                                return;
-                              }
-                              // Use the provider's createComment method
-                              final notifier = ref.read(galleryThreadProvider(subject).notifier);
-                              final success = await notifier.createComment(
-                                text: text,
-                                focus: focus,
-                              );
-                              if (success) commentPosted = true;
-                              // Sheet will pop itself
-                            },
-                          );
-                          // After sheet closes, notify parent if a comment was posted
-                          if (commentPosted && widget.gallery?.uri != null) {
-                            widget.onClose?.call(); // Remove GalleryPhotoView overlay
-                            widget.onCommentPosted?.call(widget.gallery!.uri);
-                          }
-                        },
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            if (apiService.currentUser?.avatar != null &&
-                                (apiService.currentUser?.avatar?.isNotEmpty ?? false))
-                              ClipOval(
-                                child: AppImage(
-                                  url: apiService.currentUser!.avatar!,
-                                  width: 32,
-                                  height: 32,
-                                  fit: BoxFit.cover,
-                                ),
-                              )
-                            else
-                              CircleAvatar(
-                                radius: 16,
-                                backgroundColor: Colors.grey[800],
-                                child: Icon(Icons.person, size: 16, color: Colors.white),
-                              ),
-                            const SizedBox(width: 12),
-                            Text(
-                              'Add a comment',
-                              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
-                            ),
-                          ],
-                        ),
-                      ),
+                    child: AddCommentButton(
+                      onPressed: () async {
+                        final photo = widget.photos[_currentIndex];
+                        final creator = widget.gallery?.creator;
+                        final replyTo = {
+                          'author': creator != null
+                              ? {
+                                  'avatar': creator.avatar,
+                                  'displayName': creator.displayName,
+                                  'handle': creator.handle,
+                                }
+                              : {'avatar': null, 'displayName': '', 'handle': ''},
+                          'focus': photo,
+                          'text': '',
+                        };
+                        bool commentPosted = false;
+                        await showAddCommentSheet(
+                          context,
+                          gallery: null,
+                          replyTo: replyTo,
+                          initialText: '',
+                          onSubmit: (text) async {
+                            final photo = widget.photos[_currentIndex];
+                            final gallery = widget.gallery;
+                            final subject = gallery?.uri;
+                            final focus = photo.uri;
+                            if (subject == null || focus == null) {
+                              return;
+                            }
+                            // Use the provider's createComment method
+                            final notifier = ref.read(galleryThreadProvider(subject).notifier);
+                            final success = await notifier.createComment(text: text, focus: focus);
+                            if (success) commentPosted = true;
+                            // Sheet will pop itself
+                          },
+                        );
+                        // After sheet closes, notify parent if a comment was posted
+                        if (commentPosted && widget.gallery?.uri != null) {
+                          widget.onClose?.call(); // Remove GalleryPhotoView overlay
+                          widget.onCommentPosted?.call(widget.gallery!.uri);
+                        }
+                      },
+                      backgroundColor: Colors.grey[900],
+                      foregroundColor: Colors.white,
                     ),
                   ),
                 ),

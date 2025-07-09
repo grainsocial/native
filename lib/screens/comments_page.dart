@@ -7,6 +7,7 @@ import 'package:grain/providers/gallery_thread_cache_provider.dart';
 import 'package:grain/screens/hashtag_page.dart';
 import 'package:grain/screens/profile_page.dart';
 import 'package:grain/utils.dart';
+import 'package:grain/widgets/add_comment_button.dart';
 import 'package:grain/widgets/add_comment_sheet.dart';
 import 'package:grain/widgets/app_image.dart';
 import 'package:grain/widgets/faceted_text.dart';
@@ -182,29 +183,11 @@ class _CommentsPageState extends ConsumerState<CommentsPage> {
                   ),
           ),
           bottomNavigationBar: Container(
-            color: theme.colorScheme.surface,
             child: SafeArea(
-              child: GestureDetector(
-                onTap: () => _showCommentInputSheet(context, ref),
-                child: Container(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: Container(
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(22),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.reply, color: theme.iconTheme.color, size: 20),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Add a reply...',
-                          style: theme.textTheme.bodyMedium?.copyWith(color: theme.hintColor),
-                        ),
-                      ],
-                    ),
-                  ),
+              child: Padding(
+                padding: const EdgeInsets.only(top: 8, left: 16, right: 16, bottom: 8),
+                child: AddCommentButton(
+                  onPressed: () => _showCommentInputSheet(context, ref),
                 ),
               ),
             ),
