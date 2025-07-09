@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'comment.dart';
+import 'gallery.dart';
 import 'profile.dart';
 
 part 'notification.freezed.dart';
@@ -13,7 +15,9 @@ class Notification with _$Notification {
     required Profile author,
     required Map<String, dynamic> record,
     required String reason,
-    String? reasonSubject,
+    Gallery? reasonSubjectGallery,
+    Profile? reasonSubjectProfile,
+    Comment? reasonSubjectComment,
     required bool isRead,
     required String indexedAt,
   }) = _Notification;

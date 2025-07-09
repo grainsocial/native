@@ -26,7 +26,9 @@ mixin _$Notification {
   Profile get author => throw _privateConstructorUsedError;
   Map<String, dynamic> get record => throw _privateConstructorUsedError;
   String get reason => throw _privateConstructorUsedError;
-  String? get reasonSubject => throw _privateConstructorUsedError;
+  Gallery? get reasonSubjectGallery => throw _privateConstructorUsedError;
+  Profile? get reasonSubjectProfile => throw _privateConstructorUsedError;
+  Comment? get reasonSubjectComment => throw _privateConstructorUsedError;
   bool get isRead => throw _privateConstructorUsedError;
   String get indexedAt => throw _privateConstructorUsedError;
 
@@ -53,12 +55,17 @@ abstract class $NotificationCopyWith<$Res> {
     Profile author,
     Map<String, dynamic> record,
     String reason,
-    String? reasonSubject,
+    Gallery? reasonSubjectGallery,
+    Profile? reasonSubjectProfile,
+    Comment? reasonSubjectComment,
     bool isRead,
     String indexedAt,
   });
 
   $ProfileCopyWith<$Res> get author;
+  $GalleryCopyWith<$Res>? get reasonSubjectGallery;
+  $ProfileCopyWith<$Res>? get reasonSubjectProfile;
+  $CommentCopyWith<$Res>? get reasonSubjectComment;
 }
 
 /// @nodoc
@@ -81,7 +88,9 @@ class _$NotificationCopyWithImpl<$Res, $Val extends Notification>
     Object? author = null,
     Object? record = null,
     Object? reason = null,
-    Object? reasonSubject = freezed,
+    Object? reasonSubjectGallery = freezed,
+    Object? reasonSubjectProfile = freezed,
+    Object? reasonSubjectComment = freezed,
     Object? isRead = null,
     Object? indexedAt = null,
   }) {
@@ -107,10 +116,18 @@ class _$NotificationCopyWithImpl<$Res, $Val extends Notification>
                 ? _value.reason
                 : reason // ignore: cast_nullable_to_non_nullable
                       as String,
-            reasonSubject: freezed == reasonSubject
-                ? _value.reasonSubject
-                : reasonSubject // ignore: cast_nullable_to_non_nullable
-                      as String?,
+            reasonSubjectGallery: freezed == reasonSubjectGallery
+                ? _value.reasonSubjectGallery
+                : reasonSubjectGallery // ignore: cast_nullable_to_non_nullable
+                      as Gallery?,
+            reasonSubjectProfile: freezed == reasonSubjectProfile
+                ? _value.reasonSubjectProfile
+                : reasonSubjectProfile // ignore: cast_nullable_to_non_nullable
+                      as Profile?,
+            reasonSubjectComment: freezed == reasonSubjectComment
+                ? _value.reasonSubjectComment
+                : reasonSubjectComment // ignore: cast_nullable_to_non_nullable
+                      as Comment?,
             isRead: null == isRead
                 ? _value.isRead
                 : isRead // ignore: cast_nullable_to_non_nullable
@@ -133,6 +150,48 @@ class _$NotificationCopyWithImpl<$Res, $Val extends Notification>
       return _then(_value.copyWith(author: value) as $Val);
     });
   }
+
+  /// Create a copy of Notification
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $GalleryCopyWith<$Res>? get reasonSubjectGallery {
+    if (_value.reasonSubjectGallery == null) {
+      return null;
+    }
+
+    return $GalleryCopyWith<$Res>(_value.reasonSubjectGallery!, (value) {
+      return _then(_value.copyWith(reasonSubjectGallery: value) as $Val);
+    });
+  }
+
+  /// Create a copy of Notification
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $ProfileCopyWith<$Res>? get reasonSubjectProfile {
+    if (_value.reasonSubjectProfile == null) {
+      return null;
+    }
+
+    return $ProfileCopyWith<$Res>(_value.reasonSubjectProfile!, (value) {
+      return _then(_value.copyWith(reasonSubjectProfile: value) as $Val);
+    });
+  }
+
+  /// Create a copy of Notification
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $CommentCopyWith<$Res>? get reasonSubjectComment {
+    if (_value.reasonSubjectComment == null) {
+      return null;
+    }
+
+    return $CommentCopyWith<$Res>(_value.reasonSubjectComment!, (value) {
+      return _then(_value.copyWith(reasonSubjectComment: value) as $Val);
+    });
+  }
 }
 
 /// @nodoc
@@ -150,13 +209,21 @@ abstract class _$$NotificationImplCopyWith<$Res>
     Profile author,
     Map<String, dynamic> record,
     String reason,
-    String? reasonSubject,
+    Gallery? reasonSubjectGallery,
+    Profile? reasonSubjectProfile,
+    Comment? reasonSubjectComment,
     bool isRead,
     String indexedAt,
   });
 
   @override
   $ProfileCopyWith<$Res> get author;
+  @override
+  $GalleryCopyWith<$Res>? get reasonSubjectGallery;
+  @override
+  $ProfileCopyWith<$Res>? get reasonSubjectProfile;
+  @override
+  $CommentCopyWith<$Res>? get reasonSubjectComment;
 }
 
 /// @nodoc
@@ -178,7 +245,9 @@ class __$$NotificationImplCopyWithImpl<$Res>
     Object? author = null,
     Object? record = null,
     Object? reason = null,
-    Object? reasonSubject = freezed,
+    Object? reasonSubjectGallery = freezed,
+    Object? reasonSubjectProfile = freezed,
+    Object? reasonSubjectComment = freezed,
     Object? isRead = null,
     Object? indexedAt = null,
   }) {
@@ -204,10 +273,18 @@ class __$$NotificationImplCopyWithImpl<$Res>
             ? _value.reason
             : reason // ignore: cast_nullable_to_non_nullable
                   as String,
-        reasonSubject: freezed == reasonSubject
-            ? _value.reasonSubject
-            : reasonSubject // ignore: cast_nullable_to_non_nullable
-                  as String?,
+        reasonSubjectGallery: freezed == reasonSubjectGallery
+            ? _value.reasonSubjectGallery
+            : reasonSubjectGallery // ignore: cast_nullable_to_non_nullable
+                  as Gallery?,
+        reasonSubjectProfile: freezed == reasonSubjectProfile
+            ? _value.reasonSubjectProfile
+            : reasonSubjectProfile // ignore: cast_nullable_to_non_nullable
+                  as Profile?,
+        reasonSubjectComment: freezed == reasonSubjectComment
+            ? _value.reasonSubjectComment
+            : reasonSubjectComment // ignore: cast_nullable_to_non_nullable
+                  as Comment?,
         isRead: null == isRead
             ? _value.isRead
             : isRead // ignore: cast_nullable_to_non_nullable
@@ -230,7 +307,9 @@ class _$NotificationImpl implements _Notification {
     required this.author,
     required final Map<String, dynamic> record,
     required this.reason,
-    this.reasonSubject,
+    this.reasonSubjectGallery,
+    this.reasonSubjectProfile,
+    this.reasonSubjectComment,
     required this.isRead,
     required this.indexedAt,
   }) : _record = record;
@@ -255,7 +334,11 @@ class _$NotificationImpl implements _Notification {
   @override
   final String reason;
   @override
-  final String? reasonSubject;
+  final Gallery? reasonSubjectGallery;
+  @override
+  final Profile? reasonSubjectProfile;
+  @override
+  final Comment? reasonSubjectComment;
   @override
   final bool isRead;
   @override
@@ -263,7 +346,7 @@ class _$NotificationImpl implements _Notification {
 
   @override
   String toString() {
-    return 'Notification(uri: $uri, cid: $cid, author: $author, record: $record, reason: $reason, reasonSubject: $reasonSubject, isRead: $isRead, indexedAt: $indexedAt)';
+    return 'Notification(uri: $uri, cid: $cid, author: $author, record: $record, reason: $reason, reasonSubjectGallery: $reasonSubjectGallery, reasonSubjectProfile: $reasonSubjectProfile, reasonSubjectComment: $reasonSubjectComment, isRead: $isRead, indexedAt: $indexedAt)';
   }
 
   @override
@@ -276,8 +359,12 @@ class _$NotificationImpl implements _Notification {
             (identical(other.author, author) || other.author == author) &&
             const DeepCollectionEquality().equals(other._record, _record) &&
             (identical(other.reason, reason) || other.reason == reason) &&
-            (identical(other.reasonSubject, reasonSubject) ||
-                other.reasonSubject == reasonSubject) &&
+            (identical(other.reasonSubjectGallery, reasonSubjectGallery) ||
+                other.reasonSubjectGallery == reasonSubjectGallery) &&
+            (identical(other.reasonSubjectProfile, reasonSubjectProfile) ||
+                other.reasonSubjectProfile == reasonSubjectProfile) &&
+            (identical(other.reasonSubjectComment, reasonSubjectComment) ||
+                other.reasonSubjectComment == reasonSubjectComment) &&
             (identical(other.isRead, isRead) || other.isRead == isRead) &&
             (identical(other.indexedAt, indexedAt) ||
                 other.indexedAt == indexedAt));
@@ -292,7 +379,9 @@ class _$NotificationImpl implements _Notification {
     author,
     const DeepCollectionEquality().hash(_record),
     reason,
-    reasonSubject,
+    reasonSubjectGallery,
+    reasonSubjectProfile,
+    reasonSubjectComment,
     isRead,
     indexedAt,
   );
@@ -318,7 +407,9 @@ abstract class _Notification implements Notification {
     required final Profile author,
     required final Map<String, dynamic> record,
     required final String reason,
-    final String? reasonSubject,
+    final Gallery? reasonSubjectGallery,
+    final Profile? reasonSubjectProfile,
+    final Comment? reasonSubjectComment,
     required final bool isRead,
     required final String indexedAt,
   }) = _$NotificationImpl;
@@ -337,7 +428,11 @@ abstract class _Notification implements Notification {
   @override
   String get reason;
   @override
-  String? get reasonSubject;
+  Gallery? get reasonSubjectGallery;
+  @override
+  Profile? get reasonSubjectProfile;
+  @override
+  Comment? get reasonSubjectComment;
   @override
   bool get isRead;
   @override

@@ -10,8 +10,9 @@ _$CommentImpl _$$CommentImplFromJson(Map<String, dynamic> json) =>
     _$CommentImpl(
       uri: json['uri'] as String,
       cid: json['cid'] as String,
-      author: json['author'] as Map<String, dynamic>,
+      author: Profile.fromJson(json['author'] as Map<String, dynamic>),
       text: json['text'] as String,
+      subject: Gallery.fromJson(json['subject'] as Map<String, dynamic>),
       replyTo: json['replyTo'] as String?,
       createdAt: json['createdAt'] as String?,
       focus: json['focus'] == null
@@ -28,6 +29,7 @@ Map<String, dynamic> _$$CommentImplToJson(_$CommentImpl instance) =>
       'cid': instance.cid,
       'author': instance.author,
       'text': instance.text,
+      'subject': instance.subject,
       'replyTo': instance.replyTo,
       'createdAt': instance.createdAt,
       'focus': instance.focus,

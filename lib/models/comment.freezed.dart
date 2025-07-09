@@ -23,8 +23,9 @@ Comment _$CommentFromJson(Map<String, dynamic> json) {
 mixin _$Comment {
   String get uri => throw _privateConstructorUsedError;
   String get cid => throw _privateConstructorUsedError;
-  Map<String, dynamic> get author => throw _privateConstructorUsedError;
+  Profile get author => throw _privateConstructorUsedError;
   String get text => throw _privateConstructorUsedError;
+  Gallery get subject => throw _privateConstructorUsedError;
   String? get replyTo => throw _privateConstructorUsedError;
   String? get createdAt => throw _privateConstructorUsedError;
   GalleryPhoto? get focus => throw _privateConstructorUsedError;
@@ -47,14 +48,17 @@ abstract class $CommentCopyWith<$Res> {
   $Res call({
     String uri,
     String cid,
-    Map<String, dynamic> author,
+    Profile author,
     String text,
+    Gallery subject,
     String? replyTo,
     String? createdAt,
     GalleryPhoto? focus,
     List<Map<String, dynamic>>? facets,
   });
 
+  $ProfileCopyWith<$Res> get author;
+  $GalleryCopyWith<$Res> get subject;
   $GalleryPhotoCopyWith<$Res>? get focus;
 }
 
@@ -77,6 +81,7 @@ class _$CommentCopyWithImpl<$Res, $Val extends Comment>
     Object? cid = null,
     Object? author = null,
     Object? text = null,
+    Object? subject = null,
     Object? replyTo = freezed,
     Object? createdAt = freezed,
     Object? focus = freezed,
@@ -95,11 +100,15 @@ class _$CommentCopyWithImpl<$Res, $Val extends Comment>
             author: null == author
                 ? _value.author
                 : author // ignore: cast_nullable_to_non_nullable
-                      as Map<String, dynamic>,
+                      as Profile,
             text: null == text
                 ? _value.text
                 : text // ignore: cast_nullable_to_non_nullable
                       as String,
+            subject: null == subject
+                ? _value.subject
+                : subject // ignore: cast_nullable_to_non_nullable
+                      as Gallery,
             replyTo: freezed == replyTo
                 ? _value.replyTo
                 : replyTo // ignore: cast_nullable_to_non_nullable
@@ -119,6 +128,26 @@ class _$CommentCopyWithImpl<$Res, $Val extends Comment>
           )
           as $Val,
     );
+  }
+
+  /// Create a copy of Comment
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $ProfileCopyWith<$Res> get author {
+    return $ProfileCopyWith<$Res>(_value.author, (value) {
+      return _then(_value.copyWith(author: value) as $Val);
+    });
+  }
+
+  /// Create a copy of Comment
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $GalleryCopyWith<$Res> get subject {
+    return $GalleryCopyWith<$Res>(_value.subject, (value) {
+      return _then(_value.copyWith(subject: value) as $Val);
+    });
   }
 
   /// Create a copy of Comment
@@ -147,14 +176,19 @@ abstract class _$$CommentImplCopyWith<$Res> implements $CommentCopyWith<$Res> {
   $Res call({
     String uri,
     String cid,
-    Map<String, dynamic> author,
+    Profile author,
     String text,
+    Gallery subject,
     String? replyTo,
     String? createdAt,
     GalleryPhoto? focus,
     List<Map<String, dynamic>>? facets,
   });
 
+  @override
+  $ProfileCopyWith<$Res> get author;
+  @override
+  $GalleryCopyWith<$Res> get subject;
   @override
   $GalleryPhotoCopyWith<$Res>? get focus;
 }
@@ -177,6 +211,7 @@ class __$$CommentImplCopyWithImpl<$Res>
     Object? cid = null,
     Object? author = null,
     Object? text = null,
+    Object? subject = null,
     Object? replyTo = freezed,
     Object? createdAt = freezed,
     Object? focus = freezed,
@@ -193,13 +228,17 @@ class __$$CommentImplCopyWithImpl<$Res>
             : cid // ignore: cast_nullable_to_non_nullable
                   as String,
         author: null == author
-            ? _value._author
+            ? _value.author
             : author // ignore: cast_nullable_to_non_nullable
-                  as Map<String, dynamic>,
+                  as Profile,
         text: null == text
             ? _value.text
             : text // ignore: cast_nullable_to_non_nullable
                   as String,
+        subject: null == subject
+            ? _value.subject
+            : subject // ignore: cast_nullable_to_non_nullable
+                  as Gallery,
         replyTo: freezed == replyTo
             ? _value.replyTo
             : replyTo // ignore: cast_nullable_to_non_nullable
@@ -227,14 +266,14 @@ class _$CommentImpl implements _Comment {
   const _$CommentImpl({
     required this.uri,
     required this.cid,
-    required final Map<String, dynamic> author,
+    required this.author,
     required this.text,
+    required this.subject,
     this.replyTo,
     this.createdAt,
     this.focus,
     final List<Map<String, dynamic>>? facets,
-  }) : _author = author,
-       _facets = facets;
+  }) : _facets = facets;
 
   factory _$CommentImpl.fromJson(Map<String, dynamic> json) =>
       _$$CommentImplFromJson(json);
@@ -243,16 +282,12 @@ class _$CommentImpl implements _Comment {
   final String uri;
   @override
   final String cid;
-  final Map<String, dynamic> _author;
   @override
-  Map<String, dynamic> get author {
-    if (_author is EqualUnmodifiableMapView) return _author;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableMapView(_author);
-  }
-
+  final Profile author;
   @override
   final String text;
+  @override
+  final Gallery subject;
   @override
   final String? replyTo;
   @override
@@ -271,7 +306,7 @@ class _$CommentImpl implements _Comment {
 
   @override
   String toString() {
-    return 'Comment(uri: $uri, cid: $cid, author: $author, text: $text, replyTo: $replyTo, createdAt: $createdAt, focus: $focus, facets: $facets)';
+    return 'Comment(uri: $uri, cid: $cid, author: $author, text: $text, subject: $subject, replyTo: $replyTo, createdAt: $createdAt, focus: $focus, facets: $facets)';
   }
 
   @override
@@ -281,8 +316,9 @@ class _$CommentImpl implements _Comment {
             other is _$CommentImpl &&
             (identical(other.uri, uri) || other.uri == uri) &&
             (identical(other.cid, cid) || other.cid == cid) &&
-            const DeepCollectionEquality().equals(other._author, _author) &&
+            (identical(other.author, author) || other.author == author) &&
             (identical(other.text, text) || other.text == text) &&
+            (identical(other.subject, subject) || other.subject == subject) &&
             (identical(other.replyTo, replyTo) || other.replyTo == replyTo) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
@@ -296,8 +332,9 @@ class _$CommentImpl implements _Comment {
     runtimeType,
     uri,
     cid,
-    const DeepCollectionEquality().hash(_author),
+    author,
     text,
+    subject,
     replyTo,
     createdAt,
     focus,
@@ -322,8 +359,9 @@ abstract class _Comment implements Comment {
   const factory _Comment({
     required final String uri,
     required final String cid,
-    required final Map<String, dynamic> author,
+    required final Profile author,
     required final String text,
+    required final Gallery subject,
     final String? replyTo,
     final String? createdAt,
     final GalleryPhoto? focus,
@@ -337,9 +375,11 @@ abstract class _Comment implements Comment {
   @override
   String get cid;
   @override
-  Map<String, dynamic> get author;
+  Profile get author;
   @override
   String get text;
+  @override
+  Gallery get subject;
   @override
   String? get replyTo;
   @override

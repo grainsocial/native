@@ -183,12 +183,38 @@ class ApiService {
       headers: {'Authorization': "Bearer $_accessToken", 'Content-Type': 'application/json'},
     );
     if (response.statusCode != 200) {
-      appLogger.w('Failed to fetch notifications: ${response.statusCode} ${response.body}');
+      appLogger.w('Failed to fetch notifications: \\${response.statusCode} \\${response.body}');
       return [];
     }
     final json = jsonDecode(response.body);
     return (json['notifications'] as List<dynamic>?)
-            ?.map((item) => grain.Notification.fromJson(item as Map<String, dynamic>))
+            ?.map((item) {
+              final map = item as Map<String, dynamic>;
+              final reasonSubject = map['reasonSubject'];
+              if (reasonSubject != null && reasonSubject is Map<String, dynamic>) {
+                final type =
+                    reasonSubject['\$type'] ?? reasonSubject[r'$type'] ?? reasonSubject['type'];
+                switch (type) {
+                  case 'social.grain.gallery.defs#galleryView':
+                    map['reasonSubjectGallery'] = map['reasonSubject'];
+                    break;
+                  case 'social.grain.actor.defs#profileView':
+                    map['reasonSubjectProfile'] = map['reasonSubject'];
+                    break;
+                  case 'social.grain.comment.defs#commentView':
+                    map['reasonSubjectComment'] = map['reasonSubject'];
+                    break;
+                }
+              }
+              map.remove('reasonSubject');
+              try {
+                return grain.Notification.fromJson(map);
+              } catch (e, st) {
+                appLogger.e('Failed to deserialize notification: $e', stackTrace: st);
+                return null;
+              }
+            })
+            .whereType<grain.Notification>()
             .toList() ??
         [];
   }

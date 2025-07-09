@@ -1,4 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:grain/models/gallery.dart';
+import 'package:grain/models/profile.dart';
 
 import 'gallery_photo.dart';
 
@@ -10,8 +12,9 @@ class Comment with _$Comment {
   const factory Comment({
     required String uri,
     required String cid,
-    required Map<String, dynamic> author,
+    required Profile author,
     required String text,
+    required Gallery subject,
     String? replyTo,
     String? createdAt,
     GalleryPhoto? focus,

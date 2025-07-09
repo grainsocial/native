@@ -332,9 +332,9 @@ class _CommentTile extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (author['avatar'] != null)
+          if (author.avatar != null)
             ClipOval(
-              child: AppImage(url: author['avatar'], width: 32, height: 32, fit: BoxFit.cover),
+              child: AppImage(url: author.avatar, width: 32, height: 32, fit: BoxFit.cover),
             )
           else
             CircleAvatar(
@@ -348,7 +348,7 @@ class _CommentTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  author['displayName'] ?? '@${author['handle'] ?? ''}',
+                  author.displayName ?? '@${author.handle ?? ''}',
                   style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 FacetedText(
@@ -435,7 +435,7 @@ class _CommentTile extends StatelessWidget {
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
                         onPressed: () {
-                          final handle = comment.author['handle'] ?? '';
+                          final handle = comment.author.handle;
                           final mention = handle.isNotEmpty ? '@$handle ' : '';
                           if (onReply != null) onReply!(comment, mention: mention);
                         },
@@ -448,9 +448,9 @@ class _CommentTile extends StatelessWidget {
                         ),
                       ),
                     if (comment.replyTo == null &&
-                        comment.author['did'] == (apiService.currentUser?.did ?? ''))
+                        comment.author.did == (apiService.currentUser?.did ?? ''))
                       const SizedBox(width: 16),
-                    if (comment.author['did'] == (apiService.currentUser?.did ?? ''))
+                    if (comment.author.did == (apiService.currentUser?.did ?? ''))
                       TextButton(
                         style: TextButton.styleFrom(
                           padding: EdgeInsets.zero,

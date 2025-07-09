@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:grain/api.dart';
 import 'package:grain/models/notification.dart' as grain;
+import 'package:grain/screens/gallery_page.dart';
+import 'package:grain/screens/profile_page.dart';
 import 'package:grain/utils.dart';
+import 'package:grain/widgets/gallery_preview.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
@@ -45,36 +48,91 @@ class _NotificationsPageState extends State<NotificationsPage> {
   Widget _buildNotificationTile(grain.Notification notification) {
     final theme = Theme.of(context);
     final author = notification.author;
-    final record = notification.record;
     String message = '';
-    String? createdAt;
+    String? createdAt = notification.record['createdAt'];
+    void Function()? onTap;
+    final gallery = notification.reasonSubjectGallery;
+    final comment = notification.reasonSubjectComment;
+    final profile = notification.reasonSubjectProfile;
+    final currentUserDid = apiService.currentUser?.did;
+
     switch (notification.reason) {
       case 'gallery-favorite':
         message = 'favorited your gallery';
-        createdAt = record['createdAt'] as String?;
+        if (gallery != null) {
+          onTap = () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => GalleryPage(uri: gallery.uri, currentUserDid: currentUserDid),
+              ),
+            );
+          };
+        }
         break;
       case 'gallery-comment':
         message = 'commented on your gallery';
-        createdAt = record['createdAt'] as String?;
+        if (comment != null) {
+          onTap = () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                    GalleryPage(uri: comment.subject.uri, currentUserDid: currentUserDid),
+              ),
+            );
+          };
+        }
         break;
       case 'gallery-mention':
       case 'gallery-comment-mention':
         message = 'mentioned you in a gallery';
-        createdAt = record['createdAt'] as String?;
+        if (comment != null) {
+          onTap = () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                    GalleryPage(uri: comment.subject.uri, currentUserDid: currentUserDid),
+              ),
+            );
+          };
+        }
         break;
       case 'reply':
         message = 'replied to your comment';
-        createdAt = record['createdAt'] as String?;
+        if (comment != null) {
+          onTap = () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                    GalleryPage(uri: comment.subject.uri, currentUserDid: currentUserDid),
+              ),
+            );
+          };
+        }
         break;
       case 'follow':
         message = 'followed you';
-        createdAt = record['createdAt'] as String?;
+        if (profile != null) {
+          onTap = () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => ProfilePage(profile: profile, showAppBar: true)),
+            );
+          };
+        }
         break;
       default:
         message = notification.reason;
-        createdAt = record['createdAt'] as String?;
     }
+
+    bool isFollow = notification.reason == 'follow';
+
     return ListTile(
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       leading: CircleAvatar(
         backgroundColor: theme.colorScheme.surfaceVariant,
         backgroundImage: (author.avatar?.isNotEmpty ?? false) ? NetworkImage(author.avatar!) : null,
@@ -86,13 +144,53 @@ class _NotificationsPageState extends State<NotificationsPage> {
         (author.displayName?.isNotEmpty ?? false) ? author.displayName! : '@${author.handle}',
         style: theme.textTheme.bodyLarge,
       ),
-      subtitle: Text(
-        '$message · ${createdAt != null ? formatRelativeTime(createdAt) : ''}',
-        style: theme.textTheme.bodyMedium?.copyWith(color: theme.hintColor),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 2),
+          Text(
+            '$message · ${createdAt != null ? formatRelativeTime(createdAt) : ''}',
+            style: theme.textTheme.bodyMedium?.copyWith(color: theme.hintColor),
+          ),
+          if (notification.reasonSubjectComment != null) ...[
+            const SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(
+                border: Border(
+                  left: BorderSide(color: theme.colorScheme.primary.withOpacity(0.5), width: 3),
+                ),
+              ),
+              padding: const EdgeInsets.only(left: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(notification.reasonSubjectComment!.text, style: theme.textTheme.bodyMedium),
+                  if (notification.reasonSubjectComment!.focus?.thumb != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4.0),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          notification.reasonSubjectComment!.focus!.thumb!,
+                          height: 64,
+                          fit: BoxFit.fitHeight,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+          if (gallery != null) ...[
+            const SizedBox(height: 8),
+            ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: 160),
+              child: GalleryPreview(gallery: gallery),
+            ),
+          ],
+        ],
       ),
-      onTap: () {
-        // TODO: Navigate to gallery/comment/profile as appropriate
-      },
+      isThreeLine: !isFollow,
     );
   }
 
