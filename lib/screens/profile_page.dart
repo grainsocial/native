@@ -216,15 +216,12 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                                       if (profile.avatar != null)
                                         GestureDetector(
                                           onTap: () => _showAvatarFullscreen(profile.avatar!),
-                                          child: Hero(
-                                            tag: 'profile-avatar',
-                                            child: ClipOval(
-                                              child: AppImage(
-                                                url: profile.avatar,
-                                                width: 64,
-                                                height: 64,
-                                                fit: BoxFit.cover,
-                                              ),
+                                          child: ClipOval(
+                                            child: AppImage(
+                                              url: profile.avatar,
+                                              width: 64,
+                                              height: 64,
+                                              fit: BoxFit.cover,
                                             ),
                                           ),
                                         )
