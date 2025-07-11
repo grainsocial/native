@@ -17,6 +17,7 @@ class GallerySortOrderSheet extends StatefulWidget {
 
 class _GallerySortOrderSheetState extends State<GallerySortOrderSheet> {
   late List<GalleryPhoto> _photos;
+  bool _saving = false;
 
   @override
   void initState() {
@@ -38,20 +39,39 @@ class _GallerySortOrderSheetState extends State<GallerySortOrderSheet> {
         ),
         leading: CupertinoButton(
           padding: EdgeInsets.zero,
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: _saving ? null : () => Navigator.of(context).maybePop(),
           child: Text(
             'Cancel',
-            style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.w600),
+            style: TextStyle(
+              color: _saving ? Colors.grey : theme.colorScheme.primary,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
         trailing: CupertinoButton(
           padding: EdgeInsets.zero,
-          onPressed: () {
-            widget.onReorderDone(_photos, context);
-          },
-          child: Text(
-            'Save',
-            style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.w600),
+          onPressed: _saving
+              ? null
+              : () {
+                  setState(() => _saving = true);
+                  widget.onReorderDone(_photos, context);
+                  if (mounted) setState(() => _saving = false);
+                },
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Save',
+                style: TextStyle(
+                  color: _saving ? Colors.grey : theme.colorScheme.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              if (_saving) ...[
+                const SizedBox(width: 8),
+                SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
+              ],
+            ],
           ),
         ),
       ),

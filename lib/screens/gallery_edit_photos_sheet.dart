@@ -2,11 +2,14 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:grain/api.dart';
 import 'package:grain/models/gallery_photo.dart';
 import 'package:grain/providers/gallery_cache_provider.dart';
 import 'package:grain/widgets/app_button.dart';
 import 'package:grain/widgets/app_image.dart';
 import 'package:image_picker/image_picker.dart';
+
+import 'library_photos_select_sheet.dart';
 
 class GalleryEditPhotosSheet extends ConsumerStatefulWidget {
   final String galleryUri;
@@ -37,6 +40,7 @@ class _GalleryEditPhotosSheetState extends ConsumerState<GalleryEditPhotosSheet>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // ...existing code...
     return CupertinoPageScaffold(
       backgroundColor: theme.colorScheme.surface,
       navigationBar: CupertinoNavigationBar(
@@ -183,7 +187,19 @@ class _GalleryEditPhotosSheetState extends ConsumerState<GalleryEditPhotosSheet>
                       label: 'Add from library',
                       variant: AppButtonVariant.secondary,
                       onPressed: () async {
-                        // TODO: Implement add from library action
+                        if (_loading) return;
+                        final actorDid = apiService.currentUser?.did;
+                        if (actorDid == null) return;
+                        await showLibraryPhotosSelectSheet(
+                          context,
+                          actorDid: actorDid,
+                          galleryUri: widget.galleryUri,
+                          onSelect: (photos) {
+                            setState(() {
+                              _photos.addAll(photos);
+                            });
+                          },
+                        );
                       },
                     ),
                   ),

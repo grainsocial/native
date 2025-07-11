@@ -116,10 +116,10 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
     }
     setState(() => _submitting = true);
     String? galleryUri;
+    final container = ProviderScope.containerOf(context, listen: false);
     if (widget.gallery == null) {
       // Use provider to create gallery and add photos
       final newImages = _images.where((img) => !img.isExisting).toList();
-      final container = ProviderScope.containerOf(context, listen: false);
       final galleryCache = container.read(galleryCacheProvider.notifier);
       final (createdUri, newPhotoUris) = await galleryCache.createGalleryAndAddPhotos(
         title: _titleController.text.trim(),
@@ -138,14 +138,14 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
         }
       }
     } else {
-      // Only support editing title/description for existing galleries
       galleryUri = widget.gallery!.uri;
-      // If you have a provider method for updating, use it. Otherwise, call the correct API method.
-      // await apiService.updateGallery(
-      //   uri: galleryUri,
-      //   title: _titleController.text.trim(),
-      //   description: _descController.text.trim(),
-      // );
+      final galleryCache = container.read(galleryCacheProvider.notifier);
+      await galleryCache.updateGalleryDetails(
+        galleryUri: galleryUri,
+        title: _titleController.text.trim(),
+        description: _descController.text.trim(),
+        createdAt: widget.gallery!.createdAt ?? DateTime.now().toUtc().toIso8601String(),
+      );
     }
     setState(() => _submitting = false);
     if (mounted && galleryUri != null) {
@@ -234,19 +234,20 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
                 hintText: 'Enter a description',
               ),
               const SizedBox(height: 16),
-              Row(
-                children: [
-                  AppButton(
-                    label: 'Upload photos',
-                    onPressed: _pickImages,
-                    icon: Icons.photo_library,
-                    variant: AppButtonVariant.primary,
-                    height: 40,
-                    fontSize: 15,
-                    borderRadius: 6,
-                  ),
-                ],
-              ),
+              if (widget.gallery == null)
+                Row(
+                  children: [
+                    AppButton(
+                      label: 'Upload photos',
+                      onPressed: _pickImages,
+                      icon: Icons.photo_library,
+                      variant: AppButtonVariant.primary,
+                      height: 40,
+                      fontSize: 15,
+                      borderRadius: 6,
+                    ),
+                  ],
+                ),
               if (_images.isNotEmpty) ...[
                 const SizedBox(height: 16),
                 GridView.builder(

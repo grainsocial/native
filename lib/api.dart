@@ -17,11 +17,13 @@ import 'models/followers_result.dart';
 import 'models/follows_result.dart';
 import 'models/gallery.dart';
 import 'models/gallery_item.dart';
+import 'models/gallery_photo.dart';
 import 'models/gallery_thread.dart';
 import 'models/notification.dart' as grain;
 import 'models/profile.dart';
 
 class ApiService {
+  // ...existing code...
   static const _storage = FlutterSecureStorage();
   String? _accessToken;
   Profile? currentUser;
@@ -110,6 +112,21 @@ class ApiService {
     galleries =
         (json['items'] as List<dynamic>?)?.map((item) => Gallery.fromJson(item)).toList() ?? [];
     return galleries;
+  }
+
+  Future<List<GalleryPhoto>> fetchActorPhotos({required String did}) async {
+    appLogger.i('Fetching photos for actor did: $did');
+    final response = await http.get(
+      Uri.parse('$_apiUrl/xrpc/social.grain.photo.getActorPhotos?actor=$did'),
+      headers: {'Content-Type': 'application/json'},
+    );
+    if (response.statusCode != 200) {
+      appLogger.w('Failed to fetch photos: ${response.statusCode} ${response.body}');
+      return [];
+    }
+    final json = jsonDecode(response.body);
+    return (json['items'] as List<dynamic>?)?.map((item) => GalleryPhoto.fromJson(item)).toList() ??
+        [];
   }
 
   Future<List<Gallery>> getTimeline({String? algorithm}) async {
@@ -783,6 +800,59 @@ class ApiService {
       return false;
     }
     appLogger.i('Gallery sort order updated successfully');
+    return true;
+  }
+
+  /// Updates a gallery's title and description.
+  /// Returns true on success, false on failure.
+  Future<bool> updateGallery({
+    required String galleryUri,
+    required String title,
+    required String description,
+    required String createdAt,
+  }) async {
+    final session = await auth.getValidSession();
+    if (session == null) {
+      appLogger.w('No valid session for updateGallery');
+      return false;
+    }
+    final dpopClient = DpopHttpClient(dpopKey: session.dpopJwk);
+    final issuer = session.issuer;
+    final did = session.subject;
+    final url = Uri.parse('$issuer/xrpc/com.atproto.repo.putRecord');
+    // Extract rkey from galleryUri
+    String rkey = '';
+    try {
+      rkey = AtUri.parse(galleryUri).rkey;
+    } catch (_) {}
+    if (rkey.isEmpty) {
+      appLogger.w('No rkey found in galleryUri: $galleryUri');
+      return false;
+    }
+    final record = {
+      'collection': 'social.grain.gallery',
+      'repo': did,
+      'rkey': rkey,
+      'record': {
+        'title': title,
+        'description': description,
+        'updatedAt': DateTime.now().toUtc().toIso8601String(),
+        'createdAt': createdAt,
+      },
+    };
+    appLogger.i('Updating gallery: $record');
+    final response = await dpopClient.send(
+      method: 'POST',
+      url: url,
+      accessToken: session.accessToken,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(record),
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      appLogger.w('Failed to update gallery: ${response.statusCode} ${response.body}');
+      return false;
+    }
+    appLogger.i('Gallery updated successfully');
     return true;
   }
 }

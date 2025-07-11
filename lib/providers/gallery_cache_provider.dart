@@ -148,6 +148,46 @@ class GalleryCache extends _$GalleryCache {
     return (galleryUri, photoUris);
   }
 
+  /// Creates gallery items for existing photoUris, polls for updated gallery items, and updates the cache.
+  /// Returns the list of new gallery item URIs if successful, or empty list otherwise.
+  Future<List<String>> addGalleryItemsToGallery({
+    required String galleryUri,
+    required List<String> photoUris,
+    int? startPosition,
+  }) async {
+    // Fetch the latest gallery from the API to avoid stale state
+    final latestGallery = await apiService.getGallery(uri: galleryUri);
+    if (latestGallery != null) {
+      state = {...state, galleryUri: latestGallery};
+    }
+    final gallery = latestGallery ?? state[galleryUri];
+    final int initialCount = gallery?.items.length ?? 0;
+    final int positionOffset = startPosition ?? initialCount;
+    final List<String> galleryItemUris = [];
+    int position = positionOffset;
+    for (final photoUri in photoUris) {
+      // Create the gallery item
+      final itemUri = await apiService.createGalleryItem(
+        galleryUri: galleryUri,
+        photoUri: photoUri,
+        position: position,
+      );
+      if (itemUri != null) {
+        galleryItemUris.add(itemUri);
+        position++;
+      }
+    }
+    // Poll for updated gallery items
+    final expectedCount = (gallery?.items.length ?? 0) + galleryItemUris.length;
+    await apiService.pollGalleryItems(galleryUri: galleryUri, expectedCount: expectedCount);
+    // Fetch the updated gallery and update the cache
+    final updatedGallery = await apiService.getGallery(uri: galleryUri);
+    if (updatedGallery != null) {
+      state = {...state, galleryUri: updatedGallery};
+    }
+    return galleryItemUris;
+  }
+
   /// Deletes a gallery from the backend and removes it from the cache.
   Future<void> deleteGallery(String uri) async {
     await apiService.deleteRecord(uri);
@@ -186,5 +226,40 @@ class GalleryCache extends _$GalleryCache {
         .toList();
     final updatedGallery = gallery.copyWith(items: updatedPhotos);
     state = {...state, galleryUri: updatedGallery};
+  }
+
+  /// Updates gallery details (title, description) and updates cache if successful.
+  /// Updates gallery details (title, description, createdAt), polls for cid change, and updates cache.
+  Future<bool> updateGalleryDetails({
+    required String galleryUri,
+    required String title,
+    required String description,
+    required String createdAt,
+  }) async {
+    final prevGallery = state[galleryUri];
+    final prevCid = prevGallery?.cid;
+    final success = await apiService.updateGallery(
+      galleryUri: galleryUri,
+      title: title,
+      description: description,
+      createdAt: createdAt,
+    );
+    if (success) {
+      final start = DateTime.now();
+      const timeout = Duration(seconds: 20);
+      const pollInterval = Duration(milliseconds: 1000);
+      Gallery? updatedGallery;
+      while (DateTime.now().difference(start) < timeout) {
+        updatedGallery = await apiService.getGallery(uri: galleryUri);
+        if (updatedGallery != null && updatedGallery.cid != prevCid) {
+          break;
+        }
+        await Future.delayed(pollInterval);
+      }
+      if (updatedGallery != null) {
+        state = {...state, galleryUri: updatedGallery};
+      }
+    }
+    return success;
   }
 }
