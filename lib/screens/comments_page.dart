@@ -183,12 +183,11 @@ class _CommentsPageState extends ConsumerState<CommentsPage> {
                   ),
           ),
           bottomNavigationBar: Container(
+            color: theme.scaffoldBackgroundColor,
             child: SafeArea(
               child: Padding(
                 padding: const EdgeInsets.only(top: 8, left: 16, right: 16, bottom: 8),
-                child: AddCommentButton(
-                  onPressed: () => _showCommentInputSheet(context, ref),
-                ),
+                child: AddCommentButton(onPressed: () => _showCommentInputSheet(context, ref)),
               ),
             ),
           ),
