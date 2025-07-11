@@ -16,6 +16,7 @@ import './auth.dart';
 import 'models/followers_result.dart';
 import 'models/follows_result.dart';
 import 'models/gallery.dart';
+import 'models/gallery_item.dart';
 import 'models/gallery_thread.dart';
 import 'models/notification.dart' as grain;
 import 'models/profile.dart';
@@ -721,6 +722,68 @@ class ApiService {
     }
     final json = jsonDecode(response.body);
     return FollowsResult.fromJson(json);
+  }
+
+  /// Updates the sort order of gallery items using com.atproto.repo.applyWrites
+  /// [galleryUri]: The URI of the gallery (at://did/social.grain.gallery/rkey)
+  /// [sortedItemUris]: List of item URIs in the desired order
+  /// [itemsMeta]: List of GalleryItem meta objects (must include gallery, item, createdAt, uri)
+  /// Returns true on success, false on failure
+  Future<bool> updateGallerySortOrder({
+    required String galleryUri,
+    required List<GalleryItem> orderedItems,
+  }) async {
+    final session = await auth.getValidSession();
+    if (session == null) {
+      appLogger.w('No valid session for updateGallerySortOrder');
+      return false;
+    }
+    final dpopClient = DpopHttpClient(dpopKey: session.dpopJwk);
+    final issuer = session.issuer;
+    final did = session.subject;
+    final url = Uri.parse('$issuer/xrpc/com.atproto.repo.applyWrites');
+
+    final updates = <Map<String, dynamic>>[];
+    int position = 0;
+    for (final item in orderedItems) {
+      String rkey = '';
+      try {
+        rkey = AtUri.parse(item.uri).rkey;
+      } catch (_) {}
+      updates.add({
+        '\$type': 'com.atproto.repo.applyWrites#update',
+        'collection': 'social.grain.gallery.item',
+        'rkey': rkey,
+        'value': {
+          'gallery': item.gallery,
+          'item': item.item,
+          'createdAt': item.createdAt,
+          'position': position,
+        },
+      });
+      position++;
+    }
+    if (updates.isEmpty) {
+      appLogger.w('No updates to apply for gallery sort order');
+      return false;
+    }
+    final payload = {'repo': did, 'validate': false, 'writes': updates};
+    appLogger.i('Applying gallery sort order updates: $payload');
+    final response = await dpopClient.send(
+      method: 'POST',
+      url: url,
+      accessToken: session.accessToken,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(payload),
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      appLogger.w(
+        'Failed to apply gallery sort order: \\${response.statusCode} \\${response.body}',
+      );
+      return false;
+    }
+    appLogger.i('Gallery sort order updated successfully');
+    return true;
   }
 }
 

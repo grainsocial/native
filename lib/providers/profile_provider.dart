@@ -60,11 +60,13 @@ class ProfileNotifier extends _$ProfileNotifier {
   Future<ProfileWithGalleries?> _fetchProfile(String did) async {
     final profile = await apiService.fetchProfile(did: did);
     final galleries = await apiService.fetchActorGalleries(did: did);
+    final favs = await apiService.getActorFavs(did: did);
     if (profile != null) {
       final facets = await computeAndFilterFacets(profile.description);
       return ProfileWithGalleries(
         profile: profile.copyWith(descriptionFacets: facets),
         galleries: galleries,
+        favs: favs,
       );
     }
     return null;
@@ -127,6 +129,7 @@ class ProfileNotifier extends _$ProfileNotifier {
           ProfileWithGalleries(
             profile: updated.copyWith(descriptionFacets: facets),
             galleries: galleries,
+            favs: state.value?.favs ?? [],
           ),
         );
       } else {
@@ -154,7 +157,11 @@ class ProfileNotifier extends _$ProfileNotifier {
           followersCount: (profile.followersCount ?? 1) - 1,
         );
         state = AsyncValue.data(
-          ProfileWithGalleries(profile: updatedProfile, galleries: current!.galleries),
+          ProfileWithGalleries(
+            profile: updatedProfile,
+            galleries: current?.galleries ?? [],
+            favs: current?.favs,
+          ),
         );
       }
     } else {
@@ -166,7 +173,11 @@ class ProfileNotifier extends _$ProfileNotifier {
           followersCount: (profile.followersCount ?? 0) + 1,
         );
         state = AsyncValue.data(
-          ProfileWithGalleries(profile: updatedProfile, galleries: current!.galleries),
+          ProfileWithGalleries(
+            profile: updatedProfile,
+            galleries: current?.galleries ?? [],
+            favs: current?.favs,
+          ),
         );
       }
     }
@@ -180,7 +191,11 @@ class ProfileNotifier extends _$ProfileNotifier {
         galleryCount: (currentProfile.profile.galleryCount ?? 0) + 1,
       );
       state = AsyncValue.data(
-        ProfileWithGalleries(profile: updatedProfile, galleries: updatedGalleries),
+        ProfileWithGalleries(
+          profile: updatedProfile,
+          galleries: updatedGalleries,
+          favs: currentProfile.favs,
+        ),
       );
     }
   }
@@ -193,7 +208,11 @@ class ProfileNotifier extends _$ProfileNotifier {
         galleryCount: (currentProfile.profile.galleryCount ?? 1) - 1,
       );
       state = AsyncValue.data(
-        ProfileWithGalleries(profile: updatedProfile, galleries: updatedGalleries),
+        ProfileWithGalleries(
+          profile: updatedProfile,
+          galleries: updatedGalleries,
+          favs: currentProfile.favs,
+        ),
       );
     }
   }

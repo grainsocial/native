@@ -8,8 +8,8 @@ part of 'gallery_photo.dart';
 
 _$GalleryPhotoImpl _$$GalleryPhotoImplFromJson(Map<String, dynamic> json) =>
     _$GalleryPhotoImpl(
-      uri: json['uri'] as String?,
-      cid: json['cid'] as String?,
+      uri: json['uri'] as String,
+      cid: json['cid'] as String,
       thumb: json['thumb'] as String?,
       fullsize: json['fullsize'] as String?,
       alt: json['alt'] as String?,

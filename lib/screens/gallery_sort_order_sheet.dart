@@ -7,7 +7,7 @@ import 'package:reorderables/reorderables.dart';
 
 class GallerySortOrderSheet extends StatefulWidget {
   final List<GalleryPhoto> photos;
-  final void Function(List<GalleryPhoto>) onReorderDone;
+  final void Function(List<GalleryPhoto>, BuildContext) onReorderDone;
 
   const GallerySortOrderSheet({super.key, required this.photos, required this.onReorderDone});
 
@@ -47,8 +47,7 @@ class _GallerySortOrderSheetState extends State<GallerySortOrderSheet> {
         trailing: CupertinoButton(
           padding: EdgeInsets.zero,
           onPressed: () {
-            widget.onReorderDone(_photos);
-            Navigator.of(context).pop();
+            widget.onReorderDone(_photos, context);
           },
           child: Text(
             'Save',
@@ -115,7 +114,7 @@ class _GallerySortOrderSheetState extends State<GallerySortOrderSheet> {
 Future<void> showGallerySortOrderSheet(
   BuildContext context, {
   required List<GalleryPhoto> photos,
-  required void Function(List<GalleryPhoto>) onReorderDone,
+  required void Function(List<GalleryPhoto>, BuildContext) onReorderDone,
 }) async {
   final theme = Theme.of(context);
   await showCupertinoSheet(

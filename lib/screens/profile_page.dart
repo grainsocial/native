@@ -28,29 +28,7 @@ class ProfilePage extends ConsumerStatefulWidget {
 }
 
 class _ProfilePageState extends ConsumerState<ProfilePage> {
-  List<Gallery> _favs = [];
-  bool _favsLoading = false;
   int _selectedSection = 0; // 0 = Galleries, 1 = Favs
-
-  void _loadFavsIfNeeded(String? did) async {
-    if (_selectedSection == 1 && _favs.isEmpty && !_favsLoading && did != null && did.isNotEmpty) {
-      setState(() => _favsLoading = true);
-      try {
-        final favs = await apiService.getActorFavs(did: did);
-        if (mounted)
-          setState(() {
-            _favs = favs;
-            _favsLoading = false;
-          });
-      } catch (e) {
-        if (mounted)
-          setState(() {
-            _favs = [];
-            _favsLoading = false;
-          });
-      }
-    }
-  }
 
   // Refactored: Just pop the sheet after save, don't return edited values
   Future<void> _handleProfileSave(
@@ -133,7 +111,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
     Future<void> refreshProfile() async {
       if (did != null) {
-        await ref.refresh(profileNotifierProvider(did).future);
+        final _ = await ref.refresh(profileNotifierProvider(did).future);
         setState(() {});
       }
     }
@@ -158,9 +136,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         }
         final profile = profileWithGalleries.profile;
         final galleries = profileWithGalleries.galleries;
-
-        // Load favs if needed when switching to favs
-        _loadFavsIfNeeded(profile.did);
+        final favs = profileWithGalleries.favs;
 
         return Scaffold(
           backgroundColor: theme.scaffoldBackgroundColor,
@@ -359,7 +335,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                                   selected: _selectedSection == 1,
                                   onTap: () {
                                     setState(() => _selectedSection = 1);
-                                    _loadFavsIfNeeded(profile.did);
                                   },
                                 ),
                               ),
@@ -371,7 +346,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                     // Directly show the grid, not inside Expanded/NestedScrollView
                     _selectedSection == 0
                         ? _buildGalleryGrid(theme, galleries)
-                        : _buildFavsGrid(theme, _favs, _favsLoading),
+                        : _buildFavsGrid(theme, favs),
                   ],
                 ),
               ),
@@ -451,14 +426,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     );
   }
 
-  Widget _buildFavsGrid(ThemeData theme, List<Gallery> favs, bool favsLoading) {
-    if (favsLoading) {
-      return const Center(
-        child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primaryColor),
-      );
-    }
-    final itemCount = favs.length < 12 ? 12 : favs.length;
-    if (favs.isEmpty) {
+  Widget _buildFavsGrid(ThemeData theme, List<Gallery>? favs) {
+    // Handle null favs more defensively
+    final safeList = favs ?? [];
+    final itemCount = safeList.length < 12 ? 12 : safeList.length;
+    if (safeList.isEmpty) {
       return GridView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
@@ -487,8 +459,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       ),
       itemCount: itemCount,
       itemBuilder: (context, index) {
-        if (favs.isNotEmpty && index < favs.length) {
-          final gallery = favs[index];
+        if (safeList.isNotEmpty && index < safeList.length) {
+          final gallery = safeList[index];
           final hasPhoto =
               gallery.items.isNotEmpty && (gallery.items[0].thumb?.isNotEmpty ?? false);
           return GestureDetector(

@@ -5,7 +5,11 @@ part 'gallery_state.g.dart';
 
 @freezed
 class GalleryState with _$GalleryState {
-  const factory GalleryState({required String item}) = _GalleryState;
+  const factory GalleryState({
+    required String item,
+    required String itemCreatedAt,
+    int? itemPosition,
+  }) = _GalleryState;
 
   factory GalleryState.fromJson(Map<String, dynamic> json) => _$GalleryStateFromJson(json);
 }

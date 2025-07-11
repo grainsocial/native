@@ -144,8 +144,15 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
                           showGallerySortOrderSheet(
                             context,
                             photos: galleryItems,
-                            onReorderDone: (newOrder) {
-                              // TODO: Save new order to backend and refresh gallery
+                            onReorderDone: (newOrder, sheetContext) async {
+                              await ref
+                                  .read(galleryCacheProvider.notifier)
+                                  .reorderGalleryItems(galleryUri: gallery.uri, newOrder: newOrder);
+                              await _maybeFetchGallery(forceRefresh: true);
+                              if (!sheetContext.mounted) return;
+                              Navigator.of(sheetContext).pop();
+                              if (!mounted) return;
+                              Navigator.of(context).pop();
                             },
                           );
                         },

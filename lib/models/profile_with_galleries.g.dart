@@ -13,6 +13,9 @@ _$ProfileWithGalleriesImpl _$$ProfileWithGalleriesImplFromJson(
   galleries: (json['galleries'] as List<dynamic>)
       .map((e) => Gallery.fromJson(e as Map<String, dynamic>))
       .toList(),
+  favs: (json['favs'] as List<dynamic>?)
+      ?.map((e) => Gallery.fromJson(e as Map<String, dynamic>))
+      .toList(),
 );
 
 Map<String, dynamic> _$$ProfileWithGalleriesImplToJson(
@@ -20,4 +23,5 @@ Map<String, dynamic> _$$ProfileWithGalleriesImplToJson(
 ) => <String, dynamic>{
   'profile': instance.profile,
   'galleries': instance.galleries,
+  'favs': instance.favs,
 };

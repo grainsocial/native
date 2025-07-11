@@ -54,7 +54,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         _followingTimelineLoading = true;
       });
       try {
+        print("Fetching following timeline with algorithm: $algorithm");
         final galleries = await apiService.getTimeline(algorithm: algorithm);
+        print("Fetched following timeline: ${galleries.length} items");
         container.read(galleryCacheProvider.notifier).setGalleries(galleries);
         setState(() {
           _followingTimelineUris = galleries.map((g) => g.uri).toList();

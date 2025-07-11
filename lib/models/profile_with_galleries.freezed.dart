@@ -23,6 +23,7 @@ ProfileWithGalleries _$ProfileWithGalleriesFromJson(Map<String, dynamic> json) {
 mixin _$ProfileWithGalleries {
   Profile get profile => throw _privateConstructorUsedError;
   List<Gallery> get galleries => throw _privateConstructorUsedError;
+  List<Gallery>? get favs => throw _privateConstructorUsedError;
 
   /// Serializes this ProfileWithGalleries to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -41,7 +42,7 @@ abstract class $ProfileWithGalleriesCopyWith<$Res> {
     $Res Function(ProfileWithGalleries) then,
   ) = _$ProfileWithGalleriesCopyWithImpl<$Res, ProfileWithGalleries>;
   @useResult
-  $Res call({Profile profile, List<Gallery> galleries});
+  $Res call({Profile profile, List<Gallery> galleries, List<Gallery>? favs});
 
   $ProfileCopyWith<$Res> get profile;
 }
@@ -63,7 +64,11 @@ class _$ProfileWithGalleriesCopyWithImpl<
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({Object? profile = null, Object? galleries = null}) {
+  $Res call({
+    Object? profile = null,
+    Object? galleries = null,
+    Object? favs = freezed,
+  }) {
     return _then(
       _value.copyWith(
             profile: null == profile
@@ -74,6 +79,10 @@ class _$ProfileWithGalleriesCopyWithImpl<
                 ? _value.galleries
                 : galleries // ignore: cast_nullable_to_non_nullable
                       as List<Gallery>,
+            favs: freezed == favs
+                ? _value.favs
+                : favs // ignore: cast_nullable_to_non_nullable
+                      as List<Gallery>?,
           )
           as $Val,
     );
@@ -99,7 +108,7 @@ abstract class _$$ProfileWithGalleriesImplCopyWith<$Res>
   ) = __$$ProfileWithGalleriesImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({Profile profile, List<Gallery> galleries});
+  $Res call({Profile profile, List<Gallery> galleries, List<Gallery>? favs});
 
   @override
   $ProfileCopyWith<$Res> get profile;
@@ -118,7 +127,11 @@ class __$$ProfileWithGalleriesImplCopyWithImpl<$Res>
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({Object? profile = null, Object? galleries = null}) {
+  $Res call({
+    Object? profile = null,
+    Object? galleries = null,
+    Object? favs = freezed,
+  }) {
     return _then(
       _$ProfileWithGalleriesImpl(
         profile: null == profile
@@ -129,6 +142,10 @@ class __$$ProfileWithGalleriesImplCopyWithImpl<$Res>
             ? _value._galleries
             : galleries // ignore: cast_nullable_to_non_nullable
                   as List<Gallery>,
+        favs: freezed == favs
+            ? _value._favs
+            : favs // ignore: cast_nullable_to_non_nullable
+                  as List<Gallery>?,
       ),
     );
   }
@@ -140,7 +157,9 @@ class _$ProfileWithGalleriesImpl implements _ProfileWithGalleries {
   const _$ProfileWithGalleriesImpl({
     required this.profile,
     required final List<Gallery> galleries,
-  }) : _galleries = galleries;
+    final List<Gallery>? favs,
+  }) : _galleries = galleries,
+       _favs = favs;
 
   factory _$ProfileWithGalleriesImpl.fromJson(Map<String, dynamic> json) =>
       _$$ProfileWithGalleriesImplFromJson(json);
@@ -155,9 +174,19 @@ class _$ProfileWithGalleriesImpl implements _ProfileWithGalleries {
     return EqualUnmodifiableListView(_galleries);
   }
 
+  final List<Gallery>? _favs;
+  @override
+  List<Gallery>? get favs {
+    final value = _favs;
+    if (value == null) return null;
+    if (_favs is EqualUnmodifiableListView) return _favs;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
   @override
   String toString() {
-    return 'ProfileWithGalleries(profile: $profile, galleries: $galleries)';
+    return 'ProfileWithGalleries(profile: $profile, galleries: $galleries, favs: $favs)';
   }
 
   @override
@@ -169,7 +198,8 @@ class _$ProfileWithGalleriesImpl implements _ProfileWithGalleries {
             const DeepCollectionEquality().equals(
               other._galleries,
               _galleries,
-            ));
+            ) &&
+            const DeepCollectionEquality().equals(other._favs, _favs));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -178,6 +208,7 @@ class _$ProfileWithGalleriesImpl implements _ProfileWithGalleries {
     runtimeType,
     profile,
     const DeepCollectionEquality().hash(_galleries),
+    const DeepCollectionEquality().hash(_favs),
   );
 
   /// Create a copy of ProfileWithGalleries
@@ -202,6 +233,7 @@ abstract class _ProfileWithGalleries implements ProfileWithGalleries {
   const factory _ProfileWithGalleries({
     required final Profile profile,
     required final List<Gallery> galleries,
+    final List<Gallery>? favs,
   }) = _$ProfileWithGalleriesImpl;
 
   factory _ProfileWithGalleries.fromJson(Map<String, dynamic> json) =
@@ -211,6 +243,8 @@ abstract class _ProfileWithGalleries implements ProfileWithGalleries {
   Profile get profile;
   @override
   List<Gallery> get galleries;
+  @override
+  List<Gallery>? get favs;
 
   /// Create a copy of ProfileWithGalleries
   /// with the given fields replaced by the non-null parameter values.

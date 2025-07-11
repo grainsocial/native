@@ -8,6 +8,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../api.dart';
 import '../models/gallery.dart';
+import '../models/gallery_item.dart';
 import '../photo_manip.dart';
 
 part 'gallery_cache_provider.g.dart';
@@ -151,5 +152,39 @@ class GalleryCache extends _$GalleryCache {
   Future<void> deleteGallery(String uri) async {
     await apiService.deleteRecord(uri);
     removeGallery(uri);
+  }
+
+  /// Reorders gallery items and updates backend, then updates cache.
+  Future<void> reorderGalleryItems({
+    required String galleryUri,
+    required List<dynamic> newOrder, // List<GalleryPhoto>
+  }) async {
+    final gallery = state[galleryUri];
+    if (gallery == null) return;
+    final orderedItems = newOrder.map((photo) {
+      // Map GalleryPhoto to GalleryItem
+      return GalleryItem(
+        uri: photo.gallery?.item ?? '',
+        gallery: galleryUri,
+        item: photo.uri,
+        createdAt: photo.gallery?.itemCreatedAt ?? '',
+        position: photo.gallery?.itemPosition,
+      );
+    }).toList();
+    // Optionally update positions if needed
+    for (int i = 0; i < orderedItems.length; i++) {
+      orderedItems[i] = orderedItems[i].copyWith(position: i);
+    }
+    await apiService.updateGallerySortOrder(galleryUri: galleryUri, orderedItems: orderedItems);
+    // Update cache with new order
+    final updatedPhotos = orderedItems
+        .where((item) => gallery.items.any((p) => p.uri == item.item))
+        .map((item) {
+          final photo = gallery.items.firstWhere((p) => p.uri == item.item);
+          return photo.copyWith(gallery: photo.gallery?.copyWith(itemPosition: item.position));
+        })
+        .toList();
+    final updatedGallery = gallery.copyWith(items: updatedPhotos);
+    state = {...state, galleryUri: updatedGallery};
   }
 }

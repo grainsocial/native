@@ -22,6 +22,8 @@ GalleryState _$GalleryStateFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$GalleryState {
   String get item => throw _privateConstructorUsedError;
+  String get itemCreatedAt => throw _privateConstructorUsedError;
+  int? get itemPosition => throw _privateConstructorUsedError;
 
   /// Serializes this GalleryState to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -40,7 +42,7 @@ abstract class $GalleryStateCopyWith<$Res> {
     $Res Function(GalleryState) then,
   ) = _$GalleryStateCopyWithImpl<$Res, GalleryState>;
   @useResult
-  $Res call({String item});
+  $Res call({String item, String itemCreatedAt, int? itemPosition});
 }
 
 /// @nodoc
@@ -57,13 +59,25 @@ class _$GalleryStateCopyWithImpl<$Res, $Val extends GalleryState>
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({Object? item = null}) {
+  $Res call({
+    Object? item = null,
+    Object? itemCreatedAt = null,
+    Object? itemPosition = freezed,
+  }) {
     return _then(
       _value.copyWith(
             item: null == item
                 ? _value.item
                 : item // ignore: cast_nullable_to_non_nullable
                       as String,
+            itemCreatedAt: null == itemCreatedAt
+                ? _value.itemCreatedAt
+                : itemCreatedAt // ignore: cast_nullable_to_non_nullable
+                      as String,
+            itemPosition: freezed == itemPosition
+                ? _value.itemPosition
+                : itemPosition // ignore: cast_nullable_to_non_nullable
+                      as int?,
           )
           as $Val,
     );
@@ -79,7 +93,7 @@ abstract class _$$GalleryStateImplCopyWith<$Res>
   ) = __$$GalleryStateImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String item});
+  $Res call({String item, String itemCreatedAt, int? itemPosition});
 }
 
 /// @nodoc
@@ -95,13 +109,25 @@ class __$$GalleryStateImplCopyWithImpl<$Res>
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({Object? item = null}) {
+  $Res call({
+    Object? item = null,
+    Object? itemCreatedAt = null,
+    Object? itemPosition = freezed,
+  }) {
     return _then(
       _$GalleryStateImpl(
         item: null == item
             ? _value.item
             : item // ignore: cast_nullable_to_non_nullable
                   as String,
+        itemCreatedAt: null == itemCreatedAt
+            ? _value.itemCreatedAt
+            : itemCreatedAt // ignore: cast_nullable_to_non_nullable
+                  as String,
+        itemPosition: freezed == itemPosition
+            ? _value.itemPosition
+            : itemPosition // ignore: cast_nullable_to_non_nullable
+                  as int?,
       ),
     );
   }
@@ -110,17 +136,25 @@ class __$$GalleryStateImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$GalleryStateImpl implements _GalleryState {
-  const _$GalleryStateImpl({required this.item});
+  const _$GalleryStateImpl({
+    required this.item,
+    required this.itemCreatedAt,
+    this.itemPosition,
+  });
 
   factory _$GalleryStateImpl.fromJson(Map<String, dynamic> json) =>
       _$$GalleryStateImplFromJson(json);
 
   @override
   final String item;
+  @override
+  final String itemCreatedAt;
+  @override
+  final int? itemPosition;
 
   @override
   String toString() {
-    return 'GalleryState(item: $item)';
+    return 'GalleryState(item: $item, itemCreatedAt: $itemCreatedAt, itemPosition: $itemPosition)';
   }
 
   @override
@@ -128,12 +162,17 @@ class _$GalleryStateImpl implements _GalleryState {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$GalleryStateImpl &&
-            (identical(other.item, item) || other.item == item));
+            (identical(other.item, item) || other.item == item) &&
+            (identical(other.itemCreatedAt, itemCreatedAt) ||
+                other.itemCreatedAt == itemCreatedAt) &&
+            (identical(other.itemPosition, itemPosition) ||
+                other.itemPosition == itemPosition));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, item);
+  int get hashCode =>
+      Object.hash(runtimeType, item, itemCreatedAt, itemPosition);
 
   /// Create a copy of GalleryState
   /// with the given fields replaced by the non-null parameter values.
@@ -150,14 +189,21 @@ class _$GalleryStateImpl implements _GalleryState {
 }
 
 abstract class _GalleryState implements GalleryState {
-  const factory _GalleryState({required final String item}) =
-      _$GalleryStateImpl;
+  const factory _GalleryState({
+    required final String item,
+    required final String itemCreatedAt,
+    final int? itemPosition,
+  }) = _$GalleryStateImpl;
 
   factory _GalleryState.fromJson(Map<String, dynamic> json) =
       _$GalleryStateImpl.fromJson;
 
   @override
   String get item;
+  @override
+  String get itemCreatedAt;
+  @override
+  int? get itemPosition;
 
   /// Create a copy of GalleryState
   /// with the given fields replaced by the non-null parameter values.

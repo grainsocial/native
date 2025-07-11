@@ -21,8 +21,8 @@ GalleryPhoto _$GalleryPhotoFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$GalleryPhoto {
-  String? get uri => throw _privateConstructorUsedError;
-  String? get cid => throw _privateConstructorUsedError;
+  String get uri => throw _privateConstructorUsedError;
+  String get cid => throw _privateConstructorUsedError;
   String? get thumb => throw _privateConstructorUsedError;
   String? get fullsize => throw _privateConstructorUsedError;
   String? get alt => throw _privateConstructorUsedError;
@@ -47,8 +47,8 @@ abstract class $GalleryPhotoCopyWith<$Res> {
   ) = _$GalleryPhotoCopyWithImpl<$Res, GalleryPhoto>;
   @useResult
   $Res call({
-    String? uri,
-    String? cid,
+    String uri,
+    String cid,
     String? thumb,
     String? fullsize,
     String? alt,
@@ -75,8 +75,8 @@ class _$GalleryPhotoCopyWithImpl<$Res, $Val extends GalleryPhoto>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? uri = freezed,
-    Object? cid = freezed,
+    Object? uri = null,
+    Object? cid = null,
     Object? thumb = freezed,
     Object? fullsize = freezed,
     Object? alt = freezed,
@@ -85,14 +85,14 @@ class _$GalleryPhotoCopyWithImpl<$Res, $Val extends GalleryPhoto>
   }) {
     return _then(
       _value.copyWith(
-            uri: freezed == uri
+            uri: null == uri
                 ? _value.uri
                 : uri // ignore: cast_nullable_to_non_nullable
-                      as String?,
-            cid: freezed == cid
+                      as String,
+            cid: null == cid
                 ? _value.cid
                 : cid // ignore: cast_nullable_to_non_nullable
-                      as String?,
+                      as String,
             thumb: freezed == thumb
                 ? _value.thumb
                 : thumb // ignore: cast_nullable_to_non_nullable
@@ -157,8 +157,8 @@ abstract class _$$GalleryPhotoImplCopyWith<$Res>
   @override
   @useResult
   $Res call({
-    String? uri,
-    String? cid,
+    String uri,
+    String cid,
     String? thumb,
     String? fullsize,
     String? alt,
@@ -186,8 +186,8 @@ class __$$GalleryPhotoImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? uri = freezed,
-    Object? cid = freezed,
+    Object? uri = null,
+    Object? cid = null,
     Object? thumb = freezed,
     Object? fullsize = freezed,
     Object? alt = freezed,
@@ -196,14 +196,14 @@ class __$$GalleryPhotoImplCopyWithImpl<$Res>
   }) {
     return _then(
       _$GalleryPhotoImpl(
-        uri: freezed == uri
+        uri: null == uri
             ? _value.uri
             : uri // ignore: cast_nullable_to_non_nullable
-                  as String?,
-        cid: freezed == cid
+                  as String,
+        cid: null == cid
             ? _value.cid
             : cid // ignore: cast_nullable_to_non_nullable
-                  as String?,
+                  as String,
         thumb: freezed == thumb
             ? _value.thumb
             : thumb // ignore: cast_nullable_to_non_nullable
@@ -233,8 +233,8 @@ class __$$GalleryPhotoImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$GalleryPhotoImpl implements _GalleryPhoto {
   const _$GalleryPhotoImpl({
-    this.uri,
-    this.cid,
+    required this.uri,
+    required this.cid,
     this.thumb,
     this.fullsize,
     this.alt,
@@ -246,9 +246,9 @@ class _$GalleryPhotoImpl implements _GalleryPhoto {
       _$$GalleryPhotoImplFromJson(json);
 
   @override
-  final String? uri;
+  final String uri;
   @override
-  final String? cid;
+  final String cid;
   @override
   final String? thumb;
   @override
@@ -310,8 +310,8 @@ class _$GalleryPhotoImpl implements _GalleryPhoto {
 
 abstract class _GalleryPhoto implements GalleryPhoto {
   const factory _GalleryPhoto({
-    final String? uri,
-    final String? cid,
+    required final String uri,
+    required final String cid,
     final String? thumb,
     final String? fullsize,
     final String? alt,
@@ -323,9 +323,9 @@ abstract class _GalleryPhoto implements GalleryPhoto {
       _$GalleryPhotoImpl.fromJson;
 
   @override
-  String? get uri;
+  String get uri;
   @override
-  String? get cid;
+  String get cid;
   @override
   String? get thumb;
   @override

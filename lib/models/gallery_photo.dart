@@ -9,8 +9,8 @@ part 'gallery_photo.g.dart';
 @freezed
 class GalleryPhoto with _$GalleryPhoto {
   const factory GalleryPhoto({
-    String? uri,
-    String? cid,
+    required String uri,
+    required String cid,
     String? thumb,
     String? fullsize,
     String? alt,
