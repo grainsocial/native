@@ -176,8 +176,11 @@ class ProfileNotifier extends _$ProfileNotifier {
     final currentProfile = state.value;
     if (currentProfile != null) {
       final updatedGalleries = [newGallery, ...currentProfile.galleries];
+      final updatedProfile = currentProfile.profile.copyWith(
+        galleryCount: (currentProfile.profile.galleryCount ?? 0) + 1,
+      );
       state = AsyncValue.data(
-        ProfileWithGalleries(profile: currentProfile.profile, galleries: updatedGalleries),
+        ProfileWithGalleries(profile: updatedProfile, galleries: updatedGalleries),
       );
     }
   }
@@ -186,8 +189,11 @@ class ProfileNotifier extends _$ProfileNotifier {
     final currentProfile = state.value;
     if (currentProfile != null) {
       final updatedGalleries = currentProfile.galleries.where((g) => g.uri != galleryUri).toList();
+      final updatedProfile = currentProfile.profile.copyWith(
+        galleryCount: (currentProfile.profile.galleryCount ?? 1) - 1,
+      );
       state = AsyncValue.data(
-        ProfileWithGalleries(profile: currentProfile.profile, galleries: updatedGalleries),
+        ProfileWithGalleries(profile: updatedProfile, galleries: updatedGalleries),
       );
     }
   }
