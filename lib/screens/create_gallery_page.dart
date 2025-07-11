@@ -1,19 +1,19 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:ui' as ui;
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:grain/api.dart';
 import 'package:grain/models/gallery.dart';
-import 'package:grain/photo_manip.dart';
+import 'package:grain/providers/profile_provider.dart';
 import 'package:grain/widgets/app_button.dart';
 import 'package:grain/widgets/plain_text_field.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:path_provider/path_provider.dart';
 
+import '../providers/gallery_cache_provider.dart';
 import 'gallery_page.dart';
 
 // Wrapper class for differentiating images
@@ -44,40 +44,49 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
     if (widget.gallery != null) {
       _titleController.text = widget.gallery?.title ?? '';
       _descController.text = widget.gallery?.description ?? '';
-      // Load existing images
-      Future.microtask(() async {
-        final List<GalleryImage> loadedImages = [];
-        for (final item in widget.gallery!.items) {
-          try {
-            final response = await HttpClient().getUrl(Uri.parse(item.thumb ?? ''));
-            final file = await response.close().then((res) async {
-              final bytes = await consolidateHttpClientResponseBytes(res);
-              final tempDir = await getTemporaryDirectory();
-              final tempFile = File('${tempDir.path}/${item.uri.hashCode}.jpg');
-              await tempFile.writeAsBytes(bytes);
-              return tempFile;
-            });
-            loadedImages.add(
-              GalleryImage(file: XFile(file.path), isExisting: true, remoteUri: item.uri),
-            );
-          } catch (_) {}
-        }
-        if (mounted) {
-          setState(() {
-            _images.addAll(loadedImages);
-          });
-        }
-      });
     }
   }
 
+  Future<String> _computeMd5(XFile xfile) async {
+    final bytes = await xfile.readAsBytes();
+    return md5.convert(bytes).toString();
+  }
+
   Future<void> _pickImages() async {
+    if (widget.gallery != null) return; // Only allow picking on create
     final picker = ImagePicker();
     final picked = await picker.pickMultiImage(imageQuality: 85);
     if (picked.isNotEmpty) {
-      setState(() {
-        _images.addAll(picked.map((xfile) => GalleryImage(file: xfile, isExisting: false)));
-      });
+      // Use md5 hash for duplicate detection
+      final existingHashes = <String>{};
+      for (final img in _images) {
+        final hash = await _computeMd5(img.file);
+        existingHashes.add(hash);
+      }
+      final newImages = <GalleryImage>[];
+      int skipped = 0;
+      for (final xfile in picked) {
+        final hash = await _computeMd5(xfile);
+        if (!existingHashes.contains(hash)) {
+          newImages.add(GalleryImage(file: xfile, isExisting: false));
+          existingHashes.add(hash);
+        } else {
+          skipped++;
+        }
+      }
+      if (newImages.isNotEmpty) {
+        setState(() {
+          _images.addAll(newImages);
+        });
+      }
+      if (skipped > 0 && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Some images were skipped (duplicates).'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
     }
   }
 
@@ -87,82 +96,59 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
     });
   }
 
-  Future<Map<String, int>> _getImageDimensions(XFile xfile) async {
-    final bytes = await xfile.readAsBytes();
-    final completer = Completer<Map<String, int>>();
-    ui.decodeImageFromList(bytes, (image) {
-      completer.complete({'width': image.width, 'height': image.height});
-    });
-    return completer.future;
-  }
-
   Future<void> _submit() async {
-    setState(() => _submitting = true);
-    final List<String> photoUris = [];
-    for (final galleryImage in _images) {
-      if (galleryImage.isExisting && galleryImage.remoteUri != null) {
-        photoUris.add(galleryImage.remoteUri!);
-        continue;
+    if (widget.gallery == null && _images.length > 10) {
+      if (mounted) {
+        await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Photo Limit'),
+            content: const Text(
+              'You can only add up to 10 photos on initial create but can add more later on.',
+            ),
+            actions: [
+              TextButton(child: const Text('OK'), onPressed: () => Navigator.of(context).pop()),
+            ],
+          ),
+        );
       }
-      // Only upload, create photo, and create gallery item if not existing
-      if (!galleryImage.isExisting) {
-        final file = File(galleryImage.file.path);
-        final resizedResult = await compute<File, ResizeResult>((f) => resizeImage(file: f), file);
-        final blobResult = await apiService.uploadBlob(resizedResult.file);
-        if (blobResult != null) {
-          final dims = await _getImageDimensions(galleryImage.file);
-          final photoUri = await apiService.createPhoto(
-            blob: blobResult,
-            width: dims['width']!,
-            height: dims['height']!,
-          );
-          if (photoUri != null) {
-            photoUris.add(photoUri);
-          }
-        }
-      }
+      return;
     }
+    setState(() => _submitting = true);
     String? galleryUri;
-    if (widget.gallery != null && widget.gallery!.uri.isNotEmpty) {
-      galleryUri = widget.gallery!.uri;
-    } else {
-      galleryUri = await apiService.createGallery(
+    if (widget.gallery == null) {
+      // Use provider to create gallery and add photos
+      final newImages = _images.where((img) => !img.isExisting).toList();
+      final container = ProviderScope.containerOf(context, listen: false);
+      final galleryCache = container.read(galleryCacheProvider.notifier);
+      final (createdUri, newPhotoUris) = await galleryCache.createGalleryAndAddPhotos(
         title: _titleController.text.trim(),
         description: _descController.text.trim(),
+        xfiles: newImages.map((img) => img.file).toList(),
       );
-    }
-    // Link only new photos to gallery as gallery items
-    if (galleryUri != null) {
-      int position = 0;
-      for (final galleryImage in _images) {
-        if (!galleryImage.isExisting) {
-          // Only create gallery item for new photos
-          if (position < photoUris.length) {
-            await apiService.createGalleryItem(
-              galleryUri: galleryUri,
-              photoUri: photoUris[position],
-              position: position,
-            );
-            position++;
-          }
-        } else {
-          position++;
+      galleryUri = createdUri;
+      // Update profile provider state to include new gallery
+      if (galleryUri != null && mounted) {
+        final newGallery = container.read(galleryCacheProvider)[galleryUri];
+        final profileNotifier = container.read(
+          profileNotifierProvider(apiService.currentUser!.did).notifier,
+        );
+        if (newGallery != null) {
+          profileNotifier.addGalleryToProfile(newGallery);
         }
       }
-      await apiService.pollGalleryItems(galleryUri: galleryUri, expectedCount: _images.length);
+    } else {
+      // Only support editing title/description for existing galleries
+      galleryUri = widget.gallery!.uri;
+      // If you have a provider method for updating, use it. Otherwise, call the correct API method.
+      // await apiService.updateGallery(
+      //   uri: galleryUri,
+      //   title: _titleController.text.trim(),
+      //   description: _descController.text.trim(),
+      // );
     }
     setState(() => _submitting = false);
     if (mounted && galleryUri != null) {
-      // Mark all images as existing after successful save
-      for (var i = 0; i < _images.length; i++) {
-        if (!_images[i].isExisting && i < photoUris.length) {
-          _images[i] = GalleryImage(
-            file: _images[i].file,
-            isExisting: true,
-            remoteUri: photoUris[i],
-          );
-        }
-      }
       Navigator.of(context).pop();
       if (widget.gallery == null) {
         Navigator.of(context).push(
@@ -244,17 +230,17 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
               PlainTextField(
                 label: 'Description',
                 controller: _descController,
-                maxLines: 3,
+                maxLines: 6,
                 hintText: 'Enter a description',
               ),
               const SizedBox(height: 16),
               Row(
                 children: [
                   AppButton(
-                    label: 'Add Images',
+                    label: 'Upload photos',
                     onPressed: _pickImages,
                     icon: Icons.photo_library,
-                    variant: AppButtonVariant.secondary,
+                    variant: AppButtonVariant.primary,
                     height: 40,
                     fontSize: 15,
                     borderRadius: 6,
@@ -312,14 +298,11 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
                             onTap: () => _removeImage(index),
                             child: Container(
                               decoration: BoxDecoration(
-                                color: theme.colorScheme.surfaceTint.withOpacity(0.7),
+                                color: Colors.grey.withOpacity(0.7),
                                 shape: BoxShape.circle,
                               ),
-                              child: Icon(
-                                Icons.close,
-                                color: theme.colorScheme.onSurface,
-                                size: 18,
-                              ),
+                              padding: const EdgeInsets.all(4),
+                              child: const Icon(Icons.close, color: Colors.white, size: 20),
                             ),
                           ),
                         ),

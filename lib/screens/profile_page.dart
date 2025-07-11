@@ -27,58 +27,27 @@ class ProfilePage extends ConsumerStatefulWidget {
   ConsumerState<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProviderStateMixin {
+class _ProfilePageState extends ConsumerState<ProfilePage> {
   List<Gallery> _favs = [];
-  TabController? _tabController;
   bool _favsLoading = false;
+  int _selectedSection = 0; // 0 = Galleries, 1 = Favs
 
-  @override
-  void initState() {
-    super.initState();
-    final did = widget.did ?? widget.profile?.did;
-    final isOwnProfile = (apiService.currentUser?.did == did);
-    _tabController = TabController(length: isOwnProfile ? 2 : 1, vsync: this);
-    _tabController!.addListener(_onTabChanged);
-  }
-
-  @override
-  void dispose() {
-    _tabController?.removeListener(_onTabChanged);
-    _tabController?.dispose();
-    super.dispose();
-  }
-
-  void _onTabChanged() async {
-    if (_tabController!.index == 1 && _favs.isEmpty && !_favsLoading) {
-      if (mounted) {
-        setState(() {
-          _favsLoading = true;
-        });
-      }
-      String? did = widget.did ?? widget.profile?.did;
-      if (did != null && did.isNotEmpty) {
-        try {
-          final favs = await apiService.getActorFavs(did: did);
-          if (mounted) {
-            setState(() {
-              _favs = favs;
-              _favsLoading = false;
-            });
-          }
-        } catch (e) {
-          if (mounted) {
-            setState(() {
-              _favs = [];
-              _favsLoading = false;
-            });
-          }
-        }
-      } else {
-        if (mounted) {
+  void _loadFavsIfNeeded(String? did) async {
+    if (_selectedSection == 1 && _favs.isEmpty && !_favsLoading && did != null && did.isNotEmpty) {
+      setState(() => _favsLoading = true);
+      try {
+        final favs = await apiService.getActorFavs(did: did);
+        if (mounted)
           setState(() {
+            _favs = favs;
             _favsLoading = false;
           });
-        }
+      } catch (e) {
+        if (mounted)
+          setState(() {
+            _favs = [];
+            _favsLoading = false;
+          });
       }
     }
   }
@@ -162,6 +131,13 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
         ? ref.watch(profileNotifierProvider(did))
         : const AsyncValue<ProfileWithGalleries?>.loading();
 
+    Future<void> refreshProfile() async {
+      if (did != null) {
+        await ref.refresh(profileNotifierProvider(did).future);
+        setState(() {});
+      }
+    }
+
     return asyncProfile.when(
       loading: () => Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
@@ -183,6 +159,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
         final profile = profileWithGalleries.profile;
         final galleries = profileWithGalleries.galleries;
 
+        // Load favs if needed when switching to favs
+        _loadFavsIfNeeded(profile.did);
+
         return Scaffold(
           backgroundColor: theme.scaffoldBackgroundColor,
           appBar: widget.showAppBar
@@ -194,384 +173,353 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
               : null,
           body: SafeArea(
             bottom: false,
-            child: Column(
-              children: [
-                Expanded(
-                  child: NestedScrollView(
-                    headerSliverBuilder: (context, innerBoxIsScrolled) => [
-                      SliverToBoxAdapter(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 8),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const SizedBox(height: 16),
-                                  Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      // Avatar
-                                      if (profile.avatar != null)
-                                        GestureDetector(
-                                          onTap: () => _showAvatarFullscreen(profile.avatar!),
-                                          child: ClipOval(
-                                            child: AppImage(
-                                              url: profile.avatar,
-                                              width: 64,
-                                              height: 64,
-                                              fit: BoxFit.cover,
-                                            ),
-                                          ),
-                                        )
-                                      else
-                                        const Icon(
-                                          Icons.account_circle,
-                                          size: 64,
-                                          color: Colors.grey,
-                                        ),
-                                      const Spacer(),
-                                      // Follow/Unfollow button
-                                      if (profile.did != apiService.currentUser?.did)
-                                        SizedBox(
-                                          child: AppButton(
-                                            size: AppButtonSize.small,
-                                            variant: profile.viewer?.following?.isNotEmpty == true
-                                                ? AppButtonVariant.secondary
-                                                : AppButtonVariant.primary,
-                                            onPressed: () async {
-                                              await ref
-                                                  .read(
-                                                    profileNotifierProvider(profile.did).notifier,
-                                                  )
-                                                  .toggleFollow(apiService.currentUser?.did);
-                                            },
-                                            label: (profile.viewer?.following?.isNotEmpty == true)
-                                                ? 'Following'
-                                                : 'Follow',
-                                          ),
-                                        )
-                                      // Edit Profile button for current user
-                                      else
-                                        SizedBox(
-                                          child: AppButton(
-                                            size: AppButtonSize.small,
-                                            variant: AppButtonVariant.secondary,
-                                            onPressed: () async {
-                                              showEditProfileSheet(
-                                                context,
-                                                initialDisplayName: profile.displayName,
-                                                initialDescription: profile.description,
-                                                initialAvatarUrl: profile.avatar,
-                                                onSave:
-                                                    (displayName, description, avatarFile) async {
-                                                      await _handleProfileSave(
-                                                        profile.did,
-                                                        displayName,
-                                                        description,
-                                                        avatarFile,
-                                                      );
-                                                    },
-                                                onCancel: () {
-                                                  Navigator.of(context).maybePop();
-                                                },
-                                              );
-                                            },
-                                            label: 'Edit profile',
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    profile.displayName ?? '',
-                                    style: const TextStyle(
-                                      fontSize: 28,
-                                      fontWeight: FontWeight.w800,
+            child: RefreshIndicator(
+              onRefresh: refreshProfile,
+              child: SingleChildScrollView(
+                padding: EdgeInsets.zero,
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 16),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Avatar
+                              if (profile.avatar != null)
+                                GestureDetector(
+                                  onTap: () => _showAvatarFullscreen(profile.avatar!),
+                                  child: ClipOval(
+                                    child: AppImage(
+                                      url: profile.avatar,
+                                      width: 64,
+                                      height: 64,
+                                      fit: BoxFit.cover,
                                     ),
-                                    textAlign: TextAlign.left,
                                   ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    '@${profile.handle}',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Theme.of(context).brightness == Brightness.dark
-                                          ? Colors.grey[400]
-                                          : Colors.grey[700],
-                                    ),
-                                    textAlign: TextAlign.left,
+                                )
+                              else
+                                const Icon(Icons.account_circle, size: 64, color: Colors.grey),
+                              const Spacer(),
+                              // Follow/Unfollow button
+                              if (profile.did != apiService.currentUser?.did)
+                                SizedBox(
+                                  child: AppButton(
+                                    size: AppButtonSize.small,
+                                    variant: profile.viewer?.following?.isNotEmpty == true
+                                        ? AppButtonVariant.secondary
+                                        : AppButtonVariant.primary,
+                                    onPressed: () async {
+                                      await ref
+                                          .read(profileNotifierProvider(profile.did).notifier)
+                                          .toggleFollow(apiService.currentUser?.did);
+                                    },
+                                    label: (profile.viewer?.following?.isNotEmpty == true)
+                                        ? 'Following'
+                                        : 'Follow',
                                   ),
-                                  const SizedBox(height: 12),
-                                  _ProfileStatsRow(
-                                    followers:
-                                        (profile.followersCount is int
-                                                ? profile.followersCount
-                                                : int.tryParse(
-                                                        profile.followersCount?.toString() ?? '0',
-                                                      ) ??
-                                                      0)
-                                            .toString(),
-                                    following:
-                                        (profile.followsCount is int
-                                                ? profile.followsCount
-                                                : int.tryParse(
-                                                        profile.followsCount?.toString() ?? '0',
-                                                      ) ??
-                                                      0)
-                                            .toString(),
-                                    galleries:
-                                        (profile.galleryCount is int
-                                                ? profile.galleryCount
-                                                : int.tryParse(
-                                                        profile.galleryCount?.toString() ?? '0',
-                                                      ) ??
-                                                      0)
-                                            .toString(),
-                                    did: profile.did,
-                                  ),
-                                  if ((profile.cameras?.isNotEmpty ?? false)) ...[
-                                    const SizedBox(height: 16),
-                                    CameraPills(cameras: profile.cameras!),
-                                  ],
-                                  if ((profile.description ?? '').isNotEmpty) ...[
-                                    const SizedBox(height: 16),
-                                    FacetedText(
-                                      text: profile.description ?? '',
-                                      facets: profile.descriptionFacets,
-                                      onMentionTap: (didOrHandle) {
-                                        Navigator.of(context).push(
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                ProfilePage(did: didOrHandle, showAppBar: true),
-                                          ),
-                                        );
-                                      },
-                                      onLinkTap: (url) async {
-                                        final uri = Uri.parse(url);
-                                        if (!await launchUrl(uri)) {
-                                          throw Exception('Could not launch $url');
-                                        }
-                                      },
-                                      onTagTap: (tag) => Navigator.push(
+                                )
+                              // Edit Profile button for current user
+                              else
+                                SizedBox(
+                                  child: AppButton(
+                                    size: AppButtonSize.small,
+                                    variant: AppButtonVariant.secondary,
+                                    onPressed: () async {
+                                      showEditProfileSheet(
                                         context,
-                                        MaterialPageRoute(
-                                          builder: (_) => HashtagPage(hashtag: tag),
-                                        ),
-                                      ),
-                                      linkStyle: TextStyle(
-                                        color: Theme.of(context).colorScheme.primary,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                  const SizedBox(height: 24),
-                                ],
-                              ),
-                            ),
-                            // TabBar with no horizontal padding
-                            Container(
-                              color: theme.scaffoldBackgroundColor,
-                              child: TabBar(
-                                dividerColor: theme.disabledColor,
-                                controller: _tabController,
-                                indicator: UnderlineTabIndicator(
-                                  borderSide: const BorderSide(
-                                    color: AppTheme.primaryColor,
-                                    width: 3,
+                                        initialDisplayName: profile.displayName,
+                                        initialDescription: profile.description,
+                                        initialAvatarUrl: profile.avatar,
+                                        onSave: (displayName, description, avatarFile) async {
+                                          await _handleProfileSave(
+                                            profile.did,
+                                            displayName,
+                                            description,
+                                            avatarFile,
+                                          );
+                                        },
+                                        onCancel: () {
+                                          Navigator.of(context).maybePop();
+                                        },
+                                      );
+                                    },
+                                    label: 'Edit profile',
                                   ),
-                                  insets: EdgeInsets.zero,
                                 ),
-                                indicatorSize: TabBarIndicatorSize.tab,
-                                labelColor: theme.colorScheme.onSurface,
-                                unselectedLabelColor: theme.colorScheme.onSurfaceVariant,
-                                labelStyle: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 16,
-                                ),
-                                tabs: [
-                                  const Tab(text: 'Galleries'),
-                                  if (apiService.currentUser?.did == profile.did)
-                                    const Tab(text: 'Favs'),
-                                ],
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            profile.displayName ?? '',
+                            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800),
+                            textAlign: TextAlign.left,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '@${profile.handle}',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.grey[400]
+                                  : Colors.grey[700],
+                            ),
+                            textAlign: TextAlign.left,
+                          ),
+                          const SizedBox(height: 12),
+                          _ProfileStatsRow(
+                            followers:
+                                (profile.followersCount is int
+                                        ? profile.followersCount
+                                        : int.tryParse(profile.followersCount?.toString() ?? '0') ??
+                                              0)
+                                    .toString(),
+                            following:
+                                (profile.followsCount is int
+                                        ? profile.followsCount
+                                        : int.tryParse(profile.followsCount?.toString() ?? '0') ??
+                                              0)
+                                    .toString(),
+                            galleries:
+                                (profile.galleryCount is int
+                                        ? profile.galleryCount
+                                        : int.tryParse(profile.galleryCount?.toString() ?? '0') ??
+                                              0)
+                                    .toString(),
+                            did: profile.did,
+                          ),
+                          if ((profile.cameras?.isNotEmpty ?? false)) ...[
+                            const SizedBox(height: 16),
+                            CameraPills(cameras: profile.cameras!),
+                          ],
+                          if ((profile.description ?? '').isNotEmpty) ...[
+                            const SizedBox(height: 16),
+                            FacetedText(
+                              text: profile.description ?? '',
+                              facets: profile.descriptionFacets,
+                              onMentionTap: (didOrHandle) {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        ProfilePage(did: didOrHandle, showAppBar: true),
+                                  ),
+                                );
+                              },
+                              onLinkTap: (url) async {
+                                final uri = Uri.parse(url);
+                                if (!await launchUrl(uri)) {
+                                  throw Exception('Could not launch $url');
+                                }
+                              },
+                              onTagTap: (tag) => Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => HashtagPage(hashtag: tag)),
+                              ),
+                              linkStyle: TextStyle(
+                                color: Theme.of(context).colorScheme.primary,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],
-                        ),
+                          const SizedBox(height: 24),
+                          // REMOVE the Stack (tab row + divider) from inside Padding COMPLETELY
+                          SizedBox(height: 12), // Add bottom padding before grid
+                        ],
                       ),
-                    ],
-                    body: TabBarView(
-                      controller: _tabController,
+                    ),
+                    // Place Stack (tab row + divider) OUTSIDE Padding for true edge-to-edge
+                    Stack(
                       children: [
-                        // Galleries tab, edge-to-edge grid
-                        galleries.isEmpty
-                            ? GridView.builder(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                padding: EdgeInsets.zero,
-                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 3,
-                                  childAspectRatio: 3 / 4,
-                                  crossAxisSpacing: 2,
-                                  mainAxisSpacing: 2,
-                                ),
-                                itemCount: 12, // Enough to fill the screen
-                                itemBuilder: (context, index) {
-                                  return Container(
-                                    color: theme.colorScheme.surfaceContainerHighest,
-                                  );
-                                },
-                              )
-                            : GridView.builder(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                padding: EdgeInsets.zero,
-                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 3,
-                                  childAspectRatio: 3 / 4,
-                                  crossAxisSpacing: 2,
-                                  mainAxisSpacing: 2,
-                                ),
-                                itemCount: (galleries.length < 12 ? 12 : galleries.length),
-                                itemBuilder: (context, index) {
-                                  if (galleries.isNotEmpty && index < galleries.length) {
-                                    final gallery = galleries[index];
-                                    final hasPhoto =
-                                        gallery.items.isNotEmpty &&
-                                        (gallery.items[0].thumb?.isNotEmpty ?? false);
-                                    return GestureDetector(
-                                      onTap: () {
-                                        if (gallery.uri.isNotEmpty) {
-                                          Navigator.of(context).push(
-                                            MaterialPageRoute(
-                                              builder: (context) => GalleryPage(
-                                                uri: gallery.uri,
-                                                currentUserDid: apiService.currentUser?.did ?? '',
-                                              ),
-                                            ),
-                                          );
-                                        }
-                                      },
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.surfaceContainerHighest,
-                                        ),
-                                        clipBehavior: Clip.antiAlias,
-                                        child: hasPhoto
-                                            ? AppImage(
-                                                url: gallery.items[0].thumb,
-                                                fit: BoxFit.cover,
-                                              )
-                                            : Center(
-                                                child: Text(
-                                                  gallery.title ?? '',
-                                                  style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: theme.colorScheme.onSurfaceVariant,
-                                                  ),
-                                                  textAlign: TextAlign.center,
-                                                ),
-                                              ),
-                                      ),
-                                    );
-                                  }
-                                  // Placeholder for empty slots
-                                  return Container(
-                                    color: theme.colorScheme.surfaceContainerHighest,
-                                  );
+                        Positioned.fill(
+                          child: Align(
+                            alignment: Alignment.bottomCenter,
+                            child: Container(height: 1, color: Theme.of(context).dividerColor),
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _ProfileTabButton(
+                                label: 'Galleries',
+                                selected: _selectedSection == 0,
+                                onTap: () {
+                                  setState(() => _selectedSection = 0);
                                 },
                               ),
-                        // Favs tab
-                        if (apiService.currentUser?.did == profile.did)
-                          (_favsLoading
-                              ? const Center(
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: AppTheme.primaryColor,
-                                  ),
-                                )
-                              : _favs.isEmpty
-                              ? GridView.builder(
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  padding: EdgeInsets.zero,
-                                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 3,
-                                    childAspectRatio: 3 / 4,
-                                    crossAxisSpacing: 2,
-                                    mainAxisSpacing: 2,
-                                  ),
-                                  itemCount: 12, // Enough to fill the screen
-                                  itemBuilder: (context, index) {
-                                    return Container(
-                                      color: theme.colorScheme.surfaceContainerHighest,
-                                    );
+                            ),
+                            if (apiService.currentUser?.did == profile.did)
+                              Expanded(
+                                child: _ProfileTabButton(
+                                  label: 'Favs',
+                                  selected: _selectedSection == 1,
+                                  onTap: () {
+                                    setState(() => _selectedSection = 1);
+                                    _loadFavsIfNeeded(profile.did);
                                   },
-                                )
-                              : GridView.builder(
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  padding: EdgeInsets.zero,
-                                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 3,
-                                    childAspectRatio: 3 / 4,
-                                    crossAxisSpacing: 2,
-                                    mainAxisSpacing: 2,
-                                  ),
-                                  itemCount: _favs.length,
-                                  itemBuilder: (context, index) {
-                                    final gallery = _favs[index];
-                                    final hasPhoto =
-                                        gallery.items.isNotEmpty &&
-                                        (gallery.items[0].thumb?.isNotEmpty ?? false);
-                                    return GestureDetector(
-                                      onTap: () {
-                                        if (gallery.uri.isNotEmpty) {
-                                          Navigator.of(context).push(
-                                            MaterialPageRoute(
-                                              builder: (context) => GalleryPage(
-                                                uri: gallery.uri,
-                                                currentUserDid: apiService.currentUser?.did ?? '',
-                                              ),
-                                            ),
-                                          );
-                                        }
-                                      },
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          color: theme.colorScheme.surfaceContainerHighest,
-                                        ),
-                                        clipBehavior: Clip.antiAlias,
-                                        child: hasPhoto
-                                            ? AppImage(
-                                                url: gallery.items[0].thumb,
-                                                fit: BoxFit.cover,
-                                              )
-                                            : Center(
-                                                child: Text(
-                                                  gallery.title ?? '',
-                                                  style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: theme.colorScheme.onSurfaceVariant,
-                                                  ),
-                                                  textAlign: TextAlign.center,
-                                                ),
-                                              ),
-                                      ),
-                                    );
-                                  },
-                                )),
+                                ),
+                              ),
+                          ],
+                        ),
                       ],
                     ),
-                  ),
+                    // SizedBox(height: 1), // Add bottom padding before grid
+                    // Directly show the grid, not inside Expanded/NestedScrollView
+                    _selectedSection == 0
+                        ? _buildGalleryGrid(theme, galleries)
+                        : _buildFavsGrid(theme, _favs, _favsLoading),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         );
+      },
+    );
+  }
+
+  Widget _buildGalleryGrid(ThemeData theme, List<Gallery> galleries) {
+    if (galleries.isEmpty) {
+      return GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        padding: EdgeInsets.zero,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          childAspectRatio: 3 / 4,
+          crossAxisSpacing: 2,
+          mainAxisSpacing: 2,
+        ),
+        itemCount: 12,
+        itemBuilder: (context, index) {
+          return Container(color: theme.colorScheme.surfaceContainerHighest);
+        },
+      );
+    }
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        childAspectRatio: 3 / 4,
+        crossAxisSpacing: 2,
+        mainAxisSpacing: 2,
+      ),
+      itemCount: (galleries.length < 12 ? 12 : galleries.length),
+      itemBuilder: (context, index) {
+        if (galleries.isNotEmpty && index < galleries.length) {
+          final gallery = galleries[index];
+          final hasPhoto =
+              gallery.items.isNotEmpty && (gallery.items[0].thumb?.isNotEmpty ?? false);
+          return GestureDetector(
+            onTap: () {
+              if (gallery.uri.isNotEmpty) {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => GalleryPage(
+                      uri: gallery.uri,
+                      currentUserDid: apiService.currentUser?.did ?? '',
+                    ),
+                  ),
+                );
+              }
+            },
+            child: Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: hasPhoto
+                  ? AppImage(url: gallery.items[0].thumb, fit: BoxFit.cover)
+                  : Center(
+                      child: Text(
+                        gallery.title ?? '',
+                        style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+            ),
+          );
+        }
+        return Container(color: theme.colorScheme.surfaceContainerHighest);
+      },
+    );
+  }
+
+  Widget _buildFavsGrid(ThemeData theme, List<Gallery> favs, bool favsLoading) {
+    if (favsLoading) {
+      return const Center(
+        child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primaryColor),
+      );
+    }
+    final itemCount = favs.length < 12 ? 12 : favs.length;
+    if (favs.isEmpty) {
+      return GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        padding: EdgeInsets.zero,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          childAspectRatio: 3 / 4,
+          crossAxisSpacing: 2,
+          mainAxisSpacing: 2,
+        ),
+        itemCount: 12,
+        itemBuilder: (context, index) {
+          return Container(color: theme.colorScheme.surfaceContainerHighest);
+        },
+      );
+    }
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        childAspectRatio: 3 / 4,
+        crossAxisSpacing: 2,
+        mainAxisSpacing: 2,
+      ),
+      itemCount: itemCount,
+      itemBuilder: (context, index) {
+        if (favs.isNotEmpty && index < favs.length) {
+          final gallery = favs[index];
+          final hasPhoto =
+              gallery.items.isNotEmpty && (gallery.items[0].thumb?.isNotEmpty ?? false);
+          return GestureDetector(
+            onTap: () {
+              if (gallery.uri.isNotEmpty) {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => GalleryPage(
+                      uri: gallery.uri,
+                      currentUserDid: apiService.currentUser?.did ?? '',
+                    ),
+                  ),
+                );
+              }
+            },
+            child: Container(
+              decoration: BoxDecoration(color: theme.colorScheme.surfaceContainerHighest),
+              clipBehavior: Clip.antiAlias,
+              child: hasPhoto
+                  ? AppImage(url: gallery.items[0].thumb, fit: BoxFit.cover)
+                  : Center(
+                      child: Text(
+                        gallery.title ?? '',
+                        style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+            ),
+          );
+        }
+        return Container(color: theme.colorScheme.surfaceContainerHighest);
       },
     );
   }
@@ -638,5 +586,67 @@ class _ProfileStatsRow extends StatelessWidget {
         Text('galleries', style: styleLabel),
       ],
     );
+  }
+}
+
+class _ProfileTabButton extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _ProfileTabButton({required this.label, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        height: 44,
+        alignment: Alignment.center,
+        child: Stack(
+          alignment: Alignment.bottomCenter,
+          children: [
+            Center(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                  color: selected
+                      ? theme.colorScheme.onSurface
+                      : theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+            if (selected)
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Container(
+                    height: 3,
+                    width: _textWidth(context, label),
+                    color: AppTheme.primaryColor,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  double _textWidth(BuildContext context, String text) {
+    final TextPainter textPainter = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+      ),
+      maxLines: 1,
+      textDirection: TextDirection.ltr,
+    )..layout();
+    return textPainter.width;
   }
 }

@@ -16,8 +16,10 @@ import 'profile_page.dart';
 
 class MyHomePage extends StatefulWidget {
   final String title;
+  final int initialTab; // 0: Home, 1: Explore, 2: Notifications, 3: Profile
+  final String? did;
   final VoidCallback? onSignOut;
-  const MyHomePage({super.key, required this.title, this.onSignOut});
+  const MyHomePage({super.key, required this.title, this.initialTab = 0, this.did, this.onSignOut});
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -37,6 +39,10 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    // Set tab state based on initialTab
+    showProfile = widget.initialTab == 3;
+    showExplore = widget.initialTab == 1;
+    showNotifications = widget.initialTab == 2;
     _fetchTimeline();
     _initTabController();
   }
@@ -397,13 +403,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         floatingActionButton: (!showProfile && !showNotifications && !showExplore)
             ? FloatingActionButton(
                 shape: const CircleBorder(),
-                onPressed: () {
+                onPressed: () async {
                   HapticFeedback.mediumImpact();
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    builder: (context) => CreateGalleryPage(),
-                  );
+                  await showCreateGallerySheet(context);
                 },
                 backgroundColor: theme.colorScheme.primary,
                 foregroundColor: Colors.white,

@@ -1,0 +1,218 @@
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:grain/models/gallery_photo.dart';
+import 'package:grain/providers/gallery_cache_provider.dart';
+import 'package:grain/widgets/app_button.dart';
+import 'package:grain/widgets/app_image.dart';
+import 'package:image_picker/image_picker.dart';
+
+class GalleryEditPhotosSheet extends ConsumerStatefulWidget {
+  final String galleryUri;
+  final List<GalleryPhoto> allPhotos;
+  final void Function(List<GalleryPhoto>) onSave;
+
+  const GalleryEditPhotosSheet({
+    super.key,
+    required this.galleryUri,
+    required this.allPhotos,
+    required this.onSave,
+  });
+
+  @override
+  ConsumerState<GalleryEditPhotosSheet> createState() => _GalleryEditPhotosSheetState();
+}
+
+class _GalleryEditPhotosSheetState extends ConsumerState<GalleryEditPhotosSheet> {
+  late List<GalleryPhoto> _photos;
+  bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _photos = List.from(widget.allPhotos);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return CupertinoPageScaffold(
+      backgroundColor: theme.colorScheme.surface,
+      navigationBar: CupertinoNavigationBar(
+        backgroundColor: theme.colorScheme.surface,
+        border: Border(bottom: BorderSide(color: theme.dividerColor, width: 1)),
+        middle: Text(
+          'Edit Gallery Photos',
+          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+        ),
+        leading: CupertinoButton(
+          padding: EdgeInsets.zero,
+          onPressed: _loading ? null : () => Navigator.of(context).maybePop(),
+          child: Text(
+            'Cancel',
+            style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.w600),
+          ),
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.only(top: 8, left: 16, right: 16, bottom: 24),
+          child: Column(
+            children: [
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final itemSpacing = 8.0;
+                    final itemCountPerRow = 3;
+                    return GridView.builder(
+                      itemCount: _photos.length,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: itemCountPerRow,
+                        crossAxisSpacing: itemSpacing,
+                        mainAxisSpacing: itemSpacing,
+                        childAspectRatio: 1,
+                      ),
+                      itemBuilder: (context, index) {
+                        final photo = _photos[index];
+                        return Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                                color: Colors.grey[200],
+                              ),
+                              clipBehavior: Clip.antiAlias,
+                              child: photo.thumb != null && photo.thumb!.isNotEmpty
+                                  ? AppImage(url: photo.thumb!, fit: BoxFit.cover)
+                                  : const Icon(Icons.photo, size: 48),
+                            ),
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: GestureDetector(
+                                onTap: _loading
+                                    ? null
+                                    : () async {
+                                        final confirm = await showDialog<bool>(
+                                          context: context,
+                                          builder: (context) => AlertDialog(
+                                            title: const Text('Remove Photo'),
+                                            content: const Text(
+                                              'Remove this photo from the gallery?',
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () => Navigator.of(context).pop(false),
+                                                child: const Text('Cancel'),
+                                              ),
+                                              TextButton(
+                                                onPressed: () => Navigator.of(context).pop(true),
+                                                child: const Text('Remove'),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                        if (confirm == true && photo.gallery?.item != null) {
+                                          await ref
+                                              .read(galleryCacheProvider.notifier)
+                                              .removePhotoFromGallery(
+                                                widget.galleryUri,
+                                                photo.gallery!.item,
+                                              );
+                                          setState(() {
+                                            _photos.removeAt(index);
+                                          });
+                                        }
+                                      },
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.withOpacity(0.7),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  padding: const EdgeInsets.all(4),
+                                  child: const Icon(Icons.close, color: Colors.white, size: 20),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: AppButton(
+                      label: 'Upload photos',
+                      loading: _loading,
+                      onPressed: _loading
+                          ? null
+                          : () async {
+                              final picker = ImagePicker();
+                              final picked = await picker.pickMultiImage(imageQuality: 85);
+                              if (picked.isNotEmpty) {
+                                setState(() => _loading = true);
+                                final notifier = ref.read(galleryCacheProvider.notifier);
+                                await notifier.uploadAndAddPhotosToGallery(
+                                  galleryUri: widget.galleryUri,
+                                  xfiles: picked,
+                                );
+                                // Fetch the updated gallery from provider state
+                                final updatedGallery = ref.read(
+                                  galleryCacheProvider,
+                                )[widget.galleryUri];
+                                if (updatedGallery != null && mounted) {
+                                  setState(() {
+                                    _photos = List.from(updatedGallery.items);
+                                  });
+                                }
+                                if (mounted) setState(() => _loading = false);
+                              }
+                            },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: AppButton(
+                      label: 'Add from library',
+                      variant: AppButtonVariant.secondary,
+                      onPressed: () async {
+                        // TODO: Implement add from library action
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+Future<void> showGalleryEditPhotosSheet(
+  BuildContext context, {
+  required String galleryUri,
+  required List<GalleryPhoto> allPhotos,
+  required void Function(List<GalleryPhoto>) onSave,
+}) async {
+  final theme = Theme.of(context);
+  await showCupertinoSheet(
+    context: context,
+    useNestedNavigation: true,
+    pageBuilder: (context) => Material(
+      type: MaterialType.transparency,
+      child: GalleryEditPhotosSheet(galleryUri: galleryUri, allPhotos: allPhotos, onSave: onSave),
+    ),
+  );
+  SystemChrome.setSystemUIOverlayStyle(
+    theme.brightness == Brightness.dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+  );
+}

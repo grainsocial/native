@@ -27,6 +27,7 @@ mixin _$GalleryPhoto {
   String? get fullsize => throw _privateConstructorUsedError;
   String? get alt => throw _privateConstructorUsedError;
   AspectRatio? get aspectRatio => throw _privateConstructorUsedError;
+  GalleryState? get gallery => throw _privateConstructorUsedError;
 
   /// Serializes this GalleryPhoto to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -52,9 +53,11 @@ abstract class $GalleryPhotoCopyWith<$Res> {
     String? fullsize,
     String? alt,
     AspectRatio? aspectRatio,
+    GalleryState? gallery,
   });
 
   $AspectRatioCopyWith<$Res>? get aspectRatio;
+  $GalleryStateCopyWith<$Res>? get gallery;
 }
 
 /// @nodoc
@@ -78,6 +81,7 @@ class _$GalleryPhotoCopyWithImpl<$Res, $Val extends GalleryPhoto>
     Object? fullsize = freezed,
     Object? alt = freezed,
     Object? aspectRatio = freezed,
+    Object? gallery = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -105,6 +109,10 @@ class _$GalleryPhotoCopyWithImpl<$Res, $Val extends GalleryPhoto>
                 ? _value.aspectRatio
                 : aspectRatio // ignore: cast_nullable_to_non_nullable
                       as AspectRatio?,
+            gallery: freezed == gallery
+                ? _value.gallery
+                : gallery // ignore: cast_nullable_to_non_nullable
+                      as GalleryState?,
           )
           as $Val,
     );
@@ -121,6 +129,20 @@ class _$GalleryPhotoCopyWithImpl<$Res, $Val extends GalleryPhoto>
 
     return $AspectRatioCopyWith<$Res>(_value.aspectRatio!, (value) {
       return _then(_value.copyWith(aspectRatio: value) as $Val);
+    });
+  }
+
+  /// Create a copy of GalleryPhoto
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $GalleryStateCopyWith<$Res>? get gallery {
+    if (_value.gallery == null) {
+      return null;
+    }
+
+    return $GalleryStateCopyWith<$Res>(_value.gallery!, (value) {
+      return _then(_value.copyWith(gallery: value) as $Val);
     });
   }
 }
@@ -141,10 +163,13 @@ abstract class _$$GalleryPhotoImplCopyWith<$Res>
     String? fullsize,
     String? alt,
     AspectRatio? aspectRatio,
+    GalleryState? gallery,
   });
 
   @override
   $AspectRatioCopyWith<$Res>? get aspectRatio;
+  @override
+  $GalleryStateCopyWith<$Res>? get gallery;
 }
 
 /// @nodoc
@@ -167,6 +192,7 @@ class __$$GalleryPhotoImplCopyWithImpl<$Res>
     Object? fullsize = freezed,
     Object? alt = freezed,
     Object? aspectRatio = freezed,
+    Object? gallery = freezed,
   }) {
     return _then(
       _$GalleryPhotoImpl(
@@ -194,6 +220,10 @@ class __$$GalleryPhotoImplCopyWithImpl<$Res>
             ? _value.aspectRatio
             : aspectRatio // ignore: cast_nullable_to_non_nullable
                   as AspectRatio?,
+        gallery: freezed == gallery
+            ? _value.gallery
+            : gallery // ignore: cast_nullable_to_non_nullable
+                  as GalleryState?,
       ),
     );
   }
@@ -209,6 +239,7 @@ class _$GalleryPhotoImpl implements _GalleryPhoto {
     this.fullsize,
     this.alt,
     this.aspectRatio,
+    this.gallery,
   });
 
   factory _$GalleryPhotoImpl.fromJson(Map<String, dynamic> json) =>
@@ -226,10 +257,12 @@ class _$GalleryPhotoImpl implements _GalleryPhoto {
   final String? alt;
   @override
   final AspectRatio? aspectRatio;
+  @override
+  final GalleryState? gallery;
 
   @override
   String toString() {
-    return 'GalleryPhoto(uri: $uri, cid: $cid, thumb: $thumb, fullsize: $fullsize, alt: $alt, aspectRatio: $aspectRatio)';
+    return 'GalleryPhoto(uri: $uri, cid: $cid, thumb: $thumb, fullsize: $fullsize, alt: $alt, aspectRatio: $aspectRatio, gallery: $gallery)';
   }
 
   @override
@@ -244,13 +277,22 @@ class _$GalleryPhotoImpl implements _GalleryPhoto {
                 other.fullsize == fullsize) &&
             (identical(other.alt, alt) || other.alt == alt) &&
             (identical(other.aspectRatio, aspectRatio) ||
-                other.aspectRatio == aspectRatio));
+                other.aspectRatio == aspectRatio) &&
+            (identical(other.gallery, gallery) || other.gallery == gallery));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, uri, cid, thumb, fullsize, alt, aspectRatio);
+  int get hashCode => Object.hash(
+    runtimeType,
+    uri,
+    cid,
+    thumb,
+    fullsize,
+    alt,
+    aspectRatio,
+    gallery,
+  );
 
   /// Create a copy of GalleryPhoto
   /// with the given fields replaced by the non-null parameter values.
@@ -274,6 +316,7 @@ abstract class _GalleryPhoto implements GalleryPhoto {
     final String? fullsize,
     final String? alt,
     final AspectRatio? aspectRatio,
+    final GalleryState? gallery,
   }) = _$GalleryPhotoImpl;
 
   factory _GalleryPhoto.fromJson(Map<String, dynamic> json) =
@@ -291,6 +334,8 @@ abstract class _GalleryPhoto implements GalleryPhoto {
   String? get alt;
   @override
   AspectRatio? get aspectRatio;
+  @override
+  GalleryState? get gallery;
 
   /// Create a copy of GalleryPhoto
   /// with the given fields replaced by the non-null parameter values.

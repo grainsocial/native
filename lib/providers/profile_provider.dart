@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:bluesky_text/bluesky_text.dart';
 import 'package:grain/api.dart';
+import 'package:grain/models/gallery.dart';
 import 'package:grain/models/profile.dart';
 import 'package:grain/models/profile_with_galleries.dart';
 import 'package:grain/providers/gallery_cache_provider.dart';
@@ -168,6 +169,26 @@ class ProfileNotifier extends _$ProfileNotifier {
           ProfileWithGalleries(profile: updatedProfile, galleries: current!.galleries),
         );
       }
+    }
+  }
+
+  void addGalleryToProfile(Gallery newGallery) {
+    final currentProfile = state.value;
+    if (currentProfile != null) {
+      final updatedGalleries = [newGallery, ...currentProfile.galleries];
+      state = AsyncValue.data(
+        ProfileWithGalleries(profile: currentProfile.profile, galleries: updatedGalleries),
+      );
+    }
+  }
+
+  void removeGalleryFromProfile(String galleryUri) {
+    final currentProfile = state.value;
+    if (currentProfile != null) {
+      final updatedGalleries = currentProfile.galleries.where((g) => g.uri != galleryUri).toList();
+      state = AsyncValue.data(
+        ProfileWithGalleries(profile: currentProfile.profile, galleries: updatedGalleries),
+      );
     }
   }
 }

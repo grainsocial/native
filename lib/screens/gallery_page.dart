@@ -3,9 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:grain/api.dart';
 import 'package:grain/models/gallery_photo.dart';
 import 'package:grain/providers/gallery_cache_provider.dart';
+import 'package:grain/providers/profile_provider.dart';
 import 'package:grain/screens/comments_page.dart';
 import 'package:grain/screens/create_gallery_page.dart';
+import 'package:grain/screens/gallery_action_sheet.dart';
+import 'package:grain/screens/gallery_edit_photos_sheet.dart';
+import 'package:grain/screens/gallery_sort_order_sheet.dart';
 import 'package:grain/screens/hashtag_page.dart';
+import 'package:grain/screens/home_page.dart';
 import 'package:grain/screens/profile_page.dart';
 import 'package:grain/widgets/app_image.dart';
 import 'package:grain/widgets/camera_pills.dart';
@@ -33,10 +38,20 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
   @override
   void initState() {
     super.initState();
-    _maybeFetchGallery();
+    // Only fetch if not already in cache
+    final cached = ref.read(galleryCacheProvider)[widget.uri];
+    if (cached == null) {
+      _maybeFetchGallery();
+    } else {
+      setState(() {
+        _loading = false;
+        _error = false;
+      });
+    }
   }
 
   Future<void> _maybeFetchGallery({bool forceRefresh = false}) async {
+    // Only fetch from API if not in cache or forceRefresh is true
     if (!forceRefresh) {
       final cached = ref.read(galleryCacheProvider)[widget.uri];
       if (cached != null) {
@@ -104,11 +119,58 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
             actions: [
               if (gallery.creator?.did == widget.currentUserDid)
                 IconButton(
-                  icon: const Icon(Icons.edit),
-                  tooltip: 'Edit Gallery',
+                  icon: const Icon(Icons.more_vert),
+                  tooltip: 'Gallery Actions',
                   onPressed: () async {
-                    await showCreateGallerySheet(context, gallery: gallery);
-                    _maybeFetchGallery();
+                    showModalBottomSheet(
+                      context: context,
+                      builder: (sheetContext) => GalleryActionSheet(
+                        parentContext: context,
+                        onEditDetails: () async {
+                          await showCreateGallerySheet(context, gallery: gallery);
+                          _maybeFetchGallery();
+                        },
+                        onEditPhotos: () {
+                          showGalleryEditPhotosSheet(
+                            context,
+                            galleryUri: gallery.uri,
+                            allPhotos: gallery.items,
+                            onSave: (newSelection) {
+                              // TODO: Save new selection to backend and refresh gallery
+                            },
+                          );
+                        },
+                        onChangeSortOrder: () {
+                          showGallerySortOrderSheet(
+                            context,
+                            photos: galleryItems,
+                            onReorderDone: (newOrder) {
+                              // TODO: Save new order to backend and refresh gallery
+                            },
+                          );
+                        },
+                        onDeleteGallery: (sheetContext) async {
+                          await ref.read(galleryCacheProvider.notifier).deleteGallery(gallery.uri);
+                          ref
+                              .read(profileNotifierProvider(widget.currentUserDid!).notifier)
+                              .removeGalleryFromProfile(gallery.uri);
+                          if (!sheetContext.mounted) return;
+                          Navigator.of(sheetContext).pop(); // Close the action sheet
+                          if (!mounted) return;
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute(
+                              builder: (_) => MyHomePage(
+                                title: 'Grain',
+                                initialTab: 3, // Profile tab
+                                did: widget.currentUserDid,
+                              ),
+                            ),
+                            (route) => false,
+                          );
+                          return;
+                        },
+                      ),
+                    );
                   },
                 ),
             ],
