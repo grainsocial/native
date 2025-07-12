@@ -30,6 +30,7 @@ class GalleryEditPhotosSheet extends ConsumerStatefulWidget {
 class _GalleryEditPhotosSheetState extends ConsumerState<GalleryEditPhotosSheet> {
   late List<GalleryPhoto> _photos;
   bool _loading = false;
+  int? _deletingPhotoIndex;
 
   @override
   void initState() {
@@ -40,7 +41,6 @@ class _GalleryEditPhotosSheetState extends ConsumerState<GalleryEditPhotosSheet>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // ...existing code...
     return CupertinoPageScaffold(
       backgroundColor: theme.colorScheme.surface,
       navigationBar: CupertinoNavigationBar(
@@ -52,10 +52,15 @@ class _GalleryEditPhotosSheetState extends ConsumerState<GalleryEditPhotosSheet>
         ),
         leading: CupertinoButton(
           padding: EdgeInsets.zero,
-          onPressed: _loading ? null : () => Navigator.of(context).maybePop(),
+          onPressed: (_loading || _deletingPhotoIndex != null)
+              ? null
+              : () => Navigator.of(context).maybePop(),
           child: Text(
             'Cancel',
-            style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.w600),
+            style: TextStyle(
+              color: _deletingPhotoIndex != null ? theme.disabledColor : theme.colorScheme.primary,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ),
@@ -80,6 +85,7 @@ class _GalleryEditPhotosSheetState extends ConsumerState<GalleryEditPhotosSheet>
                       ),
                       itemBuilder: (context, index) {
                         final photo = _photos[index];
+                        final isDeleting = _deletingPhotoIndex == index;
                         return Stack(
                           fit: StackFit.expand,
                           children: [
@@ -97,7 +103,7 @@ class _GalleryEditPhotosSheetState extends ConsumerState<GalleryEditPhotosSheet>
                               top: 8,
                               right: 8,
                               child: GestureDetector(
-                                onTap: _loading
+                                onTap: (_loading || _deletingPhotoIndex != null || isDeleting)
                                     ? null
                                     : () async {
                                         final confirm = await showDialog<bool>(
@@ -120,14 +126,20 @@ class _GalleryEditPhotosSheetState extends ConsumerState<GalleryEditPhotosSheet>
                                           ),
                                         );
                                         if (confirm == true && photo.gallery?.item != null) {
+                                          if (!mounted) return;
+                                          setState(() {
+                                            _deletingPhotoIndex = index;
+                                          });
                                           await ref
                                               .read(galleryCacheProvider.notifier)
                                               .removePhotoFromGallery(
                                                 widget.galleryUri,
                                                 photo.gallery!.item,
                                               );
+                                          if (!mounted) return;
                                           setState(() {
                                             _photos.removeAt(index);
+                                            _deletingPhotoIndex = null;
                                           });
                                         }
                                       },
@@ -137,7 +149,16 @@ class _GalleryEditPhotosSheetState extends ConsumerState<GalleryEditPhotosSheet>
                                     shape: BoxShape.circle,
                                   ),
                                   padding: const EdgeInsets.all(4),
-                                  child: const Icon(Icons.close, color: Colors.white, size: 20),
+                                  child: isDeleting
+                                      ? SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                          ),
+                                        )
+                                      : const Icon(Icons.close, color: Colors.white, size: 20),
                                 ),
                               ),
                             ),
@@ -155,7 +176,7 @@ class _GalleryEditPhotosSheetState extends ConsumerState<GalleryEditPhotosSheet>
                     child: AppButton(
                       label: 'Upload photos',
                       loading: _loading,
-                      onPressed: _loading
+                      onPressed: (_loading || _deletingPhotoIndex != null)
                           ? null
                           : () async {
                               final picker = ImagePicker();
@@ -186,21 +207,22 @@ class _GalleryEditPhotosSheetState extends ConsumerState<GalleryEditPhotosSheet>
                     child: AppButton(
                       label: 'Add from library',
                       variant: AppButtonVariant.secondary,
-                      onPressed: () async {
-                        if (_loading) return;
-                        final actorDid = apiService.currentUser?.did;
-                        if (actorDid == null) return;
-                        await showLibraryPhotosSelectSheet(
-                          context,
-                          actorDid: actorDid,
-                          galleryUri: widget.galleryUri,
-                          onSelect: (photos) {
-                            setState(() {
-                              _photos.addAll(photos);
-                            });
-                          },
-                        );
-                      },
+                      onPressed: (_loading || _deletingPhotoIndex != null)
+                          ? null
+                          : () async {
+                              final actorDid = apiService.currentUser?.did;
+                              if (actorDid == null) return;
+                              await showLibraryPhotosSelectSheet(
+                                context,
+                                actorDid: actorDid,
+                                galleryUri: widget.galleryUri,
+                                onSelect: (photos) {
+                                  setState(() {
+                                    _photos.addAll(photos);
+                                  });
+                                },
+                              );
+                            },
                     ),
                   ),
                 ],
