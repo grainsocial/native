@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:grain/api.dart';
+import 'package:grain/app_icons.dart';
 import 'package:grain/models/gallery_photo.dart';
 import 'package:grain/providers/gallery_cache_provider.dart';
 import 'package:grain/widgets/app_button.dart';
@@ -117,7 +118,7 @@ class _LibraryPhotosSelectSheetState extends ConsumerState<LibraryPhotosSelectSh
                                     children: [
                                       photo.thumb != null && photo.thumb!.isNotEmpty
                                           ? AppImage(url: photo.thumb!, fit: BoxFit.cover)
-                                          : const Icon(Icons.photo, size: 48),
+                                          : Icon(AppIcons.photo, size: 48),
                                       if (selected) ...[
                                         Container(
                                           decoration: BoxDecoration(
@@ -129,7 +130,7 @@ class _LibraryPhotosSelectSheetState extends ConsumerState<LibraryPhotosSelectSh
                                           top: 8,
                                           right: 8,
                                           child: FaIcon(
-                                            FontAwesomeIcons.checkCircle,
+                                            AppIcons.checkCircle,
                                             color: Colors.white,
                                             size: 24,
                                           ),

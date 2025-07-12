@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:grain/app_icons.dart';
 
 class AppImage extends StatelessWidget {
   final String? url;
@@ -30,7 +31,7 @@ class AppImage extends StatelessWidget {
             width: width,
             height: height,
             color: theme.colorScheme.surface,
-            child: const Icon(Icons.broken_image, color: Colors.grey),
+            child: Icon(AppIcons.brokenImage, color: Colors.grey),
           );
     }
     final image = CachedNetworkImage(
@@ -59,7 +60,7 @@ class AppImage extends StatelessWidget {
             width: width,
             height: height,
             color: theme.colorScheme.surface,
-            child: const Icon(Icons.broken_image, color: Colors.grey),
+            child: Icon(AppIcons.brokenImage, color: Colors.grey),
           ),
     );
     if (borderRadius != null) {

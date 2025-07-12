@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:grain/app_icons.dart';
 import 'package:grain/models/gallery_photo.dart';
 import 'package:grain/providers/gallery_thread_cache_provider.dart';
 import 'package:grain/widgets/add_comment_button.dart';
@@ -48,7 +49,7 @@ class _GalleryPhotoViewState extends ConsumerState<GalleryPhotoView> {
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
         leading: IconButton(
-          icon: const Icon(Icons.close),
+          icon: Icon(AppIcons.close),
           onPressed: widget.onClose ?? () => Navigator.of(context).maybePop(),
         ),
       ),
@@ -75,7 +76,7 @@ class _GalleryPhotoViewState extends ConsumerState<GalleryPhotoView> {
                       ),
                       errorWidget: Container(
                         color: Colors.black,
-                        child: const Icon(Icons.broken_image, color: Colors.grey),
+                        child: Icon(AppIcons.brokenImage, color: Colors.grey),
                       ),
                     ),
                   ),

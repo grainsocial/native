@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:grain/app_icons.dart';
 import 'package:grain/app_theme.dart';
 import 'package:grain/models/gallery.dart';
 import 'package:grain/providers/gallery_cache_provider.dart';
@@ -48,7 +49,7 @@ class GalleryActionButtons extends ConsumerWidget {
                   child: Row(
                     children: [
                       FaIcon(
-                        isFav ? FontAwesomeIcons.solidHeart : FontAwesomeIcons.heart,
+                        isFav ? AppIcons.solidHeart : AppIcons.heart,
                         color: isFav ? AppTheme.favoriteColor : theme.iconTheme.color,
                         size: 21,
                       ),
@@ -79,7 +80,7 @@ class GalleryActionButtons extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
                   child: Row(
                     children: [
-                      FaIcon(FontAwesomeIcons.comment, color: theme.iconTheme.color, size: 21),
+                      FaIcon(AppIcons.comment, color: theme.iconTheme.color, size: 21),
                       if (gallery.commentCount != null) ...[
                         const SizedBox(width: 4),
                         Text(
@@ -107,7 +108,7 @@ class GalleryActionButtons extends ConsumerWidget {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
                   child: FaIcon(
-                    FontAwesomeIcons.arrowUpFromBracket,
+                    AppIcons.arrowUpFromBracket,
                     color: theme.iconTheme.color,
                     size: 18,
                   ),

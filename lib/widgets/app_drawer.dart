@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:grain/api.dart';
+import 'package:grain/app_icons.dart';
 import 'package:grain/screens/log_page.dart';
 import 'package:grain/widgets/app_version_text.dart';
 
@@ -48,7 +48,7 @@ class AppDrawer extends StatelessWidget {
                       ? NetworkImage(avatarUrl!)
                       : null,
                   child: (avatarUrl?.isEmpty ?? true)
-                      ? Icon(Icons.person, size: 44, color: theme.hintColor)
+                      ? Icon(AppIcons.person, size: 44, color: theme.hintColor)
                       : null,
                 ),
                 const SizedBox(height: 6),
@@ -100,14 +100,16 @@ class AppDrawer extends StatelessWidget {
           ),
           ListTile(
             leading: Icon(
-              FontAwesomeIcons.house,
+              AppIcons.house,
               size: 18,
               color: activeIndex == 0 ? theme.colorScheme.primary : theme.iconTheme.color,
             ),
             title: Text(
               'Home',
               style: TextStyle(
-                color: activeIndex == 0 ? theme.colorScheme.primary : theme.textTheme.bodyLarge?.color,
+                color: activeIndex == 0
+                    ? theme.colorScheme.primary
+                    : theme.textTheme.bodyLarge?.color,
                 fontWeight: activeIndex == 0 ? FontWeight.bold : FontWeight.normal,
               ),
             ),
@@ -118,14 +120,16 @@ class AppDrawer extends StatelessWidget {
           ),
           ListTile(
             leading: Icon(
-              FontAwesomeIcons.magnifyingGlass,
+              AppIcons.magnifyingGlass,
               size: 18,
               color: activeIndex == 1 ? theme.colorScheme.primary : theme.iconTheme.color,
             ),
             title: Text(
               'Explore',
               style: TextStyle(
-                color: activeIndex == 1 ? theme.colorScheme.primary : theme.textTheme.bodyLarge?.color,
+                color: activeIndex == 1
+                    ? theme.colorScheme.primary
+                    : theme.textTheme.bodyLarge?.color,
                 fontWeight: activeIndex == 1 ? FontWeight.bold : FontWeight.normal,
               ),
             ),
@@ -136,14 +140,16 @@ class AppDrawer extends StatelessWidget {
           ),
           ListTile(
             leading: Icon(
-              FontAwesomeIcons.solidBell,
+              AppIcons.solidBell,
               size: 18,
               color: activeIndex == 2 ? theme.colorScheme.primary : theme.iconTheme.color,
             ),
             title: Text(
               'Notifications',
               style: TextStyle(
-                color: activeIndex == 2 ? theme.colorScheme.primary : theme.textTheme.bodyLarge?.color,
+                color: activeIndex == 2
+                    ? theme.colorScheme.primary
+                    : theme.textTheme.bodyLarge?.color,
                 fontWeight: activeIndex == 2 ? FontWeight.bold : FontWeight.normal,
               ),
             ),
@@ -154,14 +160,16 @@ class AppDrawer extends StatelessWidget {
           ),
           ListTile(
             leading: Icon(
-              FontAwesomeIcons.user,
+              AppIcons.user,
               size: 18,
               color: activeIndex == 3 ? theme.colorScheme.primary : theme.iconTheme.color,
             ),
             title: Text(
               'Profile',
               style: TextStyle(
-                color: activeIndex == 3 ? theme.colorScheme.primary : theme.textTheme.bodyLarge?.color,
+                color: activeIndex == 3
+                    ? theme.colorScheme.primary
+                    : theme.textTheme.bodyLarge?.color,
                 fontWeight: activeIndex == 3 ? FontWeight.bold : FontWeight.normal,
               ),
             ),
@@ -171,7 +179,7 @@ class AppDrawer extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: const Icon(FontAwesomeIcons.list, size: 18),
+            leading: const Icon(AppIcons.list, size: 18),
             title: const Text('Logs'),
             onTap: () {
               Navigator.pop(context);

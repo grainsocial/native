@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:grain/api.dart';
+import 'package:grain/app_icons.dart';
 import 'package:grain/screens/create_gallery_page.dart';
 import 'package:grain/widgets/app_drawer.dart';
 import 'package:grain/widgets/bottom_nav_bar.dart';
@@ -10,7 +10,6 @@ import 'package:grain/widgets/timeline_item.dart';
 
 import '../providers/gallery_cache_provider.dart';
 import 'explore_page.dart';
-// ...existing code...
 import 'notifications_page.dart';
 import 'profile_page.dart';
 
@@ -36,7 +35,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         builder: (context) => IconButton(
           color: theme.colorScheme.onSurfaceVariant,
           iconSize: 20,
-          icon: const Icon(FontAwesomeIcons.bars),
+          icon: const Icon(AppIcons.bars),
           onPressed: () => Scaffold.of(context).openDrawer(),
         ),
       ),
@@ -44,7 +43,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         IconButton(
           color: theme.colorScheme.onSurfaceVariant,
           iconSize: 20,
-          icon: const Icon(FontAwesomeIcons.arrowRightFromBracket),
+          icon: const Icon(AppIcons.arrowRightFromBracket),
           tooltip: 'Sign Out',
           onPressed: widget.onSignOut,
         ),
@@ -239,7 +238,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                 backgroundColor: theme.colorScheme.primary,
                 foregroundColor: Colors.white,
                 tooltip: 'Create Gallery',
-                child: const Icon(Icons.add_a_photo),
+                child: Icon(AppIcons.addAPhoto),
               )
             : null,
       );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:grain/api.dart';
+import 'package:grain/app_icons.dart';
 import 'package:grain/app_theme.dart';
 import 'package:grain/models/gallery.dart';
 import 'package:grain/models/profile_with_galleries.dart';
@@ -89,7 +90,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
               right: 24,
               child: SafeArea(
                 child: IconButton(
-                  icon: Icon(Icons.close_rounded, color: Colors.white, size: 36),
+                  icon: Icon(AppIcons.closeRounded, color: Colors.white, size: 36),
                   onPressed: () => Navigator.of(context).pop(),
                   tooltip: 'Close',
                 ),
@@ -180,7 +181,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                                   ),
                                 )
                               else
-                                const Icon(Icons.account_circle, size: 64, color: Colors.grey),
+                                Icon(AppIcons.accountCircle, size: 64, color: Colors.grey),
                               const Spacer(),
                               // Follow/Unfollow button
                               if (profile.did != apiService.currentUser?.did)

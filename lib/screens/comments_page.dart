@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:grain/api.dart';
+import 'package:grain/app_icons.dart';
 import 'package:grain/models/comment.dart';
 import 'package:grain/models/gallery_photo.dart';
 import 'package:grain/providers/gallery_thread_cache_provider.dart';
@@ -322,7 +323,7 @@ class _CommentTile extends StatelessWidget {
             CircleAvatar(
               radius: 16,
               backgroundColor: theme.colorScheme.surfaceContainerHighest,
-              child: Icon(Icons.person, size: 16, color: theme.iconTheme.color),
+              child: Icon(AppIcons.person, size: 16, color: theme.iconTheme.color),
             ),
           const SizedBox(width: 8),
           Expanded(

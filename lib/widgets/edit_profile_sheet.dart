@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:grain/app_icons.dart';
 import 'package:grain/widgets/plain_text_field.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -201,7 +201,7 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
                           (_selectedAvatar == null &&
                               (widget.initialAvatarUrl == null || widget.initialAvatarUrl!.isEmpty))
                           ? Icon(
-                              Icons.account_circle,
+                              AppIcons.accountCircle,
                               size: avatarRadius * 2,
                               color: theme.colorScheme.onSurfaceVariant,
                             )
@@ -216,7 +216,7 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
                           shape: BoxShape.circle,
                         ),
                         padding: const EdgeInsets.all(6),
-                        child: Icon(FontAwesomeIcons.camera, color: Colors.white, size: 12),
+                        child: Icon(AppIcons.camera, color: Colors.white, size: 12),
                       ),
                     ),
                   ],

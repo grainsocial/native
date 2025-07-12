@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:grain/api.dart';
+import 'package:grain/app_icons.dart';
 import 'package:grain/models/notification.dart' as grain;
 import 'package:grain/screens/gallery_page.dart';
 import 'package:grain/screens/profile_page.dart';
@@ -137,7 +138,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
         backgroundColor: theme.colorScheme.surfaceVariant,
         backgroundImage: (author.avatar?.isNotEmpty ?? false) ? NetworkImage(author.avatar!) : null,
         child: (author.avatar?.isEmpty ?? true)
-            ? Icon(Icons.account_circle, color: theme.iconTheme.color)
+            ? Icon(AppIcons.accountCircle, color: theme.iconTheme.color)
             : null,
       ),
       title: Text(

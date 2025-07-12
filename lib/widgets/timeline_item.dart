@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:grain/api.dart';
+import 'package:grain/app_icons.dart';
 import 'package:grain/screens/hashtag_page.dart';
 import 'package:grain/utils.dart';
 import 'package:grain/widgets/app_image.dart';
@@ -59,7 +60,7 @@ class TimelineItemWidget extends ConsumerWidget {
                           ),
                         )
                       : Icon(
-                          Icons.account_circle,
+                          AppIcons.accountCircle,
                           size: 24,
                           color: theme.colorScheme.onSurfaceVariant,
                         ),

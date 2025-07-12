@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:grain/api.dart';
+import 'package:grain/app_icons.dart';
 import 'package:grain/widgets/app_image.dart';
 import 'package:grain/widgets/gallery_preview.dart';
 
@@ -176,7 +177,7 @@ class _AddCommentSheetState extends State<_AddCommentSheet> {
                       CircleAvatar(
                         radius: 20,
                         backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                        child: Icon(Icons.person, size: 20, color: theme.iconTheme.color),
+                        child: Icon(AppIcons.person, size: 20, color: theme.iconTheme.color),
                       ),
                     Expanded(
                       child: Padding(
@@ -309,7 +310,7 @@ class _AddCommentSheetState extends State<_AddCommentSheet> {
                         child: CircleAvatar(
                           radius: 20,
                           backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                          child: Icon(Icons.person, size: 20, color: theme.iconTheme.color),
+                          child: Icon(AppIcons.person, size: 20, color: theme.iconTheme.color),
                         ),
                       ),
                     // Text input

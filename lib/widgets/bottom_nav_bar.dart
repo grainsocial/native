@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:grain/api.dart';
+import 'package:grain/app_icons.dart';
 import 'package:grain/app_theme.dart';
 import 'package:grain/models/profile_with_galleries.dart';
 import 'package:grain/providers/profile_provider.dart';
@@ -54,7 +55,7 @@ class BottomNavBar extends ConsumerWidget {
                   offset: const Offset(0, -10),
                   child: Center(
                     child: FaIcon(
-                      FontAwesomeIcons.house,
+                      AppIcons.house,
                       size: 20,
                       color: navIndex == 0
                           ? AppTheme.primaryColor
@@ -75,7 +76,7 @@ class BottomNavBar extends ConsumerWidget {
                   offset: const Offset(0, -10),
                   child: Center(
                     child: FaIcon(
-                      FontAwesomeIcons.magnifyingGlass,
+                      AppIcons.magnifyingGlass,
                       size: 20,
                       color: navIndex == 1
                           ? AppTheme.primaryColor
@@ -96,7 +97,7 @@ class BottomNavBar extends ConsumerWidget {
                   offset: const Offset(0, -10),
                   child: Center(
                     child: FaIcon(
-                      FontAwesomeIcons.solidBell,
+                      AppIcons.solidBell,
                       size: 20,
                       color: navIndex == 2
                           ? AppTheme.primaryColor
@@ -137,7 +138,7 @@ class BottomNavBar extends ConsumerWidget {
                             ),
                           )
                         : FaIcon(
-                            navIndex == 3 ? FontAwesomeIcons.solidUser : FontAwesomeIcons.user,
+                            navIndex == 3 ? AppIcons.solidUser : AppIcons.user,
                             size: 16,
                             color: navIndex == 3
                                 ? AppTheme.primaryColor

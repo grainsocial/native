@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:grain/api.dart';
+import 'package:grain/app_icons.dart';
 import 'package:grain/widgets/app_image.dart';
 
 class AddCommentButton extends StatelessWidget {
@@ -50,7 +51,7 @@ class AddCommentButton extends StatelessWidget {
               CircleAvatar(
                 radius: 16,
                 backgroundColor: Colors.grey[800],
-                child: Icon(Icons.person, size: 16, color: Colors.white),
+                child: Icon(AppIcons.person, size: 16, color: Colors.white),
               ),
             const SizedBox(width: 12),
             const Text(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:grain/app_icons.dart';
 import 'package:grain/app_logger.dart';
 
 class LogPage extends StatelessWidget {
@@ -15,7 +16,7 @@ class LogPage extends StatelessWidget {
         backgroundColor: theme.appBarTheme.backgroundColor,
         actions: [
           IconButton(
-            icon: Icon(Icons.delete, color: theme.iconTheme.color),
+            icon: Icon(AppIcons.delete, color: theme.iconTheme.color),
             onPressed: () {
               InMemoryLogOutput.clear();
               (context as Element).markNeedsBuild();

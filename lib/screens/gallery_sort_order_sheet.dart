@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:grain/app_icons.dart';
 import 'package:grain/models/gallery_photo.dart';
 import 'package:grain/widgets/app_image.dart';
 import 'package:reorderables/reorderables.dart';
@@ -114,7 +115,7 @@ class _GallerySortOrderSheetState extends State<GallerySortOrderSheet> {
                               clipBehavior: Clip.antiAlias,
                               child: photo.thumb != null && photo.thumb!.isNotEmpty
                                   ? AppImage(url: photo.thumb!, fit: BoxFit.cover)
-                                  : const Icon(Icons.photo, size: 48),
+                                  : Icon(AppIcons.photo, size: 48),
                             ),
                         ],
                       ),
