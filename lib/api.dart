@@ -269,7 +269,11 @@ class ApiService {
     return (json['items'] as List<dynamic>?)?.map((item) => Gallery.fromJson(item)).toList() ?? [];
   }
 
-  Future<String?> createGallery({required String title, required String description}) async {
+  Future<String?> createGallery({
+    required String title,
+    required String description,
+    List<Map<String, dynamic>>? facets,
+  }) async {
     final session = await auth.getValidSession();
     if (session == null) {
       appLogger.w('No valid session for createGallery');
@@ -285,6 +289,7 @@ class ApiService {
       'record': {
         'title': title,
         'description': description,
+        if (facets != null) 'facets': facets,
         'updatedAt': DateTime.now().toUtc().toIso8601String(),
         'createdAt': DateTime.now().toUtc().toIso8601String(),
       },
@@ -810,6 +815,7 @@ class ApiService {
     required String title,
     required String description,
     required String createdAt,
+    List<Map<String, dynamic>>? facets,
   }) async {
     final session = await auth.getValidSession();
     if (session == null) {
@@ -836,6 +842,7 @@ class ApiService {
       'record': {
         'title': title,
         'description': description,
+        if (facets != null) 'facets': facets,
         'updatedAt': DateTime.now().toUtc().toIso8601String(),
         'createdAt': createdAt,
       },

@@ -2,7 +2,9 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:bluesky_text/bluesky_text.dart';
 import 'package:flutter/foundation.dart';
+import 'package:grain/models/gallery_photo.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -38,6 +40,13 @@ class GalleryCache extends _$GalleryCache {
   void setGalleriesForActor(String did, List<Gallery> galleries) {
     setGalleries(galleries);
     // Optionally, you could keep a mapping of actor DID to gallery URIs if needed
+  }
+
+  Future<List<Map<String, dynamic>>> _extractFacets(String text) async {
+    final blueskyText = BlueskyText(text);
+    final entities = blueskyText.entities;
+    final facets = await entities.toFacets();
+    return List<Map<String, dynamic>>.from(facets);
   }
 
   Future<void> toggleFavorite(String uri) async {
@@ -140,8 +149,15 @@ class GalleryCache extends _$GalleryCache {
     required String description,
     required List<XFile> xfiles,
   }) async {
-    // Create the gallery
-    final galleryUri = await apiService.createGallery(title: title, description: description);
+    // Extract facets from description
+    final facetsList = await _extractFacets(description);
+    final facets = facetsList.isEmpty ? null : facetsList;
+    // Create the gallery with facets
+    final galleryUri = await apiService.createGallery(
+      title: title,
+      description: description,
+      facets: facets,
+    );
     if (galleryUri == null) return (null, <String>[]);
     // Upload and add photos
     final photoUris = await uploadAndAddPhotosToGallery(galleryUri: galleryUri, xfiles: xfiles);
@@ -190,6 +206,17 @@ class GalleryCache extends _$GalleryCache {
 
   /// Deletes a gallery from the backend and removes it from the cache.
   Future<void> deleteGallery(String uri) async {
+    // Fetch the latest gallery from backend to ensure all items are deleted
+    final gallery = await apiService.getGallery(uri: uri);
+    if (gallery != null) {
+      // Delete all gallery item records
+      for (final item in gallery.items) {
+        final itemUri = item.gallery?.item;
+        if (itemUri != null && itemUri.isNotEmpty) {
+          await apiService.deleteRecord(itemUri);
+        }
+      }
+    }
     await apiService.deleteRecord(uri);
     removeGallery(uri);
   }
@@ -197,7 +224,7 @@ class GalleryCache extends _$GalleryCache {
   /// Reorders gallery items and updates backend, then updates cache.
   Future<void> reorderGalleryItems({
     required String galleryUri,
-    required List<dynamic> newOrder, // List<GalleryPhoto>
+    required List<GalleryPhoto> newOrder,
   }) async {
     final gallery = state[galleryUri];
     if (gallery == null) return;
@@ -208,7 +235,7 @@ class GalleryCache extends _$GalleryCache {
         gallery: galleryUri,
         item: photo.uri,
         createdAt: photo.gallery?.itemCreatedAt ?? '',
-        position: photo.gallery?.itemPosition,
+        position: photo.gallery?.itemPosition ?? 0,
       );
     }).toList();
     // Optionally update positions if needed
@@ -228,8 +255,7 @@ class GalleryCache extends _$GalleryCache {
     state = {...state, galleryUri: updatedGallery};
   }
 
-  /// Updates gallery details (title, description) and updates cache if successful.
-  /// Updates gallery details (title, description, createdAt), polls for cid change, and updates cache.
+  /// Updates gallery details (title, description), polls for cid change, and updates cache.
   Future<bool> updateGalleryDetails({
     required String galleryUri,
     required String title,
@@ -238,11 +264,15 @@ class GalleryCache extends _$GalleryCache {
   }) async {
     final prevGallery = state[galleryUri];
     final prevCid = prevGallery?.cid;
+    // Extract facets from description
+    final facetsList = await _extractFacets(description);
+    final facets = facetsList.isEmpty ? null : facetsList;
     final success = await apiService.updateGallery(
       galleryUri: galleryUri,
       title: title,
       description: description,
       createdAt: createdAt,
+      facets: facets,
     );
     if (success) {
       final start = DateTime.now();
@@ -261,5 +291,13 @@ class GalleryCache extends _$GalleryCache {
       }
     }
     return success;
+  }
+
+  /// Fetches timeline galleries from the API and updates the cache.
+  /// Returns the list of galleries.
+  Future<List<Gallery>> fetchTimeline({String? algorithm}) async {
+    final galleries = await apiService.getTimeline(algorithm: algorithm);
+    setGalleries(galleries);
+    return galleries;
   }
 }

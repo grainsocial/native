@@ -30,11 +30,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   bool showNotifications = false;
   bool showExplore = false;
   List<String> _timelineUris = [];
-  List<String> _followingTimelineUris = [];
   bool _timelineLoading = true;
-  bool _followingTimelineLoading = false;
-  int _tabIndex = 0; // 0 = Timeline, 1 = Following
-  TabController? _tabController;
 
   @override
   void initState() {
@@ -44,82 +40,34 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     showExplore = widget.initialTab == 1;
     showNotifications = widget.initialTab == 2;
     _fetchTimeline();
-    _initTabController();
   }
 
   Future<void> _fetchTimeline({String? algorithm}) async {
     final container = ProviderScope.containerOf(context, listen: false);
-    if (algorithm == "following") {
-      setState(() {
-        _followingTimelineLoading = true;
-      });
-      try {
-        print("Fetching following timeline with algorithm: $algorithm");
-        final galleries = await apiService.getTimeline(algorithm: algorithm);
-        print("Fetched following timeline: ${galleries.length} items");
-        container.read(galleryCacheProvider.notifier).setGalleries(galleries);
-        setState(() {
-          _followingTimelineUris = galleries.map((g) => g.uri).toList();
-          _followingTimelineLoading = false;
-        });
-      } catch (e) {
-        setState(() {
-          _followingTimelineUris = [];
-          _followingTimelineLoading = false;
-        });
-      }
-    } else {
-      setState(() {
-        _timelineLoading = true;
-      });
-      try {
-        final galleries = await apiService.getTimeline(algorithm: algorithm);
-        container.read(galleryCacheProvider.notifier).setGalleries(galleries);
-        setState(() {
-          _timelineUris = galleries.map((g) => g.uri).toList();
-          _timelineLoading = false;
-        });
-      } catch (e) {
-        setState(() {
-          _timelineUris = [];
-          _timelineLoading = false;
-        });
-      }
-    }
-  }
-
-  void _onTabChanged(int index) {
     setState(() {
-      _tabIndex = index;
+      _timelineLoading = true;
     });
-    if (index == 1) {
-      _fetchTimeline(algorithm: "following");
-    } else {
-      _fetchTimeline();
+    try {
+      final galleries = await container.read(galleryCacheProvider.notifier).fetchTimeline();
+      setState(() {
+        _timelineUris = galleries.map((g) => g.uri).toList();
+        _timelineLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _timelineUris = [];
+        _timelineLoading = false;
+      });
     }
-  }
-
-  void _initTabController() {
-    _tabController?.dispose();
-    _tabController = TabController(length: 2, vsync: this, initialIndex: _tabIndex);
-    _tabController!.addListener(() {
-      if (_tabController!.index != _tabIndex) {
-        _onTabChanged(_tabController!.index);
-      }
-    });
   }
 
   @override
   void didUpdateWidget(covariant MyHomePage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (_tabController == null || _tabController!.length != 2) {
-      _initTabController();
-    }
   }
 
   @override
   void dispose() {
-    _tabController?.dispose();
     super.dispose();
   }
 
@@ -131,37 +79,39 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   }
 
   Widget _buildTimelineSliver(BuildContext context, {bool following = false}) {
-    final loading = following ? _followingTimelineLoading : _timelineLoading;
-    final uris = following ? _followingTimelineUris : _timelineUris;
-    return CustomScrollView(
-      key: PageStorageKey(following ? 'following' : 'timeline'),
-      slivers: [
-        SliverOverlapInjector(handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context)),
-        if (uris.isEmpty && loading)
-          SliverFillRemaining(
-            hasScrollBody: false,
-            child: Center(
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Theme.of(context).colorScheme.primary,
+    final loading = _timelineLoading;
+    final uris = _timelineUris;
+    return RefreshIndicator(
+      onRefresh: () async {
+        await _fetchTimeline();
+      },
+      child: CustomScrollView(
+        key: const PageStorageKey('timeline'),
+        slivers: [
+          if (uris.isEmpty && loading)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
               ),
             ),
-          ),
-        if (uris.isEmpty && !loading)
-          SliverFillRemaining(
-            hasScrollBody: false,
-            child: Center(
-              child: Text(following ? 'No following timeline items.' : 'No timeline items.'),
+          if (uris.isEmpty && !loading)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(child: Text('No timeline items.')),
             ),
-          ),
-        if (uris.isNotEmpty)
-          SliverList(
-            delegate: SliverChildBuilderDelegate((context, index) {
-              final uri = uris[index];
-              return TimelineItemWidget(galleryUri: uri);
-            }, childCount: uris.length),
-          ),
-      ],
+          if (uris.isNotEmpty)
+            SliverList(
+              delegate: SliverChildBuilderDelegate((context, index) {
+                final uri = uris[index];
+                return TimelineItemWidget(galleryUri: uri);
+              }, childCount: uris.length),
+            ),
+        ],
+      ),
     );
   }
 
@@ -303,74 +253,33 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         ),
       );
     }
-    // Home page: show tabs
+    // Home page: show default timeline only
     if (!showProfile && !showNotifications && !showExplore) {
-      if (_tabController == null) _initTabController();
       return Scaffold(
         onDrawerChanged: (isOpen) {
           setState(() {});
         },
         drawer: _buildAppDrawer(theme, avatarUrl),
-        body: NestedScrollView(
-          floatHeaderSlivers: true,
-          headerSliverBuilder: (context, innerBoxIsScrolled) => [
-            SliverOverlapAbsorber(
-              handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
-              sliver: SliverAppBar(
-                backgroundColor: theme.appBarTheme.backgroundColor,
-                surfaceTintColor: theme.appBarTheme.backgroundColor,
-                floating: false,
-                snap: false,
-                pinned: true,
-                elevation: 0.5,
-                title: Text(widget.title),
-                leading: Builder(
-                  builder: (context) => IconButton(
-                    icon: const Icon(Icons.menu),
-                    onPressed: () => Scaffold.of(context).openDrawer(),
-                  ),
-                ),
-                actions: [
-                  IconButton(
-                    icon: const Icon(Icons.logout),
-                    tooltip: 'Sign Out',
-                    onPressed: widget.onSignOut,
-                  ),
-                ],
-                bottom: PreferredSize(
-                  preferredSize: const Size.fromHeight(48),
-                  child: Container(
-                    color: theme.scaffoldBackgroundColor,
-                    child: TabBar(
-                      dividerColor: theme.dividerColor,
-                      controller: _tabController,
-                      indicator: UnderlineTabIndicator(
-                        borderSide: BorderSide(color: theme.colorScheme.primary, width: 3),
-                        insets: EdgeInsets.zero,
-                      ),
-                      indicatorSize: TabBarIndicatorSize.tab,
-                      labelColor: theme.colorScheme.onSurface,
-                      unselectedLabelColor: theme.colorScheme.onSurfaceVariant,
-                      labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
-                      tabs: const [
-                        Tab(text: 'Timeline'),
-                        Tab(text: 'Following'),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
+        appBar: AppBar(
+          backgroundColor: theme.appBarTheme.backgroundColor,
+          surfaceTintColor: theme.appBarTheme.backgroundColor,
+          elevation: 0.5,
+          title: Text(widget.title),
+          leading: Builder(
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.menu),
+              onPressed: () => Scaffold.of(context).openDrawer(),
+            ),
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.logout),
+              tooltip: 'Sign Out',
+              onPressed: widget.onSignOut,
             ),
           ],
-          body: TabBarView(
-            controller: _tabController,
-            physics: const NeverScrollableScrollPhysics(),
-            children: [
-              Builder(builder: (context) => _buildTimelineSliver(context, following: false)),
-              Builder(builder: (context) => _buildTimelineSliver(context, following: true)),
-            ],
-          ),
         ),
+        body: _buildTimelineSliver(context),
         bottomNavigationBar: BottomNavBar(
           navIndex: _navIndex,
           onHome: () {
@@ -407,7 +316,10 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                 shape: const CircleBorder(),
                 onPressed: () async {
                   HapticFeedback.mediumImpact();
-                  await showCreateGallerySheet(context);
+                  final createdGalleryUri = await showCreateGallerySheet(context);
+                  if (createdGalleryUri != null) {
+                    _fetchTimeline();
+                  }
                 },
                 backgroundColor: theme.colorScheme.primary,
                 foregroundColor: Colors.white,

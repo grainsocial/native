@@ -149,7 +149,8 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
     }
     setState(() => _submitting = false);
     if (mounted && galleryUri != null) {
-      Navigator.of(context).pop();
+      FocusScope.of(context).unfocus(); // Force keyboard to close
+      Navigator.of(context).pop(galleryUri); // Pop with galleryUri if created
       if (widget.gallery == null) {
         Navigator.of(context).push(
           MaterialPageRoute(
@@ -159,7 +160,8 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
         );
       }
     } else if (mounted) {
-      Navigator.of(context).pop(true);
+      FocusScope.of(context).unfocus(); // Force keyboard to close
+      Navigator.of(context).pop();
     }
   }
 
@@ -320,9 +322,9 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
   }
 }
 
-Future<void> showCreateGallerySheet(BuildContext context, {Gallery? gallery}) async {
+Future<String?> showCreateGallerySheet(BuildContext context, {Gallery? gallery}) async {
   final theme = Theme.of(context);
-  await showCupertinoSheet(
+  final result = await showCupertinoSheet(
     context: context,
     useNestedNavigation: false,
     pageBuilder: (context) => Material(
@@ -334,4 +336,5 @@ Future<void> showCreateGallerySheet(BuildContext context, {Gallery? gallery}) as
   SystemChrome.setSystemUIOverlayStyle(
     theme.brightness == Brightness.dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
   );
+  return result as String?;
 }
