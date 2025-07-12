@@ -26,6 +26,11 @@ class AppConfig {
 }
 
 Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    appLogger.e('Flutter error: ${details.exception}\n${details.stack}');
+  };
   await AppConfig.init();
   await apiService.loadToken(); // Restore access token before app starts
   appLogger.i('🚀 App started');
