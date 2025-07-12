@@ -22,7 +22,7 @@ class TimelineItemWidget extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final gallery = ref.watch(galleryCacheProvider)[galleryUri];
     if (gallery == null) {
-      return const SizedBox.shrink(); // or a loading/placeholder widget
+      return const SizedBox.shrink();
     }
     final actor = gallery.creator;
     final createdAt = gallery.createdAt;
@@ -39,10 +39,10 @@ class TimelineItemWidget extends ConsumerWidget {
                 onTap:
                     onProfileTap ??
                     () {
-                      if (actor != null) {
+                      if (actor?.did != null) {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (context) => ProfilePage(did: actor.did, showAppBar: true),
+                            builder: (context) => ProfilePage(did: actor!.did, showAppBar: true),
                           ),
                         );
                       }
@@ -50,10 +50,10 @@ class TimelineItemWidget extends ConsumerWidget {
                 child: CircleAvatar(
                   radius: 18,
                   backgroundColor: theme.scaffoldBackgroundColor,
-                  child: (actor != null && (actor.avatar?.isNotEmpty ?? false))
+                  child: (actor?.avatar?.isNotEmpty ?? false)
                       ? ClipOval(
                           child: AppImage(
-                            url: actor.avatar,
+                            url: actor!.avatar ?? '',
                             width: 36,
                             height: 36,
                             fit: BoxFit.cover,
@@ -76,9 +76,9 @@ class TimelineItemWidget extends ConsumerWidget {
                       child: Text.rich(
                         TextSpan(
                           children: [
-                            if (actor != null && (actor.displayName?.isNotEmpty ?? false))
+                            if (actor?.displayName?.isNotEmpty ?? false)
                               TextSpan(
-                                text: actor.displayName,
+                                text: actor!.displayName ?? '',
                                 style: theme.textTheme.titleMedium?.copyWith(
                                   fontWeight: FontWeight.w600,
                                   fontSize: 16,
@@ -144,7 +144,7 @@ class TimelineItemWidget extends ConsumerWidget {
             padding: const EdgeInsets.only(top: 4, left: 8, right: 8),
             child: FacetedText(
               text: gallery.description ?? '',
-              facets: gallery.facets,
+              facets: gallery.facets ?? [],
               style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
               linkStyle: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.primary,
@@ -168,7 +168,7 @@ class TimelineItemWidget extends ConsumerWidget {
             child: GalleryActionButtons(
               gallery: gallery,
               parentContext: context,
-              currentUserDid: gallery.creator?.did, // or apiService.currentUser?.did if available
+              currentUserDid: gallery.creator?.did ?? '',
               isLoggedIn: isLoggedIn,
             ),
           ),

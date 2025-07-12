@@ -10,6 +10,7 @@ import 'package:grain/screens/home_page.dart';
 import 'package:grain/screens/login_page.dart';
 
 import 'providers/profile_provider.dart';
+import 'widgets/skeleton_timeline.dart';
 
 class AppConfig {
   static late final String apiUrl;
@@ -98,8 +99,13 @@ class _MyAppState extends State<MyApp> {
     Widget home;
     if (_loading) {
       home = Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primaryColor),
+        appBar: AppBar(title: const Text('Grain')),
+        body: Column(
+          children: [
+            Expanded(
+              child: SkeletonTimeline(padding: EdgeInsets.symmetric(vertical: 24, horizontal: 8)),
+            ),
+          ],
         ),
       );
     } else {

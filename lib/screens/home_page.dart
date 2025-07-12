@@ -6,6 +6,7 @@ import 'package:grain/app_icons.dart';
 import 'package:grain/screens/create_gallery_page.dart';
 import 'package:grain/widgets/app_drawer.dart';
 import 'package:grain/widgets/bottom_nav_bar.dart';
+import 'package:grain/widgets/skeleton_timeline.dart';
 import 'package:grain/widgets/timeline_item.dart';
 
 import '../providers/gallery_cache_provider.dart';
@@ -113,16 +114,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       child: CustomScrollView(
         key: const PageStorageKey('timeline'),
         slivers: [
-          if (uris.isEmpty && loading)
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: Center(
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ),
-            ),
+          if (uris.isEmpty && loading) const SkeletonTimeline(useSliver: true),
           if (uris.isEmpty && !loading)
             SliverFillRemaining(
               hasScrollBody: false,
@@ -146,13 +138,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final avatarUrl = apiService.currentUser?.avatar;
-    if (apiService.currentUser == null) {
-      return Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(strokeWidth: 2, color: theme.colorScheme.primary),
-        ),
-      );
-    }
     // Home page: show default timeline only
     if (!showProfile && !showNotifications && !showExplore) {
       return Scaffold(
