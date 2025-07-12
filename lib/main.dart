@@ -7,7 +7,7 @@ import 'package:grain/app_logger.dart';
 import 'package:grain/app_theme.dart';
 import 'package:grain/auth.dart';
 import 'package:grain/screens/home_page.dart';
-import 'package:grain/screens/splash_page.dart';
+import 'package:grain/screens/login_page.dart';
 
 import 'providers/profile_provider.dart';
 
@@ -105,7 +105,7 @@ class _MyAppState extends State<MyApp> {
     } else {
       home = isSignedIn
           ? MyHomePage(title: 'Grain', onSignOut: () => handleSignOut(context))
-          : SplashPage(onSignIn: handleSignIn);
+          : LoginPage(onSignIn: handleSignIn);
     }
     return MaterialApp(
       title: 'Grain',
