@@ -34,7 +34,7 @@ class _GallerySortOrderSheetState extends State<GallerySortOrderSheet> {
         backgroundColor: theme.colorScheme.surface,
         border: Border(bottom: BorderSide(color: theme.dividerColor, width: 1)),
         middle: Text(
-          'Change Sort Order',
+          'Edit sort order',
           style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
         ),
         leading: CupertinoButton(

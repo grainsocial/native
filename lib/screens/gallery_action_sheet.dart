@@ -40,7 +40,7 @@ class GalleryActionSheet extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.sort),
-            title: const Text('Change sort order'),
+            title: const Text('Edit sort order'),
             onTap: () {
               Navigator.of(context).pop();
               if (onChangeSortOrder != null) onChangeSortOrder!();

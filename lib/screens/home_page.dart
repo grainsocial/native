@@ -4,13 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:grain/api.dart';
 import 'package:grain/screens/create_gallery_page.dart';
-import 'package:grain/widgets/app_version_text.dart';
+import 'package:grain/widgets/app_drawer.dart';
 import 'package:grain/widgets/bottom_nav_bar.dart';
 import 'package:grain/widgets/timeline_item.dart';
 
 import '../providers/gallery_cache_provider.dart';
 import 'explore_page.dart';
-import 'log_page.dart';
+// ...existing code...
 import 'notifications_page.dart';
 import 'profile_page.dart';
 
@@ -26,6 +26,32 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
+  PreferredSizeWidget _buildAppBar(ThemeData theme, {required String title}) {
+    return AppBar(
+      backgroundColor: theme.appBarTheme.backgroundColor,
+      surfaceTintColor: theme.appBarTheme.backgroundColor,
+      elevation: 0.5,
+      title: Text(title, style: theme.appBarTheme.titleTextStyle),
+      leading: Builder(
+        builder: (context) => IconButton(
+          color: theme.colorScheme.onSurfaceVariant,
+          iconSize: 20,
+          icon: const Icon(FontAwesomeIcons.bars),
+          onPressed: () => Scaffold.of(context).openDrawer(),
+        ),
+      ),
+      actions: [
+        IconButton(
+          color: theme.colorScheme.onSurfaceVariant,
+          iconSize: 20,
+          icon: const Icon(FontAwesomeIcons.arrowRightFromBracket),
+          tooltip: 'Sign Out',
+          onPressed: widget.onSignOut,
+        ),
+      ],
+    );
+  }
+
   bool showProfile = false;
   bool showNotifications = false;
   bool showExplore = false;
@@ -115,132 +141,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildAppDrawer(ThemeData theme, String? avatarUrl) {
-    return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          Container(
-            height: 250,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              border: Border(bottom: BorderSide(color: theme.dividerColor, width: 1)),
-            ),
-            padding: const EdgeInsets.fromLTRB(16, 115, 16, 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircleAvatar(
-                  radius: 22,
-                  backgroundColor: theme.scaffoldBackgroundColor,
-                  backgroundImage: (avatarUrl != null && avatarUrl.isNotEmpty)
-                      ? NetworkImage(avatarUrl)
-                      : null,
-                  child: (avatarUrl == null || avatarUrl.isEmpty)
-                      ? Icon(Icons.person, size: 44, color: theme.hintColor)
-                      : null,
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  apiService.currentUser?.displayName ?? '',
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
-                if (apiService.currentUser?.handle != null)
-                  Text(
-                    '@${apiService.currentUser!.handle}',
-                    style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor),
-                  ),
-                const SizedBox(height: 6),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Text(
-                      (apiService.currentUser?.followersCount ?? 0).toString(),
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurface,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Followers',
-                      style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor),
-                    ),
-                    const SizedBox(width: 16),
-                    Text(
-                      (apiService.currentUser?.followsCount ?? 0).toString(),
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurface,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Following',
-                      style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          ListTile(
-            leading: const Icon(FontAwesomeIcons.house),
-            title: const Text('Home'),
-            onTap: () {
-              Navigator.pop(context);
-              setState(() {
-                showProfile = false;
-                showNotifications = false;
-                showExplore = false;
-              });
-            },
-          ),
-          ListTile(
-            leading: const Icon(FontAwesomeIcons.magnifyingGlass),
-            title: const Text('Explore'),
-            onTap: () {
-              Navigator.pop(context);
-              setState(() {
-                showExplore = true;
-                showProfile = false;
-                showNotifications = false;
-              });
-            },
-          ),
-          ListTile(
-            leading: const Icon(FontAwesomeIcons.user),
-            title: const Text('Profile'),
-            onTap: () {
-              Navigator.pop(context);
-              setState(() {
-                showProfile = true;
-                showNotifications = false;
-                showExplore = false;
-              });
-            },
-          ),
-          ListTile(
-            leading: const Icon(FontAwesomeIcons.list),
-            title: const Text('Logs'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.of(context).push(MaterialPageRoute(builder: (context) => const LogPage()));
-            },
-          ),
-          const SizedBox(height: 16),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 16.0),
-            child: Center(child: AppVersionText()),
-          ),
-        ],
-      ),
-    );
-  }
+  // ...existing code...
 
   @override
   Widget build(BuildContext context) {
@@ -259,26 +160,40 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         onDrawerChanged: (isOpen) {
           setState(() {});
         },
-        drawer: _buildAppDrawer(theme, avatarUrl),
-        appBar: AppBar(
-          backgroundColor: theme.appBarTheme.backgroundColor,
-          surfaceTintColor: theme.appBarTheme.backgroundColor,
-          elevation: 0.5,
-          title: Text(widget.title),
-          leading: Builder(
-            builder: (context) => IconButton(
-              icon: const Icon(Icons.menu),
-              onPressed: () => Scaffold.of(context).openDrawer(),
-            ),
-          ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.logout),
-              tooltip: 'Sign Out',
-              onPressed: widget.onSignOut,
-            ),
-          ],
+        drawer: AppDrawer(
+          theme: theme,
+          avatarUrl: avatarUrl,
+          activeIndex: _navIndex,
+          onHome: () {
+            setState(() {
+              showProfile = false;
+              showNotifications = false;
+              showExplore = false;
+            });
+          },
+          onExplore: () {
+            setState(() {
+              showProfile = false;
+              showNotifications = false;
+              showExplore = true;
+            });
+          },
+          onNotifications: () {
+            setState(() {
+              showProfile = false;
+              showNotifications = true;
+              showExplore = false;
+            });
+          },
+          onProfile: () {
+            setState(() {
+              showProfile = true;
+              showNotifications = false;
+              showExplore = false;
+            });
+          },
         ),
+        appBar: _buildAppBar(theme, title: widget.title),
         body: _buildTimelineSliver(context),
         bottomNavigationBar: BottomNavBar(
           navIndex: _navIndex,
@@ -311,7 +226,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             });
           },
         ),
-        floatingActionButton: (!showProfile && !showNotifications && !showExplore)
+        floatingActionButton: (!showNotifications && !showExplore)
             ? FloatingActionButton(
                 shape: const CircleBorder(),
                 onPressed: () async {
@@ -330,32 +245,46 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       );
     }
     // Explore, Notifications, Profile: no tabs, no TabController
+    String pageTitle = showExplore
+        ? 'Explore'
+        : showNotifications
+        ? 'Notifications'
+        : '';
     return Scaffold(
-      drawer: _buildAppDrawer(theme, avatarUrl),
-      appBar: (showExplore || showNotifications)
-          ? AppBar(
-              backgroundColor: theme.appBarTheme.backgroundColor,
-              surfaceTintColor: theme.appBarTheme.backgroundColor,
-              elevation: 0.5,
-              title: Text(
-                showExplore ? 'Explore' : 'Notifications',
-                style: theme.appBarTheme.titleTextStyle,
-              ),
-              leading: Builder(
-                builder: (context) => IconButton(
-                  icon: const Icon(Icons.menu),
-                  onPressed: () => Scaffold.of(context).openDrawer(),
-                ),
-              ),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.logout),
-                  tooltip: 'Sign Out',
-                  onPressed: widget.onSignOut,
-                ),
-              ],
-            )
-          : null,
+      drawer: AppDrawer(
+        theme: theme,
+        avatarUrl: avatarUrl,
+        activeIndex: _navIndex,
+        onHome: () {
+          setState(() {
+            showProfile = false;
+            showNotifications = false;
+            showExplore = false;
+          });
+        },
+        onExplore: () {
+          setState(() {
+            showProfile = false;
+            showNotifications = false;
+            showExplore = true;
+          });
+        },
+        onNotifications: () {
+          setState(() {
+            showProfile = false;
+            showNotifications = true;
+            showExplore = false;
+          });
+        },
+        onProfile: () {
+          setState(() {
+            showProfile = true;
+            showNotifications = false;
+            showExplore = false;
+          });
+        },
+      ),
+      appBar: (showExplore || showNotifications) ? _buildAppBar(theme, title: pageTitle) : null,
       body: Stack(
         children: [
           if (showExplore)

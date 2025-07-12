@@ -194,14 +194,54 @@ class _NotificationsPageState extends State<NotificationsPage> {
     );
   }
 
+  Widget _buildSkeletonTile(BuildContext context) {
+    final theme = Theme.of(context);
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      leading: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerHighest.withAlpha(128),
+          shape: BoxShape.circle,
+        ),
+      ),
+      title: Container(
+        width: 120,
+        height: 16,
+        color: theme.colorScheme.surfaceContainerHighest.withAlpha(128),
+        margin: const EdgeInsets.only(bottom: 4),
+      ),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 180,
+            height: 14,
+            color: theme.colorScheme.surfaceContainerHighest.withAlpha(128),
+            margin: const EdgeInsets.only(bottom: 8),
+          ),
+          Container(
+            width: 140,
+            height: 12,
+            color: theme.colorScheme.surfaceContainerHighest.withAlpha(128),
+          ),
+        ],
+      ),
+      isThreeLine: true,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: _loading
-          ? Center(
-              child: CircularProgressIndicator(strokeWidth: 2, color: theme.colorScheme.primary),
+          ? ListView.separated(
+              itemCount: 6,
+              separatorBuilder: (context, index) => Divider(height: 1, color: theme.dividerColor),
+              itemBuilder: (context, index) => _buildSkeletonTile(context),
             )
           : _error
           ? Center(child: Text('Failed to load notifications.', style: theme.textTheme.bodyMedium))

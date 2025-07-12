@@ -47,16 +47,19 @@ class _GalleryEditPhotosSheetState extends ConsumerState<GalleryEditPhotosSheet>
         backgroundColor: theme.colorScheme.surface,
         border: Border(bottom: BorderSide(color: theme.dividerColor, width: 1)),
         middle: Text(
-          'Edit Gallery Photos',
+          'Edit photos',
           style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
         ),
-        leading: CupertinoButton(
+        trailing: CupertinoButton(
           padding: EdgeInsets.zero,
           onPressed: (_loading || _deletingPhotoIndex != null)
               ? null
-              : () => Navigator.of(context).maybePop(),
+              : () {
+                  widget.onSave(_photos);
+                  Navigator.of(context).maybePop();
+                },
           child: Text(
-            'Cancel',
+            'Done',
             style: TextStyle(
               color: _deletingPhotoIndex != null ? theme.disabledColor : theme.colorScheme.primary,
               fontWeight: FontWeight.w600,
