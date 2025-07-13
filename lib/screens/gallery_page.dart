@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:grain/api.dart';
+import 'package:grain/app_icons.dart';
 import 'package:grain/models/gallery_photo.dart';
 import 'package:grain/providers/gallery_cache_provider.dart';
 import 'package:grain/providers/profile_provider.dart';
@@ -119,7 +120,7 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
             actions: [
               if (gallery.creator?.did == widget.currentUserDid)
                 IconButton(
-                  icon: const Icon(Icons.more_vert),
+                  icon: const Icon(AppIcons.moreVertical),
                   tooltip: 'Gallery Actions',
                   onPressed: () async {
                     showModalBottomSheet(
@@ -225,7 +226,7 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
                                   (gallery.creator == null ||
                                       (gallery.creator!.avatar?.isNotEmpty != true))
                                   ? Icon(
-                                      Icons.account_circle,
+                                      AppIcons.accountCircle,
                                       size: 24,
                                       color: theme.colorScheme.onSurface.withOpacity(0.4),
                                     )

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:grain/api.dart';
+import 'package:grain/app_icons.dart';
 import 'package:grain/models/gallery_photo.dart';
 import 'package:grain/providers/gallery_cache_provider.dart';
 import 'package:grain/widgets/app_button.dart';
@@ -101,7 +102,7 @@ class _GalleryEditPhotosSheetState extends ConsumerState<GalleryEditPhotosSheet>
                               clipBehavior: Clip.antiAlias,
                               child: photo.thumb != null && photo.thumb!.isNotEmpty
                                   ? AppImage(url: photo.thumb!, fit: BoxFit.cover)
-                                  : const Icon(Icons.photo, size: 48),
+                                  : const Icon(AppIcons.photo, size: 48),
                             ),
                             Positioned(
                               top: 8,
@@ -162,7 +163,7 @@ class _GalleryEditPhotosSheetState extends ConsumerState<GalleryEditPhotosSheet>
                                             valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                                           ),
                                         )
-                                      : const Icon(Icons.close, color: Colors.white, size: 20),
+                                      : const Icon(AppIcons.close, color: Colors.white, size: 20),
                                 ),
                               ),
                             ),

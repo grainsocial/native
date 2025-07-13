@@ -3,6 +3,8 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class AppIcons {
   // Material Icons
+  static const IconData edit = Icons.edit;
+  static const IconData sort = Icons.sort;
   static const IconData person = Icons.person;
   static const IconData accountCircle = Icons.account_circle;
   static const IconData close = Icons.close;
@@ -15,6 +17,8 @@ class AppIcons {
   static const IconData notifications = Icons.notifications;
   static const IconData search = Icons.search;
   static const IconData settings = Icons.settings;
+  static const IconData photoLibrary = Icons.photo_library;
+  static const IconData moreVertical = Icons.more_vert;
   // FontAwesome Icons
   static const IconData house = FontAwesomeIcons.house;
   static const IconData magnifyingGlass = FontAwesomeIcons.magnifyingGlass;
@@ -29,5 +33,5 @@ class AppIcons {
   static const IconData arrowUpFromBracket = FontAwesomeIcons.arrowUpFromBracket;
   static const IconData bars = FontAwesomeIcons.bars;
   static const IconData arrowRightFromBracket = FontAwesomeIcons.arrowRightFromBracket;
-  static const IconData checkCircle = FontAwesomeIcons.checkCircle;
+  static const IconData checkCircle = FontAwesomeIcons.circleCheck;
 }

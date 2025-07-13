@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:grain/api.dart';
+import 'package:grain/app_icons.dart';
 import 'package:grain/models/profile.dart';
 import 'package:grain/widgets/app_image.dart';
 import 'package:grain/widgets/plain_text_field.dart';
@@ -130,7 +131,7 @@ class _ExplorePageState extends State<ExplorePage> {
               : CircleAvatar(
                   radius: 16,
                   backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                  child: Icon(Icons.account_circle, color: theme.iconTheme.color),
+                  child: Icon(AppIcons.accountCircle, color: theme.iconTheme.color),
                 ),
           title: Text(
             profile.displayName?.isNotEmpty == true ? profile.displayName! : '@${profile.handle}',

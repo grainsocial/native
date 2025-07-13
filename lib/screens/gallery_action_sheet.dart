@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:grain/app_icons.dart';
 
 class GalleryActionSheet extends StatelessWidget {
   final VoidCallback? onEditDetails;
@@ -23,7 +24,7 @@ class GalleryActionSheet extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           ListTile(
-            leading: const Icon(Icons.edit),
+            leading: Icon(AppIcons.edit),
             title: const Text('Edit details'),
             onTap: () {
               Navigator.of(context).pop();
@@ -31,7 +32,7 @@ class GalleryActionSheet extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.photo_library),
+            leading: Icon(AppIcons.photoLibrary),
             title: const Text('Edit photos'),
             onTap: () {
               Navigator.of(context).pop();
@@ -39,7 +40,7 @@ class GalleryActionSheet extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.sort),
+            leading: Icon(AppIcons.sort),
             title: const Text('Edit sort order'),
             onTap: () {
               Navigator.of(context).pop();
@@ -47,7 +48,7 @@ class GalleryActionSheet extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.delete, color: Colors.red),
+            leading: Icon(AppIcons.delete, color: Colors.red),
             title: const Text('Delete gallery', style: TextStyle(color: Colors.red)),
             onTap: () async {
               Navigator.of(context).pop();

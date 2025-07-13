@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:grain/api.dart';
+import 'package:grain/app_icons.dart';
 import 'package:grain/models/gallery.dart';
 import 'package:grain/providers/profile_provider.dart';
 import 'package:grain/widgets/app_button.dart';
@@ -266,7 +267,7 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
                       child: AppButton(
                         label: 'Upload photos',
                         onPressed: _pickImages,
-                        icon: Icons.photo_library,
+                        icon: AppIcons.photoLibrary,
                         variant: AppButtonVariant.primary,
                         height: 40,
                         fontSize: 15,
@@ -313,7 +314,7 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Icon(
-                                Icons.check_circle,
+                                AppIcons.checkCircle,
                                 color: theme.colorScheme.onSecondary,
                                 size: 16,
                               ),
@@ -330,7 +331,7 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
                                 shape: BoxShape.circle,
                               ),
                               padding: const EdgeInsets.all(4),
-                              child: const Icon(Icons.close, color: Colors.white, size: 20),
+                              child: const Icon(AppIcons.close, color: Colors.white, size: 20),
                             ),
                           ),
                         ),
