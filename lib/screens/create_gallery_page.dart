@@ -37,6 +37,7 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
   final _descController = TextEditingController();
   final List<GalleryImage> _images = [];
   bool _submitting = false;
+  bool _includeExif = true;
 
   @override
   void initState() {
@@ -45,6 +46,9 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
       _titleController.text = widget.gallery?.title ?? '';
       _descController.text = widget.gallery?.description ?? '';
     }
+    _titleController.addListener(() {
+      setState(() {});
+    });
   }
 
   Future<String> _computeMd5(XFile xfile) async {
@@ -125,6 +129,7 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
         title: _titleController.text.trim(),
         description: _descController.text.trim(),
         xfiles: newImages.map((img) => img.file).toList(),
+        includeExif: _includeExif,
       );
       galleryUri = createdUri;
       // Update profile provider state to include new gallery
@@ -188,14 +193,16 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
         ),
         trailing: CupertinoButton(
           padding: EdgeInsets.zero,
-          onPressed: _submitting ? null : _submit,
+          onPressed: _submitting || _titleController.text.trim().isEmpty ? null : _submit,
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 widget.gallery == null ? 'Create' : 'Save',
                 style: TextStyle(
-                  color: _submitting ? theme.disabledColor : theme.colorScheme.primary,
+                  color: (_submitting || _titleController.text.trim().isEmpty)
+                      ? theme.disabledColor
+                      : theme.colorScheme.primary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -236,17 +243,35 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
                 hintText: 'Enter a description',
               ),
               const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text('Include image metadata (EXIF)', style: theme.textTheme.bodyMedium),
+                  ),
+                  Switch(
+                    value: _includeExif,
+                    onChanged: (val) {
+                      setState(() {
+                        _includeExif = val;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
               if (widget.gallery == null)
                 Row(
                   children: [
-                    AppButton(
-                      label: 'Upload photos',
-                      onPressed: _pickImages,
-                      icon: Icons.photo_library,
-                      variant: AppButtonVariant.primary,
-                      height: 40,
-                      fontSize: 15,
-                      borderRadius: 6,
+                    Expanded(
+                      child: AppButton(
+                        label: 'Upload photos',
+                        onPressed: _pickImages,
+                        icon: Icons.photo_library,
+                        variant: AppButtonVariant.primary,
+                        height: 40,
+                        fontSize: 15,
+                        borderRadius: 6,
+                      ),
                     ),
                   ],
                 ),

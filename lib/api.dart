@@ -23,7 +23,6 @@ import 'models/notification.dart' as grain;
 import 'models/profile.dart';
 
 class ApiService {
-  // ...existing code...
   static const _storage = FlutterSecureStorage();
   String? _accessToken;
   Profile? currentUser;
@@ -861,6 +860,68 @@ class ApiService {
     }
     appLogger.i('Gallery updated successfully');
     return true;
+  }
+
+  /// Creates a photo EXIF record in the social.grain.photo.exif collection.
+  /// Returns the record URI on success, or null on failure.
+  Future<String?> createPhotoExif({
+    required String photo,
+    String? createdAt,
+    String? dateTimeOriginal,
+    int? exposureTime,
+    int? fNumber,
+    String? flash,
+    int? focalLengthIn35mmFormat,
+    int? iSO,
+    String? lensMake,
+    String? lensModel,
+    String? make,
+    String? model,
+  }) async {
+    final session = await auth.getValidSession();
+    if (session == null) {
+      appLogger.w('No valid session for createPhotoExif');
+      return null;
+    }
+    final dpopClient = DpopHttpClient(dpopKey: session.dpopJwk);
+    final issuer = session.issuer;
+    final did = session.subject;
+    final url = Uri.parse('$issuer/xrpc/com.atproto.repo.createRecord');
+    final record = {
+      'collection': 'social.grain.photo.exif',
+      'repo': did,
+      'record': {
+        'photo': photo,
+        'createdAt': createdAt ?? DateTime.now().toUtc().toIso8601String(),
+        if (dateTimeOriginal != null) 'dateTimeOriginal': dateTimeOriginal,
+        if (exposureTime != null) 'exposureTime': exposureTime,
+        if (fNumber != null) 'fNumber': fNumber,
+        if (flash != null) 'flash': flash,
+        if (focalLengthIn35mmFormat != null) 'focalLengthIn35mmFormat': focalLengthIn35mmFormat,
+        if (iSO != null) 'iSO': iSO,
+        if (lensMake != null) 'lensMake': lensMake,
+        if (lensModel != null) 'lensModel': lensModel,
+        if (make != null) 'make': make,
+        if (model != null) 'model': model,
+      },
+    };
+    appLogger.i('Creating photo exif record: $record');
+    final response = await dpopClient.send(
+      method: 'POST',
+      url: url,
+      accessToken: session.accessToken,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(record),
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      appLogger.w(
+        'Failed to create photo exif record: \\${response.statusCode} \\${response.body}',
+      );
+      return null;
+    }
+    final result = jsonDecode(response.body) as Map<String, dynamic>;
+    appLogger.i('Created photo exif record result: $result');
+    return result['uri'] as String?;
   }
 }
 

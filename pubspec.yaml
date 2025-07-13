@@ -59,6 +59,7 @@ dependencies:
   json_annotation: ^4.9.0
   url_launcher: ^6.3.1
   reorderables: ^0.6.0
+  exif: ^3.3.0
 
 dependency_overrides:
   analyzer: 7.3.0

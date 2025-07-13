@@ -31,6 +31,7 @@ class _GalleryEditPhotosSheetState extends ConsumerState<GalleryEditPhotosSheet>
   late List<GalleryPhoto> _photos;
   bool _loading = false;
   int? _deletingPhotoIndex;
+  bool _includeExif = true;
 
   @override
   void initState() {
@@ -190,6 +191,7 @@ class _GalleryEditPhotosSheetState extends ConsumerState<GalleryEditPhotosSheet>
                                 await notifier.uploadAndAddPhotosToGallery(
                                   galleryUri: widget.galleryUri,
                                   xfiles: picked,
+                                  includeExif: _includeExif,
                                 );
                                 // Fetch the updated gallery from provider state
                                 final updatedGallery = ref.read(
@@ -227,6 +229,24 @@ class _GalleryEditPhotosSheetState extends ConsumerState<GalleryEditPhotosSheet>
                               );
                             },
                     ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text('Include image metadata (EXIF)', style: theme.textTheme.bodyMedium),
+                  ),
+                  Switch(
+                    value: _includeExif,
+                    onChanged: (_loading || _deletingPhotoIndex != null)
+                        ? null
+                        : (val) {
+                            setState(() {
+                              _includeExif = val;
+                            });
+                          },
                   ),
                 ],
               ),

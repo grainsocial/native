@@ -12,6 +12,7 @@ import '../api.dart';
 import '../models/gallery.dart';
 import '../models/gallery_item.dart';
 import '../photo_manip.dart';
+import '../utils/exif_utils.dart';
 
 part 'gallery_cache_provider.g.dart';
 
@@ -90,6 +91,7 @@ class GalleryCache extends _$GalleryCache {
     required String galleryUri,
     required List<XFile> xfiles,
     int? startPosition,
+    bool includeExif = true,
   }) async {
     // Fetch the latest gallery from the API to avoid stale state
     final latestGallery = await apiService.getGallery(uri: galleryUri);
@@ -102,8 +104,10 @@ class GalleryCache extends _$GalleryCache {
     final List<String> photoUris = [];
     int position = positionOffset;
     for (final xfile in xfiles) {
-      // Resize the image
       final file = File(xfile.path);
+      // Parse EXIF if requested
+      final exif = includeExif ? await parseAndNormalizeExif(file: file) : null;
+      // Resize the image
       final resizedResult = await compute<File, ResizeResult>((f) => resizeImage(file: f), file);
       // Upload the blob
       final blobResult = await apiService.uploadBlob(resizedResult.file);
@@ -122,6 +126,24 @@ class GalleryCache extends _$GalleryCache {
         height: dims['height']!,
       );
       if (photoUri == null) continue;
+
+      // If EXIF data was found, create photo exif record
+      if (exif != null) {
+        await apiService.createPhotoExif(
+          photo: photoUri,
+          dateTimeOriginal: exif['dateTimeOriginal'] as String?,
+          exposureTime: exif['exposureTime'] as int?,
+          fNumber: exif['fNumber'] as int?,
+          flash: exif['flash'] as String?,
+          focalLengthIn35mmFormat: exif['focalLengthIn35mmFilm'] as int?,
+          iSO: exif['iSOSpeedRatings'] as int?,
+          lensMake: exif['lensMake'] as String?,
+          lensModel: exif['lensModel'] as String?,
+          make: exif['make'] as String?,
+          model: exif['model'] as String?,
+        );
+      }
+
       // Create the gallery item
       await apiService.createGalleryItem(
         galleryUri: galleryUri,
@@ -148,6 +170,7 @@ class GalleryCache extends _$GalleryCache {
     required String title,
     required String description,
     required List<XFile> xfiles,
+    bool includeExif = true,
   }) async {
     // Extract facets from description
     final facetsList = await _extractFacets(description);
@@ -160,7 +183,11 @@ class GalleryCache extends _$GalleryCache {
     );
     if (galleryUri == null) return (null, <String>[]);
     // Upload and add photos
-    final photoUris = await uploadAndAddPhotosToGallery(galleryUri: galleryUri, xfiles: xfiles);
+    final photoUris = await uploadAndAddPhotosToGallery(
+      galleryUri: galleryUri,
+      xfiles: xfiles,
+      includeExif: includeExif,
+    );
     return (galleryUri, photoUris);
   }
 
