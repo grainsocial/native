@@ -23,12 +23,14 @@ PhotoExif _$PhotoExifFromJson(Map<String, dynamic> json) {
 mixin _$PhotoExif {
   String get photo => throw _privateConstructorUsedError; // at-uri
   String get createdAt => throw _privateConstructorUsedError; // datetime
+  String? get uri => throw _privateConstructorUsedError; // at-uri
+  String? get cid => throw _privateConstructorUsedError; // cid
   String? get dateTimeOriginal =>
       throw _privateConstructorUsedError; // datetime
-  int? get exposureTime => throw _privateConstructorUsedError;
-  int? get fNumber => throw _privateConstructorUsedError;
+  String? get exposureTime => throw _privateConstructorUsedError;
+  String? get fNumber => throw _privateConstructorUsedError;
   String? get flash => throw _privateConstructorUsedError;
-  int? get focalLengthIn35mmFormat => throw _privateConstructorUsedError;
+  String? get focalLengthIn35mmFormat => throw _privateConstructorUsedError;
   int? get iSO => throw _privateConstructorUsedError;
   String? get lensMake => throw _privateConstructorUsedError;
   String? get lensModel => throw _privateConstructorUsedError;
@@ -53,11 +55,13 @@ abstract class $PhotoExifCopyWith<$Res> {
   $Res call({
     String photo,
     String createdAt,
+    String? uri,
+    String? cid,
     String? dateTimeOriginal,
-    int? exposureTime,
-    int? fNumber,
+    String? exposureTime,
+    String? fNumber,
     String? flash,
-    int? focalLengthIn35mmFormat,
+    String? focalLengthIn35mmFormat,
     int? iSO,
     String? lensMake,
     String? lensModel,
@@ -83,6 +87,8 @@ class _$PhotoExifCopyWithImpl<$Res, $Val extends PhotoExif>
   $Res call({
     Object? photo = null,
     Object? createdAt = null,
+    Object? uri = freezed,
+    Object? cid = freezed,
     Object? dateTimeOriginal = freezed,
     Object? exposureTime = freezed,
     Object? fNumber = freezed,
@@ -104,6 +110,14 @@ class _$PhotoExifCopyWithImpl<$Res, $Val extends PhotoExif>
                 ? _value.createdAt
                 : createdAt // ignore: cast_nullable_to_non_nullable
                       as String,
+            uri: freezed == uri
+                ? _value.uri
+                : uri // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            cid: freezed == cid
+                ? _value.cid
+                : cid // ignore: cast_nullable_to_non_nullable
+                      as String?,
             dateTimeOriginal: freezed == dateTimeOriginal
                 ? _value.dateTimeOriginal
                 : dateTimeOriginal // ignore: cast_nullable_to_non_nullable
@@ -111,11 +125,11 @@ class _$PhotoExifCopyWithImpl<$Res, $Val extends PhotoExif>
             exposureTime: freezed == exposureTime
                 ? _value.exposureTime
                 : exposureTime // ignore: cast_nullable_to_non_nullable
-                      as int?,
+                      as String?,
             fNumber: freezed == fNumber
                 ? _value.fNumber
                 : fNumber // ignore: cast_nullable_to_non_nullable
-                      as int?,
+                      as String?,
             flash: freezed == flash
                 ? _value.flash
                 : flash // ignore: cast_nullable_to_non_nullable
@@ -123,7 +137,7 @@ class _$PhotoExifCopyWithImpl<$Res, $Val extends PhotoExif>
             focalLengthIn35mmFormat: freezed == focalLengthIn35mmFormat
                 ? _value.focalLengthIn35mmFormat
                 : focalLengthIn35mmFormat // ignore: cast_nullable_to_non_nullable
-                      as int?,
+                      as String?,
             iSO: freezed == iSO
                 ? _value.iSO
                 : iSO // ignore: cast_nullable_to_non_nullable
@@ -162,11 +176,13 @@ abstract class _$$PhotoExifImplCopyWith<$Res>
   $Res call({
     String photo,
     String createdAt,
+    String? uri,
+    String? cid,
     String? dateTimeOriginal,
-    int? exposureTime,
-    int? fNumber,
+    String? exposureTime,
+    String? fNumber,
     String? flash,
-    int? focalLengthIn35mmFormat,
+    String? focalLengthIn35mmFormat,
     int? iSO,
     String? lensMake,
     String? lensModel,
@@ -191,6 +207,8 @@ class __$$PhotoExifImplCopyWithImpl<$Res>
   $Res call({
     Object? photo = null,
     Object? createdAt = null,
+    Object? uri = freezed,
+    Object? cid = freezed,
     Object? dateTimeOriginal = freezed,
     Object? exposureTime = freezed,
     Object? fNumber = freezed,
@@ -212,6 +230,14 @@ class __$$PhotoExifImplCopyWithImpl<$Res>
             ? _value.createdAt
             : createdAt // ignore: cast_nullable_to_non_nullable
                   as String,
+        uri: freezed == uri
+            ? _value.uri
+            : uri // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        cid: freezed == cid
+            ? _value.cid
+            : cid // ignore: cast_nullable_to_non_nullable
+                  as String?,
         dateTimeOriginal: freezed == dateTimeOriginal
             ? _value.dateTimeOriginal
             : dateTimeOriginal // ignore: cast_nullable_to_non_nullable
@@ -219,11 +245,11 @@ class __$$PhotoExifImplCopyWithImpl<$Res>
         exposureTime: freezed == exposureTime
             ? _value.exposureTime
             : exposureTime // ignore: cast_nullable_to_non_nullable
-                  as int?,
+                  as String?,
         fNumber: freezed == fNumber
             ? _value.fNumber
             : fNumber // ignore: cast_nullable_to_non_nullable
-                  as int?,
+                  as String?,
         flash: freezed == flash
             ? _value.flash
             : flash // ignore: cast_nullable_to_non_nullable
@@ -231,7 +257,7 @@ class __$$PhotoExifImplCopyWithImpl<$Res>
         focalLengthIn35mmFormat: freezed == focalLengthIn35mmFormat
             ? _value.focalLengthIn35mmFormat
             : focalLengthIn35mmFormat // ignore: cast_nullable_to_non_nullable
-                  as int?,
+                  as String?,
         iSO: freezed == iSO
             ? _value.iSO
             : iSO // ignore: cast_nullable_to_non_nullable
@@ -263,6 +289,8 @@ class _$PhotoExifImpl implements _PhotoExif {
   const _$PhotoExifImpl({
     required this.photo,
     required this.createdAt,
+    this.uri,
+    this.cid,
     this.dateTimeOriginal,
     this.exposureTime,
     this.fNumber,
@@ -285,16 +313,22 @@ class _$PhotoExifImpl implements _PhotoExif {
   final String createdAt;
   // datetime
   @override
+  final String? uri;
+  // at-uri
+  @override
+  final String? cid;
+  // cid
+  @override
   final String? dateTimeOriginal;
   // datetime
   @override
-  final int? exposureTime;
+  final String? exposureTime;
   @override
-  final int? fNumber;
+  final String? fNumber;
   @override
   final String? flash;
   @override
-  final int? focalLengthIn35mmFormat;
+  final String? focalLengthIn35mmFormat;
   @override
   final int? iSO;
   @override
@@ -308,7 +342,7 @@ class _$PhotoExifImpl implements _PhotoExif {
 
   @override
   String toString() {
-    return 'PhotoExif(photo: $photo, createdAt: $createdAt, dateTimeOriginal: $dateTimeOriginal, exposureTime: $exposureTime, fNumber: $fNumber, flash: $flash, focalLengthIn35mmFormat: $focalLengthIn35mmFormat, iSO: $iSO, lensMake: $lensMake, lensModel: $lensModel, make: $make, model: $model)';
+    return 'PhotoExif(photo: $photo, createdAt: $createdAt, uri: $uri, cid: $cid, dateTimeOriginal: $dateTimeOriginal, exposureTime: $exposureTime, fNumber: $fNumber, flash: $flash, focalLengthIn35mmFormat: $focalLengthIn35mmFormat, iSO: $iSO, lensMake: $lensMake, lensModel: $lensModel, make: $make, model: $model)';
   }
 
   @override
@@ -319,6 +353,8 @@ class _$PhotoExifImpl implements _PhotoExif {
             (identical(other.photo, photo) || other.photo == photo) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
+            (identical(other.uri, uri) || other.uri == uri) &&
+            (identical(other.cid, cid) || other.cid == cid) &&
             (identical(other.dateTimeOriginal, dateTimeOriginal) ||
                 other.dateTimeOriginal == dateTimeOriginal) &&
             (identical(other.exposureTime, exposureTime) ||
@@ -345,6 +381,8 @@ class _$PhotoExifImpl implements _PhotoExif {
     runtimeType,
     photo,
     createdAt,
+    uri,
+    cid,
     dateTimeOriginal,
     exposureTime,
     fNumber,
@@ -375,11 +413,13 @@ abstract class _PhotoExif implements PhotoExif {
   const factory _PhotoExif({
     required final String photo,
     required final String createdAt,
+    final String? uri,
+    final String? cid,
     final String? dateTimeOriginal,
-    final int? exposureTime,
-    final int? fNumber,
+    final String? exposureTime,
+    final String? fNumber,
     final String? flash,
-    final int? focalLengthIn35mmFormat,
+    final String? focalLengthIn35mmFormat,
     final int? iSO,
     final String? lensMake,
     final String? lensModel,
@@ -395,15 +435,19 @@ abstract class _PhotoExif implements PhotoExif {
   @override
   String get createdAt; // datetime
   @override
+  String? get uri; // at-uri
+  @override
+  String? get cid; // cid
+  @override
   String? get dateTimeOriginal; // datetime
   @override
-  int? get exposureTime;
+  String? get exposureTime;
   @override
-  int? get fNumber;
+  String? get fNumber;
   @override
   String? get flash;
   @override
-  int? get focalLengthIn35mmFormat;
+  String? get focalLengthIn35mmFormat;
   @override
   int? get iSO;
   @override

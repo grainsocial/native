@@ -19,6 +19,9 @@ _$GalleryPhotoImpl _$$GalleryPhotoImplFromJson(Map<String, dynamic> json) =>
       gallery: json['gallery'] == null
           ? null
           : GalleryState.fromJson(json['gallery'] as Map<String, dynamic>),
+      exif: json['exif'] == null
+          ? null
+          : PhotoExif.fromJson(json['exif'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$$GalleryPhotoImplToJson(_$GalleryPhotoImpl instance) =>
@@ -30,4 +33,5 @@ Map<String, dynamic> _$$GalleryPhotoImplToJson(_$GalleryPhotoImpl instance) =>
       'alt': instance.alt,
       'aspectRatio': instance.aspectRatio,
       'gallery': instance.gallery,
+      'exif': instance.exif,
     };

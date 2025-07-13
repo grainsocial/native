@@ -6,6 +6,7 @@ import 'package:grain/providers/gallery_thread_cache_provider.dart';
 import 'package:grain/widgets/add_comment_button.dart';
 import 'package:grain/widgets/add_comment_sheet.dart';
 import 'package:grain/widgets/app_image.dart';
+import 'package:grain/widgets/photo_exif_dialog.dart';
 
 class GalleryPhotoView extends ConsumerStatefulWidget {
   final List<GalleryPhoto> photos;
@@ -98,50 +99,72 @@ class _GalleryPhotoViewState extends ConsumerState<GalleryPhotoView> {
                   top: false,
                   child: Padding(
                     padding: const EdgeInsets.only(top: 8, left: 16, right: 16, bottom: 8),
-                    child: AddCommentButton(
-                      onPressed: () async {
-                        final photo = widget.photos[_currentIndex];
-                        final creator = widget.gallery?.creator;
-                        final replyTo = {
-                          'author': creator != null
-                              ? {
-                                  'avatar': creator.avatar,
-                                  'displayName': creator.displayName,
-                                  'handle': creator.handle,
-                                }
-                              : {'avatar': null, 'displayName': '', 'handle': ''},
-                          'focus': photo,
-                          'text': '',
-                        };
-                        bool commentPosted = false;
-                        await showAddCommentSheet(
-                          context,
-                          gallery: null,
-                          replyTo: replyTo,
-                          initialText: '',
-                          onSubmit: (text) async {
-                            final photo = widget.photos[_currentIndex];
-                            final gallery = widget.gallery;
-                            final subject = gallery?.uri;
-                            final focus = photo.uri;
-                            if (subject == null || focus == null) {
-                              return;
-                            }
-                            // Use the provider's createComment method
-                            final notifier = ref.read(galleryThreadProvider(subject).notifier);
-                            final success = await notifier.createComment(text: text, focus: focus);
-                            if (success) commentPosted = true;
-                            // Sheet will pop itself
-                          },
-                        );
-                        // After sheet closes, notify parent if a comment was posted
-                        if (commentPosted && widget.gallery?.uri != null) {
-                          widget.onClose?.call(); // Remove GalleryPhotoView overlay
-                          widget.onCommentPosted?.call(widget.gallery!.uri);
-                        }
-                      },
-                      backgroundColor: Colors.grey[900],
-                      foregroundColor: Colors.white,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: AddCommentButton(
+                            onPressed: () async {
+                              final photo = widget.photos[_currentIndex];
+                              final creator = widget.gallery?.creator;
+                              final replyTo = {
+                                'author': creator != null
+                                    ? {
+                                        'avatar': creator.avatar,
+                                        'displayName': creator.displayName,
+                                        'handle': creator.handle,
+                                      }
+                                    : {'avatar': null, 'displayName': '', 'handle': ''},
+                                'focus': photo,
+                                'text': '',
+                              };
+                              bool commentPosted = false;
+                              await showAddCommentSheet(
+                                context,
+                                gallery: null,
+                                replyTo: replyTo,
+                                initialText: '',
+                                onSubmit: (text) async {
+                                  final photo = widget.photos[_currentIndex];
+                                  final gallery = widget.gallery;
+                                  final subject = gallery?.uri;
+                                  final focus = photo.uri;
+                                  if (subject == null || focus == null) {
+                                    return;
+                                  }
+                                  // Use the provider's createComment method
+                                  final notifier = ref.read(
+                                    galleryThreadProvider(subject).notifier,
+                                  );
+                                  final success = await notifier.createComment(
+                                    text: text,
+                                    focus: focus,
+                                  );
+                                  if (success) commentPosted = true;
+                                  // Sheet will pop itself
+                                },
+                              );
+                              // After sheet closes, notify parent if a comment was posted
+                              if (commentPosted && widget.gallery?.uri != null) {
+                                widget.onClose?.call(); // Remove GalleryPhotoView overlay
+                                widget.onCommentPosted?.call(widget.gallery!.uri);
+                              }
+                            },
+                            backgroundColor: Colors.grey[900],
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        if (photo.exif != null)
+                          IconButton(
+                            icon: Icon(Icons.camera_alt, color: Colors.white),
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) => PhotoExifDialog(exif: photo.exif!),
+                              );
+                            },
+                          ),
+                      ],
                     ),
                   ),
                 ),

@@ -8,11 +8,13 @@ class PhotoExif with _$PhotoExif {
   const factory PhotoExif({
     required String photo, // at-uri
     required String createdAt, // datetime
+    String? uri, // at-uri
+    String? cid, // cid
     String? dateTimeOriginal, // datetime
-    int? exposureTime,
-    int? fNumber,
+    String? exposureTime,
+    String? fNumber,
     String? flash,
-    int? focalLengthIn35mmFormat,
+    String? focalLengthIn35mmFormat,
     int? iSO,
     String? lensMake,
     String? lensModel,

@@ -10,12 +10,13 @@ _$PhotoExifImpl _$$PhotoExifImplFromJson(Map<String, dynamic> json) =>
     _$PhotoExifImpl(
       photo: json['photo'] as String,
       createdAt: json['createdAt'] as String,
+      uri: json['uri'] as String?,
+      cid: json['cid'] as String?,
       dateTimeOriginal: json['dateTimeOriginal'] as String?,
-      exposureTime: (json['exposureTime'] as num?)?.toInt(),
-      fNumber: (json['fNumber'] as num?)?.toInt(),
+      exposureTime: json['exposureTime'] as String?,
+      fNumber: json['fNumber'] as String?,
       flash: json['flash'] as String?,
-      focalLengthIn35mmFormat: (json['focalLengthIn35mmFormat'] as num?)
-          ?.toInt(),
+      focalLengthIn35mmFormat: json['focalLengthIn35mmFormat'] as String?,
       iSO: (json['iSO'] as num?)?.toInt(),
       lensMake: json['lensMake'] as String?,
       lensModel: json['lensModel'] as String?,
@@ -27,6 +28,8 @@ Map<String, dynamic> _$$PhotoExifImplToJson(_$PhotoExifImpl instance) =>
     <String, dynamic>{
       'photo': instance.photo,
       'createdAt': instance.createdAt,
+      'uri': instance.uri,
+      'cid': instance.cid,
       'dateTimeOriginal': instance.dateTimeOriginal,
       'exposureTime': instance.exposureTime,
       'fNumber': instance.fNumber,
