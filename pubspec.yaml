@@ -60,6 +60,7 @@ dependencies:
   url_launcher: ^6.3.1
   reorderables: ^0.6.0
   exif: ^3.3.0
+  shared_preferences: ^2.5.3
 
 dependency_overrides:
   analyzer: 7.3.0

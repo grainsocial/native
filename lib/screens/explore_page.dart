@@ -1,24 +1,29 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:grain/api.dart';
 import 'package:grain/app_icons.dart';
 import 'package:grain/models/profile.dart';
+import 'package:grain/providers/profile_provider.dart';
 import 'package:grain/widgets/app_image.dart';
 import 'package:grain/widgets/plain_text_field.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'profile_page.dart';
 
-class ExplorePage extends StatefulWidget {
+class ExplorePage extends ConsumerStatefulWidget {
   const ExplorePage({super.key});
 
   @override
-  State<ExplorePage> createState() => _ExplorePageState();
+  ConsumerState<ExplorePage> createState() => _ExplorePageState();
 }
 
-class _ExplorePageState extends State<ExplorePage> {
+class _ExplorePageState extends ConsumerState<ExplorePage> {
   final TextEditingController _controller = TextEditingController();
   List<Profile> _results = [];
+  List<Profile> _recentlySearched = [];
+  static const String _recentlySearchedKey = 'recently_searched_dids';
   bool _loading = false;
   bool _searched = false;
   Timer? _debounce;
@@ -26,6 +31,39 @@ class _ExplorePageState extends State<ExplorePage> {
   @override
   void initState() {
     super.initState();
+    _loadRecentlySearched();
+  }
+
+  Future<void> _loadRecentlySearched() async {
+    final prefs = await SharedPreferences.getInstance();
+    final dids = prefs.getStringList(_recentlySearchedKey) ?? [];
+    if (dids.isNotEmpty) {
+      final profiles = <Profile>[];
+      for (final did in dids) {
+        try {
+          final asyncProfile = ref.watch(profileNotifierProvider(did));
+          if (asyncProfile.hasValue && asyncProfile.value != null) {
+            profiles.add(asyncProfile.value!.profile);
+          } else {
+            final profileWithGalleries = await ref.refresh(profileNotifierProvider(did).future);
+            if (profileWithGalleries != null) {
+              profiles.add(profileWithGalleries.profile);
+            }
+          }
+        } catch (_) {}
+      }
+      if (mounted) {
+        setState(() {
+          _recentlySearched = profiles;
+        });
+      }
+    }
+  }
+
+  Future<void> _saveRecentlySearched() async {
+    final prefs = await SharedPreferences.getInstance();
+    final dids = _recentlySearched.map((p) => p.did).toList();
+    await prefs.setStringList(_recentlySearchedKey, dids);
   }
 
   void _onSearchChanged(String value) {
@@ -94,6 +132,120 @@ class _ExplorePageState extends State<ExplorePage> {
                 : null,
           ),
         ),
+        if (_controller.text.isEmpty && _recentlySearched.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 4.0, bottom: 4.0),
+                  child: Text(
+                    'Recent Searches',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.textTheme.bodyMedium?.color,
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: 96,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _recentlySearched.length,
+                    separatorBuilder: (context, index) => SizedBox(width: 16),
+                    itemBuilder: (context, index) {
+                      final profile = _recentlySearched[index];
+                      return SizedBox(
+                        width: 80,
+                        child: Stack(
+                          children: [
+                            SizedBox(
+                              width: 80,
+                              height: 96,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Expanded(
+                                    child: GestureDetector(
+                                      onTap: () async {
+                                        FocusScope.of(context).unfocus();
+                                        _debounce?.cancel();
+                                        setState(() {
+                                          _searched = false;
+                                          _loading = false;
+                                        });
+                                        if (context.mounted) {
+                                          Navigator.of(context).push(
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  ProfilePage(did: profile.did, showAppBar: true),
+                                            ),
+                                          );
+                                        }
+                                      },
+                                      child: CircleAvatar(
+                                        radius: 32,
+                                        backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                                        backgroundImage: profile.avatar?.isNotEmpty == true
+                                            ? NetworkImage(profile.avatar!)
+                                            : null,
+                                        child: profile.avatar?.isNotEmpty == true
+                                            ? null
+                                            : Icon(
+                                                AppIcons.accountCircle,
+                                                color: theme.iconTheme.color,
+                                                size: 40,
+                                              ),
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(height: 4),
+                                  SizedBox(
+                                    width: 80,
+                                    child: Text(
+                                      profile.displayName?.isNotEmpty == true
+                                          ? profile.displayName!
+                                          : '@${profile.handle}',
+                                      style: theme.textTheme.bodyMedium,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Positioned(
+                              top: 4,
+                              right: 4,
+                              child: GestureDetector(
+                                onTap: () async {
+                                  setState(() {
+                                    _recentlySearched.removeAt(index);
+                                  });
+                                  await _saveRecentlySearched();
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(2),
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.surface,
+                                    shape: BoxShape.circle,
+                                    boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 2)],
+                                  ),
+                                  child: Icon(Icons.close, size: 18, color: theme.iconTheme.color),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
         if (_controller.text.isNotEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4),
@@ -159,7 +311,18 @@ class _ExplorePageState extends State<ExplorePage> {
             setState(() {
               _searched = false;
               _loading = false;
+              // Move to front if already present, else add to front
+              final existingIndex = _recentlySearched.indexWhere((p) => p.did == profile.did);
+              if (existingIndex != -1) {
+                _recentlySearched.removeAt(existingIndex);
+              }
+              _recentlySearched.insert(0, profile);
+              // Limit to 10 recent users
+              if (_recentlySearched.length > 10) {
+                _recentlySearched.removeLast();
+              }
             });
+            await _saveRecentlySearched();
             if (context.mounted) {
               Navigator.of(context).push(
                 MaterialPageRoute(
