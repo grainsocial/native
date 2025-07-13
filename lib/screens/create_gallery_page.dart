@@ -244,21 +244,25 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
                 hintText: 'Enter a description',
               ),
               const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text('Include image metadata (EXIF)', style: theme.textTheme.bodyMedium),
-                  ),
-                  Switch(
-                    value: _includeExif,
-                    onChanged: (val) {
-                      setState(() {
-                        _includeExif = val;
-                      });
-                    },
-                  ),
-                ],
-              ),
+              if (widget.gallery == null)
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Include image metadata (EXIF)',
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                    ),
+                    Switch(
+                      value: _includeExif,
+                      onChanged: (val) {
+                        setState(() {
+                          _includeExif = val;
+                        });
+                      },
+                    ),
+                  ],
+                ),
               const SizedBox(height: 16),
               if (widget.gallery == null)
                 Row(
