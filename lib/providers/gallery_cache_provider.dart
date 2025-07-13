@@ -327,4 +327,34 @@ class GalleryCache extends _$GalleryCache {
     setGalleries(galleries);
     return galleries;
   }
+
+  /// Updates alt text for multiple photos by calling apiService.updatePhotos, then updates the gallery cache state manually.
+  /// [galleryUri]: The URI of the gallery containing the photos.
+  /// [altUpdates]: List of maps with keys: photoUri, alt (and optionally aspectRatio, createdAt, photo).
+  Future<bool> updatePhotoAltTexts({
+    required String galleryUri,
+    required List<Map<String, dynamic>> altUpdates,
+  }) async {
+    final success = await apiService.updatePhotos(altUpdates);
+    if (!success) return false;
+
+    // Update the gallery photos' alt text in the cache manually
+    final gallery = state[galleryUri];
+    if (gallery == null) return false;
+
+    // Build a map of photoUri to new alt text
+    final altMap = {for (final update in altUpdates) update['photoUri'] as String: update['alt']};
+
+    final updatedPhotos = gallery.items.map((photo) {
+      final newAlt = altMap[photo.uri];
+      if (newAlt != null) {
+        return photo.copyWith(alt: newAlt);
+      }
+      return photo;
+    }).toList();
+
+    final updatedGallery = gallery.copyWith(items: updatedPhotos);
+    state = {...state, galleryUri: updatedGallery};
+    return true;
+  }
 }

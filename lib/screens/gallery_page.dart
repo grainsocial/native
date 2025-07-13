@@ -7,6 +7,7 @@ import 'package:grain/providers/gallery_cache_provider.dart';
 import 'package:grain/providers/profile_provider.dart';
 import 'package:grain/screens/comments_page.dart';
 import 'package:grain/screens/create_gallery_page.dart';
+import 'package:grain/screens/edit_alt_text_sheet.dart';
 import 'package:grain/screens/gallery_action_sheet.dart';
 import 'package:grain/screens/gallery_edit_photos_sheet.dart';
 import 'package:grain/screens/gallery_sort_order_sheet.dart';
@@ -141,6 +142,24 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
                             },
                           );
                         },
+                        onEditAltText: () {
+                          showEditAltTextSheet(
+                            context,
+                            photos: gallery.items,
+                            onSave: (altTexts) async {
+                              // altTexts: Map<String, String?> (photoUri -> alt)
+                              final altUpdates = altTexts.entries
+                                  .map((e) => {'photoUri': e.key, 'alt': e.value})
+                                  .toList();
+                              await ref
+                                  .read(galleryCacheProvider.notifier)
+                                  .updatePhotoAltTexts(
+                                    galleryUri: gallery.uri,
+                                    altUpdates: altUpdates,
+                                  );
+                            },
+                          );
+                        },
                         onChangeSortOrder: () {
                           showGallerySortOrderSheet(
                             context,
@@ -149,7 +168,6 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
                               await ref
                                   .read(galleryCacheProvider.notifier)
                                   .reorderGalleryItems(galleryUri: gallery.uri, newOrder: newOrder);
-                              await _maybeFetchGallery(forceRefresh: true);
                               if (!sheetContext.mounted) return;
                               Navigator.of(sheetContext).pop();
                               if (!mounted) return;

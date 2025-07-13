@@ -7,12 +7,14 @@ class GalleryActionSheet extends StatelessWidget {
   final VoidCallback? onChangeSortOrder;
   final Future<void> Function(BuildContext parentContext)? onDeleteGallery;
   final BuildContext parentContext;
+  final VoidCallback? onEditAltText;
 
   const GalleryActionSheet({
     super.key,
     required this.parentContext,
     this.onEditDetails,
     this.onEditPhotos,
+    this.onEditAltText,
     this.onChangeSortOrder,
     this.onDeleteGallery,
   });
@@ -37,6 +39,14 @@ class GalleryActionSheet extends StatelessWidget {
             onTap: () {
               Navigator.of(context).pop();
               if (onEditPhotos != null) onEditPhotos!();
+            },
+          ),
+          ListTile(
+            leading: Icon(AppIcons.edit),
+            title: const Text('Edit alt text'),
+            onTap: () {
+              Navigator.of(context).pop();
+              if (onEditAltText != null) onEditAltText!();
             },
           ),
           ListTile(

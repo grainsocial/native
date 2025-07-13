@@ -923,6 +923,125 @@ class ApiService {
     appLogger.i('Created photo exif record result: $result');
     return result['uri'] as String?;
   }
+
+  /// Updates multiple photo records in the social.grain.photo collection using applyWrites.
+  /// Each photo in [updates] should have: photoUri, photo, aspectRatio, alt, createdAt
+  /// Returns true on success, false on failure.
+  Future<bool> updatePhotos(List<Map<String, dynamic>> updates) async {
+    final session = await auth.getValidSession();
+    if (session == null) {
+      appLogger.w('No valid session for updatePhotosBatch');
+      return false;
+    }
+    final dpopClient = DpopHttpClient(dpopKey: session.dpopJwk);
+    final issuer = session.issuer;
+    final did = session.subject;
+    final url = Uri.parse('$issuer/xrpc/com.atproto.repo.applyWrites');
+
+    // Fetch current photo records for all photos
+    final photoRecords = await fetchPhotoRecords();
+
+    final writes = <Map<String, dynamic>>[];
+    for (final update in updates) {
+      String rkey = '';
+      try {
+        rkey = AtUri.parse(update['photoUri'] as String).rkey;
+      } catch (_) {}
+      if (rkey.isEmpty) {
+        appLogger.w('No rkey found in photoUri: ${update['photoUri']}');
+        continue;
+      }
+
+      // Get the full photo record for this photoUri
+      final record = photoRecords[update['photoUri']];
+      if (record == null) {
+        appLogger.w('No photo record found for photoUri: ${update['photoUri']}');
+        continue;
+      }
+
+      // Use provided values or fallback to the record's values
+      final photoBlobRef = update['photo'] ?? record['photo'];
+      final aspectRatio = update['aspectRatio'] ?? record['aspectRatio'];
+      final createdAt = update['createdAt'] ?? record['createdAt'];
+
+      if (photoBlobRef == null) {
+        appLogger.w('No blobRef found for photoUri: ${update['photoUri']}');
+        continue;
+      }
+
+      writes.add({
+        '\$type': 'com.atproto.repo.applyWrites#update',
+        'collection': 'social.grain.photo',
+        'rkey': rkey,
+        'value': {
+          'photo': photoBlobRef,
+          'aspectRatio': aspectRatio,
+          'alt': update['alt'] ?? '',
+          'createdAt': createdAt,
+        },
+      });
+    }
+    if (writes.isEmpty) {
+      appLogger.w('No valid photo updates to apply');
+      return false;
+    }
+    final payload = {'repo': did, 'validate': false, 'writes': writes};
+    appLogger.i('Applying batch photo updates: $payload');
+    final response = await dpopClient.send(
+      method: 'POST',
+      url: url,
+      accessToken: session.accessToken,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(payload),
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      appLogger.w('Failed to apply batch photo updates: ${response.statusCode} ${response.body}');
+      return false;
+    }
+    appLogger.i('Batch photo updates applied successfully');
+    return true;
+  }
+
+  /// Fetches the full photo record for each photo in social.grain.photo.
+  /// Returns a map of photoUri -> photo record (Map`<`String, dynamic`>`).
+  Future<Map<String, dynamic>> fetchPhotoRecords() async {
+    final session = await auth.getValidSession();
+    if (session == null) {
+      appLogger.w('No valid session for fetchPhotoRecords');
+      return {};
+    }
+    final dpopClient = DpopHttpClient(dpopKey: session.dpopJwk);
+    final issuer = session.issuer;
+    final did = session.subject;
+    final url = Uri.parse(
+      '$issuer/xrpc/com.atproto.repo.listRecords?repo=$did&collection=social.grain.photo',
+    );
+
+    final response = await dpopClient.send(
+      method: 'GET',
+      url: url,
+      accessToken: session.accessToken,
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode != 200) {
+      appLogger.w('Failed to list photo records: ${response.statusCode} ${response.body}');
+      return {};
+    }
+
+    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final records = json['records'] as List<dynamic>? ?? [];
+    final photoRecords = <String, dynamic>{};
+
+    for (final record in records) {
+      final uri = record['uri'] as String?;
+      final value = record['value'] as Map<String, dynamic>?;
+      if (uri != null && value != null) {
+        photoRecords[uri] = value;
+      }
+    }
+    return photoRecords;
+  }
 }
 
 final apiService = ApiService();
