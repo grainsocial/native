@@ -8,6 +8,8 @@ class PlainTextField extends StatelessWidget {
   final TextInputType? keyboardType;
   final String? hintText;
   final void Function(String)? onChanged;
+  final Widget? prefixIcon;
+  final Widget? suffixIcon;
 
   const PlainTextField({
     super.key,
@@ -18,6 +20,8 @@ class PlainTextField extends StatelessWidget {
     this.keyboardType,
     this.hintText,
     this.onChanged,
+    this.prefixIcon,
+    this.suffixIcon,
   });
 
   @override
@@ -45,7 +49,6 @@ class PlainTextField extends StatelessWidget {
                 final isFocused = Focus.of(context).hasFocus;
                 return Stack(
                   children: [
-                    // TextField with internal padding
                     TextField(
                       controller: controller,
                       maxLines: maxLines,
@@ -59,6 +62,8 @@ class PlainTextField extends StatelessWidget {
                         border: InputBorder.none,
                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                         isDense: true,
+                        prefixIcon: prefixIcon,
+                        suffixIcon: suffixIcon,
                       ),
                     ),
                     // Border overlay

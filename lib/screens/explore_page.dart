@@ -82,6 +82,16 @@ class _ExplorePageState extends State<ExplorePage> {
             hintText: 'Search for users',
             onChanged: _onSearchChanged,
             enabled: true,
+            prefixIcon: Icon(AppIcons.search, color: theme.iconTheme.color, size: 24),
+            suffixIcon: _controller.text.isNotEmpty
+                ? GestureDetector(
+                    onTap: () {
+                      _controller.clear();
+                      _onSearchChanged('');
+                    },
+                    child: Icon(Icons.clear, color: theme.iconTheme.color, size: 22),
+                  )
+                : null,
           ),
         ),
         if (_controller.text.isNotEmpty)
