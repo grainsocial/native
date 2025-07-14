@@ -132,8 +132,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     );
   }
 
-  // ...existing code...
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);

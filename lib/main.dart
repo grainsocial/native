@@ -14,6 +14,7 @@ import 'widgets/skeleton_timeline.dart';
 
 class AppConfig {
   static late final String apiUrl;
+  static late final String wsUrl;
 
   static Future<void> init() async {
     if (!kReleaseMode) {
@@ -22,6 +23,9 @@ class AppConfig {
     apiUrl = kReleaseMode
         ? const String.fromEnvironment('API_URL', defaultValue: 'https://grain.social')
         : dotenv.env['API_URL'] ?? 'http://localhost:8080';
+    wsUrl = kReleaseMode
+        ? const String.fromEnvironment('WS_URL', defaultValue: 'wss://grain.social/ws')
+        : dotenv.env['WS_URL'] ?? 'ws://localhost:8080/ws';
   }
 }
 

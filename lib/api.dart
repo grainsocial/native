@@ -30,6 +30,7 @@ class ApiService {
   List<Gallery> galleries = [];
 
   String get _apiUrl => AppConfig.apiUrl;
+  String get _wsUrl => AppConfig.wsUrl;
 
   Future<void> loadToken() async {
     _accessToken = await _storage.read(key: 'access_token');
@@ -1041,6 +1042,93 @@ class ApiService {
       }
     }
     return photoRecords;
+  }
+
+  /// Connects to a WebSocket and listens for messages.
+  /// Uses the same headers as other authenticated requests.
+  /// [wsUrl]: The WebSocket URL to connect to.
+  /// [onMessage]: Callback for each incoming message.
+  /// Returns the WebSocket instance.
+  Future<WebSocket?> connectAndListenWs({required void Function(dynamic message) onMessage}) async {
+    final session = await auth.getValidSession();
+    if (session == null) {
+      appLogger.w('No valid session for WebSocket connection');
+      return null;
+    }
+    int attempt = 0;
+    const int maxRetries = 5;
+    Duration delay = const Duration(seconds: 2);
+    WebSocket? ws;
+    final headers = {'Authorization': 'Bearer $_accessToken', 'Content-Type': 'application/json'};
+
+    late Future<WebSocket?> Function() connect;
+    late Future<void> Function() retry;
+
+    connect = () async {
+      try {
+        appLogger.i('Connecting to WebSocket: $_wsUrl (attempt \\${attempt + 1})');
+        ws = await WebSocket.connect(_wsUrl, headers: headers);
+        ws!.listen(
+          (message) => onMessage(message),
+          onError: (error) async {
+            appLogger.w('WebSocket error: $error');
+            await retry();
+          },
+          onDone: () async {
+            appLogger.i('WebSocket connection closed');
+            await retry();
+          },
+        );
+        appLogger.i('Connected to WebSocket: $_wsUrl');
+        return ws;
+      } catch (e) {
+        appLogger.e('Failed to connect to WebSocket: $e');
+        await retry();
+        return null;
+      }
+    };
+
+    retry = () async {
+      if (attempt < maxRetries) {
+        attempt++;
+        appLogger.i('Retrying WebSocket connection in \\${delay.inSeconds} seconds...');
+        await Future.delayed(delay);
+        delay *= 2;
+        await connect();
+      } else {
+        appLogger.e('Max WebSocket retry attempts reached.');
+      }
+    };
+
+    return await connect();
+  }
+
+  /// Notifies the server that the requesting account has seen notifications.
+  /// Sends a POST request with the current ISO timestamp as seenAt.
+  Future<bool> updateSeen() async {
+    if (_accessToken == null) {
+      appLogger.w('No access token for updateSeen');
+      return false;
+    }
+    final url = Uri.parse('$_apiUrl/xrpc/social.grain.notification.updateSeen');
+    final seenAt = DateTime.now().toUtc().toIso8601String();
+    final body = jsonEncode({'seenAt': seenAt});
+    final headers = {'Authorization': 'Bearer $_accessToken', 'Content-Type': 'application/json'};
+    try {
+      final response = await http.post(url, headers: headers, body: body);
+      if (response.statusCode == 200) {
+        appLogger.i('Successfully updated seen notifications at $seenAt');
+        return true;
+      } else {
+        appLogger.w(
+          'Failed to update seen notifications: \\${response.statusCode} \\${response.body}',
+        );
+        return false;
+      }
+    } catch (e) {
+      appLogger.e('Error updating seen notifications: $e');
+      return false;
+    }
   }
 }
 

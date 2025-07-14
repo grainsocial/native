@@ -1,52 +1,37 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:grain/api.dart';
 import 'package:grain/app_icons.dart';
 import 'package:grain/models/notification.dart' as grain;
+import 'package:grain/providers/notifications_provider.dart';
 import 'package:grain/screens/gallery_page.dart';
 import 'package:grain/screens/profile_page.dart';
 import 'package:grain/utils.dart';
 import 'package:grain/widgets/gallery_preview.dart';
 
-class NotificationsPage extends StatefulWidget {
+class NotificationsPage extends ConsumerStatefulWidget {
   const NotificationsPage({super.key});
 
   @override
-  State<NotificationsPage> createState() => _NotificationsPageState();
+  ConsumerState<NotificationsPage> createState() => _NotificationsPageState();
 }
 
-class _NotificationsPageState extends State<NotificationsPage> {
-  bool _loading = true;
-  bool _error = false;
-  List<grain.Notification> _notifications = [];
+class _NotificationsPageState extends ConsumerState<NotificationsPage> {
+  bool _seenCalled = false;
 
   @override
   void initState() {
     super.initState();
-    _fetchNotifications();
-  }
-
-  Future<void> _fetchNotifications() async {
-    setState(() {
-      _loading = true;
-      _error = false;
+    // Only call updateSeen once per visit
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_seenCalled) {
+        ref.read(notificationsProvider.notifier).updateSeen();
+        _seenCalled = true;
+      }
     });
-    try {
-      final notifications = await apiService.getNotifications();
-      if (!mounted) return;
-      setState(() {
-        _notifications = notifications;
-        _loading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _error = true;
-        _loading = false;
-      });
-    }
   }
 
-  Widget _buildNotificationTile(grain.Notification notification) {
+  Widget _buildNotificationTile(BuildContext context, grain.Notification notification) {
     final theme = Theme.of(context);
     final author = notification.author;
     String message = '';
@@ -195,65 +180,22 @@ class _NotificationsPageState extends State<NotificationsPage> {
     );
   }
 
-  Widget _buildSkeletonTile(BuildContext context) {
-    final theme = Theme.of(context);
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-      leading: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHighest.withAlpha(128),
-          shape: BoxShape.circle,
-        ),
-      ),
-      title: Container(
-        width: 120,
-        height: 16,
-        color: theme.colorScheme.surfaceContainerHighest.withAlpha(128),
-        margin: const EdgeInsets.only(bottom: 4),
-      ),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 180,
-            height: 14,
-            color: theme.colorScheme.surfaceContainerHighest.withAlpha(128),
-            margin: const EdgeInsets.only(bottom: 8),
-          ),
-          Container(
-            width: 140,
-            height: 12,
-            color: theme.colorScheme.surfaceContainerHighest.withAlpha(128),
-          ),
-        ],
-      ),
-      isThreeLine: true,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final ref = this.ref;
     final theme = Theme.of(context);
+    final notifications = ref.watch(notificationsProvider);
+
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      body: _loading
-          ? ListView.separated(
-              itemCount: 6,
-              separatorBuilder: (context, index) => Divider(height: 1, color: theme.dividerColor),
-              itemBuilder: (context, index) => _buildSkeletonTile(context),
-            )
-          : _error
-          ? Center(child: Text('Failed to load notifications.', style: theme.textTheme.bodyMedium))
-          : _notifications.isEmpty
+      body: notifications.isEmpty
           ? Center(child: Text('No notifications yet.', style: theme.textTheme.bodyMedium))
           : ListView.separated(
-              itemCount: _notifications.length,
+              itemCount: notifications.length,
               separatorBuilder: (context, index) => Divider(height: 1, color: theme.dividerColor),
               itemBuilder: (context, index) {
-                final notification = _notifications[index];
-                return _buildNotificationTile(notification);
+                final notification = notifications[index];
+                return _buildNotificationTile(context, notification);
               },
             ),
     );

@@ -5,6 +5,7 @@ import 'package:grain/api.dart';
 import 'package:grain/app_icons.dart';
 import 'package:grain/app_theme.dart';
 import 'package:grain/models/profile_with_galleries.dart';
+import 'package:grain/providers/notifications_provider.dart';
 import 'package:grain/providers/profile_provider.dart';
 import 'package:grain/widgets/app_image.dart';
 
@@ -35,6 +36,12 @@ class BottomNavBar extends ConsumerWidget {
       data: (profileWithGalleries) => profileWithGalleries?.profile.avatar,
       orElse: () => null,
     );
+
+    final theme = Theme.of(context);
+
+    // Get unread notifications count
+    final notifications = ref.watch(notificationsProvider);
+    final unreadCount = notifications.where((n) => n.isRead == false).length;
 
     return Container(
       decoration: BoxDecoration(
@@ -95,14 +102,44 @@ class BottomNavBar extends ConsumerWidget {
                 height: 42 + MediaQuery.of(context).padding.bottom,
                 child: Transform.translate(
                   offset: const Offset(0, -10),
-                  child: Center(
-                    child: FaIcon(
-                      AppIcons.solidBell,
-                      size: 20,
-                      color: navIndex == 2
-                          ? AppTheme.primaryColor
-                          : Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Center(
+                        child: FaIcon(
+                          AppIcons.solidBell,
+                          size: 20,
+                          color: navIndex == 2
+                              ? AppTheme.primaryColor
+                              : Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      if (unreadCount > 0)
+                        Align(
+                          alignment: Alignment.center,
+                          child: Transform.translate(
+                            offset: const Offset(10, -10),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: theme.scaffoldBackgroundColor, width: 1),
+                              ),
+                              constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                              child: Text(
+                                unreadCount > 99 ? '99+' : unreadCount.toString(),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ),

@@ -139,7 +139,6 @@ class _LibraryPhotosSelectSheetState extends ConsumerState<LibraryPhotosSelectSh
                                     ],
                                   ),
                                 ),
-                                // ...existing code...
                               ],
                             ),
                           );
