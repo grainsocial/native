@@ -29,7 +29,6 @@ class NotificationsNotifier extends StateNotifier<List<Notification>> {
             final notifications = await apiService.getNotifications();
             state = notifications;
           } else {
-            // You may need to adjust this if your WS sends a list or other format
             final notification = Notification.fromJson(data);
             state = [...state, notification];
           }
