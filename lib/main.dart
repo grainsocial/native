@@ -22,10 +22,13 @@ class AppConfig {
     }
     apiUrl = kReleaseMode
         ? const String.fromEnvironment('API_URL', defaultValue: 'https://grain.social')
-        : dotenv.env['API_URL'] ?? 'http://localhost:8080';
+        : dotenv.env['API_URL'] ?? '';
     wsUrl = kReleaseMode
-        ? const String.fromEnvironment('WS_URL', defaultValue: 'wss://grain.social/ws')
-        : dotenv.env['WS_URL'] ?? 'ws://localhost:8080/ws';
+        ? const String.fromEnvironment(
+            'WS_URL',
+            defaultValue: 'wss://notifications.grainsocial.network/ws',
+          )
+        : dotenv.env['WS_URL'] ?? '';
   }
 }
 

@@ -493,6 +493,7 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
 				VERSIONING_SYSTEM = "apple-generic";
+				WS_URL = "wss://notifications.grainsocial.network/ws";
 			};
 			name = Profile;
 		};
@@ -689,6 +690,7 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
 				VERSIONING_SYSTEM = "apple-generic";
+				WS_URL = "wss://notifications.grainsocial.network/ws";
 			};
 			name = Debug;
 		};
@@ -721,6 +723,7 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
 				VERSIONING_SYSTEM = "apple-generic";
+				WS_URL = "wss://notifications.grainsocial.network/ws";
 			};
 			name = Release;
 		};
