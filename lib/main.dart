@@ -8,6 +8,7 @@ import 'package:grain/app_theme.dart';
 import 'package:grain/auth.dart';
 import 'package:grain/screens/home_page.dart';
 import 'package:grain/screens/login_page.dart';
+import 'package:grain/websocket_service.dart';
 
 import 'providers/profile_provider.dart';
 import 'widgets/skeleton_timeline.dart';
@@ -51,15 +52,52 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   bool isSignedIn = false;
   bool _loading = true;
-  String? displayName;
+  WebSocketService? _wsService;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _checkToken();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _disconnectWebSocket();
+    super.dispose();
+  }
+
+  void _connectWebSocket() {
+    _disconnectWebSocket();
+    if (!isSignedIn) return;
+    final accessToken = apiService.getAccessToken();
+    if (accessToken == null) return;
+    _wsService = WebSocketService(
+      wsUrl: AppConfig.wsUrl,
+      accessToken: accessToken,
+      onMessage: (message) {
+        // Optionally: handle global messages or trigger provider updates
+      },
+    );
+    _wsService!.connect();
+  }
+
+  void _disconnectWebSocket() {
+    _wsService?.disconnect();
+    _wsService = null;
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && isSignedIn) {
+      _connectWebSocket();
+    } else if (state == AppLifecycleState.paused || state == AppLifecycleState.detached) {
+      _disconnectWebSocket();
+    }
   }
 
   Future<void> _checkToken() async {
@@ -72,11 +110,9 @@ class _MyAppState extends State<MyApp> {
           await apiService.fetchCurrentUser();
           valid = true;
         } else {
-          // Session fetch failed, clear session
           await auth.clearSession();
         }
       } catch (e) {
-        // Error fetching session, clear session
         await auth.clearSession();
       }
     }
@@ -84,26 +120,28 @@ class _MyAppState extends State<MyApp> {
       isSignedIn = valid;
       _loading = false;
     });
+    if (valid) {
+      _connectWebSocket();
+    }
   }
 
   void handleSignIn() async {
     setState(() {
       isSignedIn = true;
     });
-    // Fetch current user profile from /oauth/session after login
     appLogger.i('Fetching current user after sign in');
     await apiService.fetchCurrentUser();
+    _connectWebSocket();
   }
 
   void handleSignOut(BuildContext context) async {
     final container = ProviderScope.containerOf(context, listen: false);
-    await auth.clearSession(); // Clear session data
-    // Invalidate Riverpod providers for profile state
+    await auth.clearSession();
     container.invalidate(profileNotifierProvider);
-    // Add any other providers you want to invalidate here
     setState(() {
       isSignedIn = false;
     });
+    _disconnectWebSocket();
   }
 
   @override

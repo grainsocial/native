@@ -1,56 +1,82 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:grain/api.dart';
+import 'package:grain/main.dart';
 import 'package:grain/models/notification.dart';
+import 'package:grain/websocket_service.dart';
 
-final notificationsProvider = StateNotifierProvider<NotificationsNotifier, List<Notification>>((
-  ref,
-) {
-  return NotificationsNotifier();
-});
+final notificationsProvider =
+    StateNotifierProvider<NotificationsNotifier, AsyncValue<List<Notification>>>(
+      (ref) => NotificationsNotifier(),
+    );
 
-class NotificationsNotifier extends StateNotifier<List<Notification>> {
-  NotificationsNotifier() : super([]) {
+class NotificationsNotifier extends StateNotifier<AsyncValue<List<Notification>>> {
+  WebSocketService? _wsService;
+
+  NotificationsNotifier() : super(const AsyncValue.loading()) {
     _connectAndListen();
   }
 
-  WebSocket? _ws;
-  StreamSubscription? _wsSubscription;
-
   void _connectAndListen() async {
-    _ws = await apiService.connectAndListenWs(
+    // Get the current access token and wsUrl from apiService
+    final accessToken = apiService.hasToken ? apiService.getAccessToken() : null;
+    final wsUrl = AppConfig.wsUrl;
+    _wsService = WebSocketService(
+      wsUrl: wsUrl,
+      accessToken: accessToken,
       onMessage: (message) async {
         try {
           final data = message is String ? jsonDecode(message) : message;
           if (data is Map<String, dynamic> && data['type'] == 'refresh-notifications') {
             final notifications = await apiService.getNotifications();
-            state = notifications;
+            if (mounted) state = AsyncValue.data(notifications);
           } else {
             final notification = Notification.fromJson(data);
-            state = [...state, notification];
+            if (mounted) {
+              final current = state.value ?? [];
+              state = AsyncValue.data([...current, notification]);
+            }
           }
         } catch (e) {
           // Handle parse error or ignore non-notification messages
         }
       },
     );
+    try {
+      final notifications = await apiService.getNotifications();
+      if (mounted) state = AsyncValue.data(notifications);
+    } catch (e, st) {
+      if (mounted) state = AsyncValue.error(e, st);
+    }
+    await _wsService!.connect();
+  }
+
+  /// Fetch notifications directly from the API (without websocket)
+  Future<void> fetch() async {
+    state = const AsyncValue.loading();
+    try {
+      final notifications = await apiService.getNotifications();
+      if (mounted) {
+        state = AsyncValue.data(notifications);
+      }
+    } catch (e, st) {
+      if (mounted) state = AsyncValue.error(e, st);
+    }
   }
 
   /// Marks all notifications as seen both on the server and locally.
   Future<void> updateSeen() async {
     final success = await apiService.updateSeen();
-    if (success) {
-      state = [for (final n in state) n.copyWith(isRead: true)];
+    if (success && mounted && state.value != null) {
+      state = AsyncValue.data([for (final n in state.value!) n.copyWith(isRead: true)]);
     }
   }
 
   @override
   void dispose() {
-    _wsSubscription?.cancel();
-    _ws?.close();
+    _wsService?.disconnect();
     super.dispose();
   }
 }

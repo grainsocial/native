@@ -180,24 +180,87 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
     );
   }
 
+  Widget _buildSkeletonTile(BuildContext context) {
+    final theme = Theme.of(context);
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      leading: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerHighest.withAlpha(128),
+          shape: BoxShape.circle,
+        ),
+      ),
+      title: Container(
+        width: 120,
+        height: 16,
+        color: theme.colorScheme.surfaceContainerHighest.withAlpha(128),
+        margin: const EdgeInsets.only(bottom: 4),
+      ),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 180,
+            height: 14,
+            color: theme.colorScheme.surfaceContainerHighest.withAlpha(128),
+            margin: const EdgeInsets.only(bottom: 8),
+          ),
+          Container(
+            width: 140,
+            height: 12,
+            color: theme.colorScheme.surfaceContainerHighest.withAlpha(128),
+          ),
+        ],
+      ),
+      isThreeLine: true,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final ref = this.ref;
     final theme = Theme.of(context);
-    final notifications = ref.watch(notificationsProvider);
+    final notificationsAsync = ref.watch(notificationsProvider);
+
+    final notificationList = notificationsAsync.when(
+      loading: () => ListView.separated(
+        itemCount: 6,
+        separatorBuilder: (context, index) => Divider(height: 1, color: theme.dividerColor),
+        itemBuilder: (context, index) => _buildSkeletonTile(context),
+      ),
+      error: (error, stack) =>
+          Center(child: Text('Failed to load notifications', style: theme.textTheme.bodyMedium)),
+      data: (notifications) {
+        if (notifications.isEmpty) {
+          return Center(child: Text('No notifications yet.', style: theme.textTheme.bodyMedium));
+        } else {
+          return ListView.separated(
+            itemCount: notifications.length,
+            separatorBuilder: (context, index) => Divider(height: 1, color: theme.dividerColor),
+            itemBuilder: (context, index) {
+              final notification = notifications[index];
+              return _buildNotificationTile(context, notification);
+            },
+          );
+        }
+      },
+    );
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      body: notifications.isEmpty
-          ? Center(child: Text('No notifications yet.', style: theme.textTheme.bodyMedium))
-          : ListView.separated(
-              itemCount: notifications.length,
-              separatorBuilder: (context, index) => Divider(height: 1, color: theme.dividerColor),
-              itemBuilder: (context, index) {
-                final notification = notifications[index];
-                return _buildNotificationTile(context, notification);
-              },
-            ),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await ref.read(notificationsProvider.notifier).fetch();
+        },
+        child: notificationList is Center
+            ? ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [SizedBox(height: 300), notificationList],
+              )
+            : notificationList,
+      ),
     );
   }
 }

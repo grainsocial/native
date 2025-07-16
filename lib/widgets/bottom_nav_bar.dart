@@ -41,7 +41,10 @@ class BottomNavBar extends ConsumerWidget {
 
     // Get unread notifications count
     final notifications = ref.watch(notificationsProvider);
-    final unreadCount = notifications.where((n) => n.isRead == false).length;
+    final unreadCount = notifications.maybeWhen(
+      data: (list) => list.where((n) => n.isRead == false).length,
+      orElse: () => 0,
+    );
 
     return Container(
       decoration: BoxDecoration(
