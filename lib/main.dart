@@ -6,11 +6,12 @@ import 'package:grain/api.dart';
 import 'package:grain/app_logger.dart';
 import 'package:grain/app_theme.dart';
 import 'package:grain/auth.dart';
+import 'package:grain/providers/notifications_provider.dart';
+import 'package:grain/providers/profile_provider.dart';
 import 'package:grain/screens/home_page.dart';
 import 'package:grain/screens/login_page.dart';
 import 'package:grain/websocket_service.dart';
 
-import 'providers/profile_provider.dart';
 import 'widgets/skeleton_timeline.dart';
 
 class AppConfig {
@@ -125,19 +126,26 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     }
   }
 
-  void handleSignIn() async {
+  // Invalidate providers to refresh data after sign in/sign out
+  void _invalidateProviders() {
+    final container = ProviderScope.containerOf(context, listen: false);
+    container.invalidate(profileNotifierProvider);
+    container.invalidate(notificationsProvider);
+  }
+
+  void _handleSignIn() async {
     setState(() {
       isSignedIn = true;
     });
     appLogger.i('Fetching current user after sign in');
     await apiService.fetchCurrentUser();
+    _invalidateProviders();
     _connectWebSocket();
   }
 
-  void handleSignOut(BuildContext context) async {
-    final container = ProviderScope.containerOf(context, listen: false);
+  void _handleSignOut(BuildContext context) async {
+    _invalidateProviders();
     await auth.clearSession();
-    container.invalidate(profileNotifierProvider);
     setState(() {
       isSignedIn = false;
     });
@@ -160,8 +168,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       );
     } else {
       home = isSignedIn
-          ? MyHomePage(title: 'Grain', onSignOut: () => handleSignOut(context))
-          : LoginPage(onSignIn: handleSignIn);
+          ? MyHomePage(title: 'Grain', onSignOut: () => _handleSignOut(context))
+          : LoginPage(onSignIn: _handleSignIn);
     }
     return MaterialApp(
       title: 'Grain',
