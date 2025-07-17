@@ -6,11 +6,10 @@ import 'package:grain/api.dart';
 import 'package:grain/app_icons.dart';
 import 'package:grain/models/profile.dart';
 import 'package:grain/providers/profile_provider.dart';
+import 'package:grain/screens/profile_page.dart';
 import 'package:grain/widgets/app_image.dart';
 import 'package:grain/widgets/plain_text_field.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import 'profile_page.dart';
 
 class ExplorePage extends ConsumerStatefulWidget {
   const ExplorePage({super.key});
@@ -41,14 +40,9 @@ class _ExplorePageState extends ConsumerState<ExplorePage> {
       final profiles = <Profile>[];
       for (final did in dids) {
         try {
-          final asyncProfile = ref.watch(profileNotifierProvider(did));
-          if (asyncProfile.hasValue && asyncProfile.value != null) {
-            profiles.add(asyncProfile.value!.profile);
-          } else {
-            final profileWithGalleries = await ref.refresh(profileNotifierProvider(did).future);
-            if (profileWithGalleries != null) {
-              profiles.add(profileWithGalleries.profile);
-            }
+          final profileWithGalleries = await ref.read(profileNotifierProvider(did).future);
+          if (profileWithGalleries != null) {
+            profiles.add(profileWithGalleries.profile);
           }
         } catch (_) {}
       }
