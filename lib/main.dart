@@ -41,7 +41,6 @@ Future<void> main() async {
     appLogger.e('Flutter error: ${details.exception}\n${details.stack}');
   };
   await AppConfig.init();
-  await apiService.loadToken(); // Restore access token before app starts
   appLogger.i('🚀 App started');
   runApp(const ProviderScope(child: MyApp()));
 }
@@ -72,14 +71,15 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     super.dispose();
   }
 
-  void _connectWebSocket() {
+  Future<void> _connectWebSocket() async {
+    if (_wsService != null) return; // Already connected
     _disconnectWebSocket();
     if (!isSignedIn) return;
-    final accessToken = apiService.getAccessToken();
-    if (accessToken == null) return;
+    final session = await auth.getValidSession();
+    if (session == null) return;
     _wsService = WebSocketService(
       wsUrl: AppConfig.wsUrl,
-      accessToken: accessToken,
+      accessToken: session.token,
       onMessage: (message) {
         // Optionally: handle global messages or trigger provider updates
       },
@@ -95,6 +95,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed && isSignedIn) {
+      // ignore: unawaited_futures
       _connectWebSocket();
     } else if (state == AppLifecycleState.paused || state == AppLifecycleState.detached) {
       _disconnectWebSocket();
@@ -102,31 +103,15 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   }
 
   Future<void> _checkToken() async {
-    await apiService.loadToken();
-    bool valid = false;
-    if (apiService.hasToken) {
-      try {
-        final session = await apiService.fetchSession();
-        if (session != null) {
-          await apiService.fetchCurrentUser();
-          valid = true;
-        } else {
-          await auth.clearSession();
-        }
-      } catch (e) {
-        await auth.clearSession();
-      }
-    }
+    final user = await apiService.fetchCurrentUser();
+    final valid = user != null;
     setState(() {
       isSignedIn = valid;
       _loading = false;
     });
-    if (valid) {
-      _connectWebSocket();
-    }
   }
 
-  // Invalidate providers to refresh data after sign in/sign out
+  // Invalidate providers to refresh data
   void _invalidateProviders() {
     final container = ProviderScope.containerOf(context, listen: false);
     container.invalidate(profileNotifierProvider);
@@ -139,12 +124,11 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     });
     appLogger.i('Fetching current user after sign in');
     await apiService.fetchCurrentUser();
+    await _connectWebSocket();
     _invalidateProviders();
-    _connectWebSocket();
   }
 
   void _handleSignOut(BuildContext context) async {
-    _invalidateProviders();
     await auth.clearSession();
     setState(() {
       isSignedIn = false;

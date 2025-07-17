@@ -2,14 +2,12 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:at_uri/at_uri.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:grain/app_logger.dart';
 import 'package:grain/dpop_client.dart';
 import 'package:grain/main.dart';
-import 'package:grain/models/atproto_session.dart';
+import 'package:grain/models/session.dart';
 import 'package:grain/photo_manip.dart';
 import 'package:http/http.dart' as http;
-import 'package:jose/jose.dart';
 import 'package:mime/mime.dart';
 
 import './auth.dart';
@@ -23,62 +21,64 @@ import 'models/notification.dart' as grain;
 import 'models/profile.dart';
 
 class ApiService {
-  static const _storage = FlutterSecureStorage();
-  String? _accessToken;
   Profile? currentUser;
   Profile? loadedProfile;
   List<Gallery> galleries = [];
 
   String get _apiUrl => AppConfig.apiUrl;
-  String? getAccessToken() => _accessToken;
 
-  Future<void> loadToken() async {
-    _accessToken = await _storage.read(key: 'access_token');
-  }
-
-  Future<void> setToken(String? token) async {
-    _accessToken = token;
-    if (token != null) {
-      await _storage.write(key: 'access_token', value: token);
-    } else {
-      await _storage.delete(key: 'access_token');
+  Future<Session?> fetchSession([String? initialToken]) async {
+    String? token = initialToken;
+    if (token == null) {
+      final session = await auth.getValidSession();
+      token = session?.token;
+      if (token == null) return null;
     }
-  }
-
-  bool get hasToken => _accessToken != null && _accessToken!.isNotEmpty;
-
-  Future<AtprotoSession?> fetchSession() async {
-    if (_accessToken == null) return null;
 
     final response = await http.get(
       Uri.parse('$_apiUrl/oauth/session'),
-      headers: {'Authorization': 'Bearer $_accessToken', 'Content-Type': 'application/json'},
+      headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
     );
 
     if (response.statusCode != 200) {
       throw Exception('Failed to fetch session');
     }
 
-    final json = jsonDecode(response.body);
-    final token = json['tokenSet'] ?? {};
-    return AtprotoSession(
-      accessToken: token['access_token'] as String,
-      tokenType: token['token_type'] as String,
-      expiresAt: DateTime.parse(token['expires_at'] as String),
-      dpopJwk: JsonWebKey.fromJson(json['dpopJwk'] as Map<String, dynamic>),
-      issuer: token['iss'] as String,
-      subject: token['sub'] as String,
-    );
+    return Session.fromJson(jsonDecode(response.body));
+  }
+
+  Future<bool> revokeSession() async {
+    final session = await auth.getValidSession();
+    final token = session?.token;
+    if (token == null) {
+      appLogger.w('No access token for revokeSession');
+      return false;
+    }
+    final url = Uri.parse('$_apiUrl/oauth/revoke');
+    final headers = {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'};
+    try {
+      final response = await http.post(url, headers: headers);
+      if (response.statusCode == 200) {
+        appLogger.i('Session revoked successfully');
+        return true;
+      } else {
+        appLogger.w('Failed to revoke session: ${response.statusCode} ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      appLogger.e('Error revoking session: $e');
+      return false;
+    }
   }
 
   Future<Profile?> fetchCurrentUser() async {
     final session = await auth.getValidSession();
 
-    if (session == null || session.subject.isEmpty) {
+    if (session == null || session.session.subject.isEmpty) {
       return null;
     }
 
-    final user = await fetchProfile(did: session.subject);
+    final user = await fetchProfile(did: session.session.subject);
 
     currentUser = user;
 
@@ -86,10 +86,12 @@ class ApiService {
   }
 
   Future<Profile?> fetchProfile({required String did}) async {
+    final session = await auth.getValidSession();
+    final token = session?.token;
     appLogger.i('Fetching profile for did: $did');
     final response = await http.get(
       Uri.parse('$_apiUrl/xrpc/social.grain.actor.getProfile?actor=$did'),
-      headers: {'Content-Type': 'application/json', 'Authorization': "Bearer $_accessToken"},
+      headers: {'Content-Type': 'application/json', 'Authorization': "Bearer $token"},
     );
     if (response.statusCode != 200) {
       appLogger.w('Failed to fetch profile: ${response.statusCode} ${response.body}');
@@ -130,16 +132,18 @@ class ApiService {
   }
 
   Future<List<Gallery>> getTimeline({String? algorithm}) async {
-    if (_accessToken == null) {
+    final session = await auth.getValidSession();
+    final token = session?.token;
+    if (token == null) {
       return [];
     }
-    appLogger.i('Fetching timeline with algorithm: \\${algorithm ?? 'default'}');
+    appLogger.i('Fetching timeline with algorithm: ${algorithm ?? 'default'}');
     final uri = algorithm != null
         ? Uri.parse('$_apiUrl/xrpc/social.grain.feed.getTimeline?algorithm=$algorithm')
         : Uri.parse('$_apiUrl/xrpc/social.grain.feed.getTimeline');
     final response = await http.get(
       uri,
-      headers: {'Authorization': "Bearer $_accessToken", 'Content-Type': 'application/json'},
+      headers: {'Authorization': "Bearer $token", 'Content-Type': 'application/json'},
     );
     if (response.statusCode != 200) {
       appLogger.w('Failed to fetch timeline: ${response.statusCode} ${response.body}');
@@ -154,9 +158,15 @@ class ApiService {
 
   Future<Gallery?> getGallery({required String uri}) async {
     appLogger.i('Fetching gallery for uri: $uri');
+    final session = await auth.getValidSession();
+    final token = session?.token;
+    if (token == null) {
+      appLogger.w('No access token for getGallery');
+      return null;
+    }
     final response = await http.get(
       Uri.parse('$_apiUrl/xrpc/social.grain.gallery.getGallery?uri=$uri'),
-      headers: {'Authorization': "Bearer $_accessToken", 'Content-Type': 'application/json'},
+      headers: {'Authorization': "Bearer $token", 'Content-Type': 'application/json'},
     );
     if (response.statusCode != 200) {
       appLogger.w('Failed to fetch gallery: ${response.statusCode} ${response.body}');
@@ -178,12 +188,18 @@ class ApiService {
 
   Future<GalleryThread?> getGalleryThread({required String uri}) async {
     appLogger.i('Fetching gallery thread for uri: $uri');
+    final session = await auth.getValidSession();
+    final token = session?.token;
+    if (token == null) {
+      appLogger.w('No access token for getGalleryThread');
+      return null;
+    }
     final response = await http.get(
       Uri.parse('$_apiUrl/xrpc/social.grain.gallery.getGalleryThread?uri=$uri'),
-      headers: {'Content-Type': 'application/json', 'Authorization': "Bearer $_accessToken"},
+      headers: {'Content-Type': 'application/json', 'Authorization': "Bearer $token"},
     );
     if (response.statusCode != 200) {
-      appLogger.w('Failed to fetch gallery thread: \\${response.statusCode} \\${response.body}');
+      appLogger.w('Failed to fetch gallery thread: ${response.statusCode} ${response.body}');
       return null;
     }
     final json = jsonDecode(response.body) as Map<String, dynamic>;
@@ -191,17 +207,19 @@ class ApiService {
   }
 
   Future<List<grain.Notification>> getNotifications() async {
-    if (_accessToken == null) {
+    final session = await auth.getValidSession();
+    final token = session?.token;
+    if (token == null) {
       appLogger.w('No access token for getNotifications');
       return [];
     }
     appLogger.i('Fetching notifications');
     final response = await http.get(
       Uri.parse('$_apiUrl/xrpc/social.grain.notification.getNotifications'),
-      headers: {'Authorization': "Bearer $_accessToken", 'Content-Type': 'application/json'},
+      headers: {'Authorization': "Bearer $token", 'Content-Type': 'application/json'},
     );
     if (response.statusCode != 200) {
-      appLogger.w('Failed to fetch notifications: \\${response.statusCode} \\${response.body}');
+      appLogger.w('Failed to fetch notifications: ${response.statusCode} ${response.body}');
       return [];
     }
     final json = jsonDecode(response.body);
@@ -238,14 +256,16 @@ class ApiService {
   }
 
   Future<List<Profile>> searchActors(String query) async {
-    if (_accessToken == null) {
+    final session = await auth.getValidSession();
+    final token = session?.token;
+    if (token == null) {
       appLogger.w('No access token for searchActors');
       return [];
     }
     appLogger.i('Searching actors with query: $query');
     final response = await http.get(
       Uri.parse('$_apiUrl/xrpc/social.grain.actor.searchActors?q=$query'),
-      headers: {'Authorization': "Bearer $_accessToken", 'Content-Type': 'application/json'},
+      headers: {'Authorization': "Bearer $token", 'Content-Type': 'application/json'},
     );
     if (response.statusCode != 200) {
       appLogger.w('Failed to search actors: ${response.statusCode} ${response.body}');
@@ -279,9 +299,9 @@ class ApiService {
       appLogger.w('No valid session for createGallery');
       return null;
     }
-    final dpopClient = DpopHttpClient(dpopKey: session.dpopJwk);
-    final issuer = session.issuer;
-    final did = session.subject;
+    final dpopClient = DpopHttpClient(dpopKey: session.session.dpopJwk);
+    final issuer = session.session.issuer;
+    final did = session.session.subject;
     final url = Uri.parse('$issuer/xrpc/com.atproto.repo.createRecord');
     final record = {
       'collection': 'social.grain.gallery',
@@ -298,7 +318,7 @@ class ApiService {
     final response = await dpopClient.send(
       method: 'POST',
       url: url,
-      accessToken: session.accessToken,
+      accessToken: session.session.accessToken,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(record),
     );
@@ -370,8 +390,8 @@ class ApiService {
       appLogger.w('No valid session for uploadBlob');
       return null;
     }
-    final dpopClient = DpopHttpClient(dpopKey: session.dpopJwk);
-    final issuer = session.issuer;
+    final dpopClient = DpopHttpClient(dpopKey: session.session.dpopJwk);
+    final issuer = session.session.issuer;
     final url = Uri.parse('$issuer/xrpc/com.atproto.repo.uploadBlob');
 
     // Detect MIME type, fallback to application/octet-stream if unknown
@@ -385,7 +405,7 @@ class ApiService {
     final response = await dpopClient.send(
       method: 'POST',
       url: url,
-      accessToken: session.accessToken,
+      accessToken: session.session.accessToken,
       headers: {'Content-Type': contentType},
       body: bytes,
     );
@@ -418,9 +438,9 @@ class ApiService {
       appLogger.w('No valid session for createPhotoRecord');
       return null;
     }
-    final dpopClient = DpopHttpClient(dpopKey: session.dpopJwk);
-    final issuer = session.issuer;
-    final did = session.subject;
+    final dpopClient = DpopHttpClient(dpopKey: session.session.dpopJwk);
+    final issuer = session.session.issuer;
+    final did = session.session.subject;
     final url = Uri.parse('$issuer/xrpc/com.atproto.repo.createRecord');
     final record = {
       'collection': 'social.grain.photo',
@@ -436,7 +456,7 @@ class ApiService {
     final response = await dpopClient.send(
       method: 'POST',
       url: url,
-      accessToken: session.accessToken,
+      accessToken: session.session.accessToken,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(record),
     );
@@ -459,9 +479,9 @@ class ApiService {
       appLogger.w('No valid session for createGalleryItem');
       return null;
     }
-    final dpopClient = DpopHttpClient(dpopKey: session.dpopJwk);
-    final issuer = session.issuer;
-    final did = session.subject;
+    final dpopClient = DpopHttpClient(dpopKey: session.session.dpopJwk);
+    final issuer = session.session.issuer;
+    final did = session.session.subject;
     final url = Uri.parse('$issuer/xrpc/com.atproto.repo.createRecord');
     final record = {
       'collection': 'social.grain.gallery.item',
@@ -477,7 +497,7 @@ class ApiService {
     final response = await dpopClient.send(
       method: 'POST',
       url: url,
-      accessToken: session.accessToken,
+      accessToken: session.session.accessToken,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(record),
     );
@@ -502,9 +522,9 @@ class ApiService {
       appLogger.w('No valid session for createComment');
       return null;
     }
-    final dpopClient = DpopHttpClient(dpopKey: session.dpopJwk);
-    final issuer = session.issuer;
-    final did = session.subject;
+    final dpopClient = DpopHttpClient(dpopKey: session.session.dpopJwk);
+    final issuer = session.session.issuer;
+    final did = session.session.subject;
     final url = Uri.parse('$issuer/xrpc/com.atproto.repo.createRecord');
     final record = {
       'collection': 'social.grain.comment',
@@ -522,7 +542,7 @@ class ApiService {
     final response = await dpopClient.send(
       method: 'POST',
       url: url,
-      accessToken: session.accessToken,
+      accessToken: session.session.accessToken,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(record),
     );
@@ -541,9 +561,9 @@ class ApiService {
       appLogger.w('No valid session for createFavorite');
       return null;
     }
-    final dpopClient = DpopHttpClient(dpopKey: session.dpopJwk);
-    final issuer = session.issuer;
-    final did = session.subject;
+    final dpopClient = DpopHttpClient(dpopKey: session.session.dpopJwk);
+    final issuer = session.session.issuer;
+    final did = session.session.subject;
     final url = Uri.parse('$issuer/xrpc/com.atproto.repo.createRecord');
     final record = {
       'collection': 'social.grain.favorite',
@@ -554,7 +574,7 @@ class ApiService {
     final response = await dpopClient.send(
       method: 'POST',
       url: url,
-      accessToken: session.accessToken,
+      accessToken: session.session.accessToken,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(record),
     );
@@ -573,9 +593,9 @@ class ApiService {
       appLogger.w('No valid session for createFollow');
       return null;
     }
-    final dpopClient = DpopHttpClient(dpopKey: session.dpopJwk);
-    final issuer = session.issuer;
-    final did = session.subject;
+    final dpopClient = DpopHttpClient(dpopKey: session.session.dpopJwk);
+    final issuer = session.session.issuer;
+    final did = session.session.subject;
     final url = Uri.parse('$issuer/xrpc/com.atproto.repo.createRecord');
     final record = {
       'collection': 'social.grain.graph.follow',
@@ -586,7 +606,7 @@ class ApiService {
     final response = await dpopClient.send(
       method: 'POST',
       url: url,
-      accessToken: session.accessToken,
+      accessToken: session.session.accessToken,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(record),
     );
@@ -607,10 +627,10 @@ class ApiService {
       appLogger.w('No valid session for deleteRecord');
       return false;
     }
-    final dpopClient = DpopHttpClient(dpopKey: session.dpopJwk);
-    final issuer = session.issuer;
+    final dpopClient = DpopHttpClient(dpopKey: session.session.dpopJwk);
+    final issuer = session.session.issuer;
     final url = Uri.parse('$issuer/xrpc/com.atproto.repo.deleteRecord');
-    final repo = session.subject;
+    final repo = session.session.subject;
     if (repo.isEmpty) {
       appLogger.w('No repo (DID) available from session for deleteRecord');
       return false;
@@ -633,7 +653,7 @@ class ApiService {
     final response = await dpopClient.send(
       method: 'POST',
       url: url,
-      accessToken: session.accessToken,
+      accessToken: session.session.accessToken,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(payload),
     );
@@ -658,9 +678,9 @@ class ApiService {
       appLogger.w('No valid session for updateProfile');
       return false;
     }
-    final dpopClient = DpopHttpClient(dpopKey: session.dpopJwk);
-    final issuer = session.issuer;
-    final did = session.subject;
+    final dpopClient = DpopHttpClient(dpopKey: session.session.dpopJwk);
+    final issuer = session.session.issuer;
+    final did = session.session.subject;
     // Fetch the raw profile record from atproto getRecord endpoint
     final getUrl = Uri.parse(
       '$issuer/xrpc/com.atproto.repo.getRecord?repo=$did&collection=social.grain.actor.profile&rkey=self',
@@ -668,7 +688,7 @@ class ApiService {
     final getResp = await dpopClient.send(
       method: 'GET',
       url: getUrl,
-      accessToken: session.accessToken,
+      accessToken: session.session.accessToken,
       headers: {'Content-Type': 'application/json'},
     );
     if (getResp.statusCode != 200) {
@@ -704,7 +724,7 @@ class ApiService {
     final response = await dpopClient.send(
       method: 'POST',
       url: url,
-      accessToken: session.accessToken,
+      accessToken: session.session.accessToken,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(record),
     );
@@ -760,9 +780,9 @@ class ApiService {
       appLogger.w('No valid session for updateGallerySortOrder');
       return false;
     }
-    final dpopClient = DpopHttpClient(dpopKey: session.dpopJwk);
-    final issuer = session.issuer;
-    final did = session.subject;
+    final dpopClient = DpopHttpClient(dpopKey: session.session.dpopJwk);
+    final issuer = session.session.issuer;
+    final did = session.session.subject;
     final url = Uri.parse('$issuer/xrpc/com.atproto.repo.applyWrites');
 
     final updates = <Map<String, dynamic>>[];
@@ -794,7 +814,7 @@ class ApiService {
     final response = await dpopClient.send(
       method: 'POST',
       url: url,
-      accessToken: session.accessToken,
+      accessToken: session.session.accessToken,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(payload),
     );
@@ -822,9 +842,9 @@ class ApiService {
       appLogger.w('No valid session for updateGallery');
       return false;
     }
-    final dpopClient = DpopHttpClient(dpopKey: session.dpopJwk);
-    final issuer = session.issuer;
-    final did = session.subject;
+    final dpopClient = DpopHttpClient(dpopKey: session.session.dpopJwk);
+    final issuer = session.session.issuer;
+    final did = session.session.subject;
     final url = Uri.parse('$issuer/xrpc/com.atproto.repo.putRecord');
     // Extract rkey from galleryUri
     String rkey = '';
@@ -851,7 +871,7 @@ class ApiService {
     final response = await dpopClient.send(
       method: 'POST',
       url: url,
-      accessToken: session.accessToken,
+      accessToken: session.session.accessToken,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(record),
     );
@@ -884,9 +904,9 @@ class ApiService {
       appLogger.w('No valid session for createPhotoExif');
       return null;
     }
-    final dpopClient = DpopHttpClient(dpopKey: session.dpopJwk);
-    final issuer = session.issuer;
-    final did = session.subject;
+    final dpopClient = DpopHttpClient(dpopKey: session.session.dpopJwk);
+    final issuer = session.session.issuer;
+    final did = session.session.subject;
     final url = Uri.parse('$issuer/xrpc/com.atproto.repo.createRecord');
     final record = {
       'collection': 'social.grain.photo.exif',
@@ -910,7 +930,7 @@ class ApiService {
     final response = await dpopClient.send(
       method: 'POST',
       url: url,
-      accessToken: session.accessToken,
+      accessToken: session.session.accessToken,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(record),
     );
@@ -934,9 +954,9 @@ class ApiService {
       appLogger.w('No valid session for updatePhotosBatch');
       return false;
     }
-    final dpopClient = DpopHttpClient(dpopKey: session.dpopJwk);
-    final issuer = session.issuer;
-    final did = session.subject;
+    final dpopClient = DpopHttpClient(dpopKey: session.session.dpopJwk);
+    final issuer = session.session.issuer;
+    final did = session.session.subject;
     final url = Uri.parse('$issuer/xrpc/com.atproto.repo.applyWrites');
 
     // Fetch current photo records for all photos
@@ -991,7 +1011,7 @@ class ApiService {
     final response = await dpopClient.send(
       method: 'POST',
       url: url,
-      accessToken: session.accessToken,
+      accessToken: session.session.accessToken,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(payload),
     );
@@ -1011,9 +1031,9 @@ class ApiService {
       appLogger.w('No valid session for fetchPhotoRecords');
       return {};
     }
-    final dpopClient = DpopHttpClient(dpopKey: session.dpopJwk);
-    final issuer = session.issuer;
-    final did = session.subject;
+    final dpopClient = DpopHttpClient(dpopKey: session.session.dpopJwk);
+    final issuer = session.session.issuer;
+    final did = session.session.subject;
     final url = Uri.parse(
       '$issuer/xrpc/com.atproto.repo.listRecords?repo=$did&collection=social.grain.photo',
     );
@@ -1021,7 +1041,7 @@ class ApiService {
     final response = await dpopClient.send(
       method: 'GET',
       url: url,
-      accessToken: session.accessToken,
+      accessToken: session.session.accessToken,
       headers: {'Content-Type': 'application/json'},
     );
 
@@ -1047,23 +1067,23 @@ class ApiService {
   /// Notifies the server that the requesting account has seen notifications.
   /// Sends a POST request with the current ISO timestamp as seenAt.
   Future<bool> updateSeen() async {
-    if (_accessToken == null) {
+    final session = await auth.getValidSession();
+    final token = session?.token;
+    if (token == null) {
       appLogger.w('No access token for updateSeen');
       return false;
     }
     final url = Uri.parse('$_apiUrl/xrpc/social.grain.notification.updateSeen');
     final seenAt = DateTime.now().toUtc().toIso8601String();
     final body = jsonEncode({'seenAt': seenAt});
-    final headers = {'Authorization': 'Bearer $_accessToken', 'Content-Type': 'application/json'};
+    final headers = {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'};
     try {
       final response = await http.post(url, headers: headers, body: body);
       if (response.statusCode == 200) {
         appLogger.i('Successfully updated seen notifications at $seenAt');
         return true;
       } else {
-        appLogger.w(
-          'Failed to update seen notifications: \\${response.statusCode} \\${response.body}',
-        );
+        appLogger.w('Failed to update seen notifications: ${response.statusCode} ${response.body}');
         return false;
       }
     } catch (e) {

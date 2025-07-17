@@ -6,10 +6,16 @@ import 'package:grain/api.dart';
 import 'package:grain/app_logger.dart';
 import 'package:grain/main.dart';
 import 'package:grain/models/atproto_session.dart';
+import 'package:grain/models/session.dart';
 
 class Auth {
   static const _storage = FlutterSecureStorage();
   Auth();
+
+  Future<bool> hasToken() async {
+    final session = await _loadSession();
+    return session != null && session.token.isNotEmpty && !isSessionExpired(session.session);
+  }
 
   Future<void> login(String handle) async {
     final apiUrl = AppConfig.apiUrl;
@@ -23,28 +29,27 @@ class Auth {
     appLogger.i('Redirected URL: $redirectedUrl');
     appLogger.i('User signed in with handle: $handle');
 
-    apiService.setToken(token);
-
-    final session = await apiService.fetchSession();
+    final session = await apiService.fetchSession(token);
     if (session == null) {
       throw Exception('Failed to fetch session after login');
     }
-
     await _saveSession(session);
   }
 
-  Future<void> _saveSession(AtprotoSession session) async {
-    final sessionJson = jsonEncode(session.toJson());
-    await _storage.write(key: 'atproto_session', value: sessionJson);
+  Future<void> _saveSession(Session session) async {
+    final atprotoSessionJson = jsonEncode(session.session.toJson());
+    await _storage.write(key: 'atproto_session', value: atprotoSessionJson);
+    await _storage.write(key: 'api_token', value: session.token);
   }
 
-  Future<AtprotoSession?> _loadSession() async {
-    final jsonString = await _storage.read(key: 'atproto_session');
-    if (jsonString == null) return null;
+  Future<Session?> _loadSession() async {
+    final sessionJsonString = await _storage.read(key: 'atproto_session');
+    final token = await _storage.read(key: 'api_token');
+    if (sessionJsonString == null || token == null) return null;
 
     try {
-      final json = jsonDecode(jsonString);
-      return AtprotoSession.fromJson(json);
+      final sessionJson = jsonDecode(sessionJsonString);
+      return Session(session: AtprotoSession.fromJson(sessionJson), token: token);
     } catch (e) {
       // Optionally log or clear storage if corrupted
       return null;
@@ -59,23 +64,28 @@ class Auth {
     return session.expiresAt.subtract(tolerance).isBefore(now);
   }
 
-  Future<AtprotoSession?> getValidSession() async {
-    var session = await _loadSession();
-    if (session == null || isSessionExpired(session)) {
-      appLogger.w('Session is expired or not found, attempting refresh');
-      // Try to refresh session by calling fetchSession
+  Future<Session?> getValidSession() async {
+    final session = await _loadSession();
+    if (session == null) {
+      // No session at all, do not attempt refresh
+      return null;
+    }
+    if (isSessionExpired(session.session)) {
+      appLogger.w('Session is expired, attempting refresh');
       try {
         final refreshed = await apiService.fetchSession();
-        if (refreshed != null && !isSessionExpired(refreshed)) {
+        if (refreshed != null && !isSessionExpired(refreshed.session)) {
           await _saveSession(refreshed);
           appLogger.i('Session refreshed and saved');
           return refreshed;
         } else {
-          appLogger.w('Session refresh failed or still expired');
+          appLogger.w('Session refresh failed or still expired, clearing session');
+          await clearSession();
           return null;
         }
       } catch (e) {
         appLogger.e('Error refreshing session: $e');
+        await clearSession();
         return null;
       }
     }
@@ -83,13 +93,13 @@ class Auth {
   }
 
   Future<void> clearSession() async {
+    // Revoke session on the server
+    await apiService.revokeSession();
     // Remove session from secure storage
     await _storage.delete(key: 'atproto_session');
-    // Remove access token from secure storage and memory
-    await apiService.setToken(null);
-    // Optionally clear any in-memory session/user data
+    await _storage.delete(key: 'api_token');
+    // Clear any in-memory session/user data
     apiService.currentUser = null;
-    // If you add a session property to ApiService, clear it here as well
   }
 }
 

@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:grain/api.dart';
+import 'package:grain/auth.dart';
 import 'package:grain/main.dart';
 import 'package:grain/models/notification.dart';
 import 'package:grain/websocket_service.dart';
@@ -20,9 +21,13 @@ class NotificationsNotifier extends StateNotifier<AsyncValue<List<Notification>>
   }
 
   void _connectAndListen() async {
-    // Get the current access token and wsUrl from apiService
-    final accessToken = apiService.hasToken ? apiService.getAccessToken() : null;
+    final session = await auth.getValidSession();
+    final accessToken = session?.token;
     final wsUrl = AppConfig.wsUrl;
+    if (accessToken == null) {
+      state = AsyncValue.error('No access token', StackTrace.current);
+      return;
+    }
     _wsService = WebSocketService(
       wsUrl: wsUrl,
       accessToken: accessToken,
