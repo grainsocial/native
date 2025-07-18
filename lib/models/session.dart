@@ -7,7 +7,11 @@ part 'session.g.dart';
 
 @freezed
 class Session with _$Session {
-  const factory Session({required AtprotoSession session, required String token}) = _Session;
+  const factory Session({
+    required AtprotoSession session,
+    required String token,
+    required String pds,
+  }) = _Session;
 
   factory Session.fromJson(Map<String, dynamic> json) => _$SessionFromJson(json);
 }

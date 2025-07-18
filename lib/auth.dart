@@ -37,19 +37,17 @@ class Auth {
   }
 
   Future<void> _saveSession(Session session) async {
-    final atprotoSessionJson = jsonEncode(session.session.toJson());
-    await _storage.write(key: 'atproto_session', value: atprotoSessionJson);
-    await _storage.write(key: 'api_token', value: session.token);
+    final sessionJson = jsonEncode(session.toJson());
+    await _storage.write(key: 'session', value: sessionJson);
   }
 
   Future<Session?> _loadSession() async {
-    final sessionJsonString = await _storage.read(key: 'atproto_session');
-    final token = await _storage.read(key: 'api_token');
-    if (sessionJsonString == null || token == null) return null;
+    final sessionJsonString = await _storage.read(key: 'session');
+    if (sessionJsonString == null) return null;
 
     try {
       final sessionJson = jsonDecode(sessionJsonString);
-      return Session(session: AtprotoSession.fromJson(sessionJson), token: token);
+      return Session.fromJson(sessionJson);
     } catch (e) {
       // Optionally log or clear storage if corrupted
       return null;
@@ -96,8 +94,7 @@ class Auth {
     // Revoke session on the server
     await apiService.revokeSession();
     // Remove session from secure storage
-    await _storage.delete(key: 'atproto_session');
-    await _storage.delete(key: 'api_token');
+    await _storage.delete(key: 'session');
     // Clear any in-memory session/user data
     apiService.currentUser = null;
   }

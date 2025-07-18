@@ -23,6 +23,7 @@ Session _$SessionFromJson(Map<String, dynamic> json) {
 mixin _$Session {
   AtprotoSession get session => throw _privateConstructorUsedError;
   String get token => throw _privateConstructorUsedError;
+  String get pds => throw _privateConstructorUsedError;
 
   /// Serializes this Session to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -38,7 +39,7 @@ abstract class $SessionCopyWith<$Res> {
   factory $SessionCopyWith(Session value, $Res Function(Session) then) =
       _$SessionCopyWithImpl<$Res, Session>;
   @useResult
-  $Res call({AtprotoSession session, String token});
+  $Res call({AtprotoSession session, String token, String pds});
 
   $AtprotoSessionCopyWith<$Res> get session;
 }
@@ -57,7 +58,11 @@ class _$SessionCopyWithImpl<$Res, $Val extends Session>
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({Object? session = null, Object? token = null}) {
+  $Res call({
+    Object? session = null,
+    Object? token = null,
+    Object? pds = null,
+  }) {
     return _then(
       _value.copyWith(
             session: null == session
@@ -67,6 +72,10 @@ class _$SessionCopyWithImpl<$Res, $Val extends Session>
             token: null == token
                 ? _value.token
                 : token // ignore: cast_nullable_to_non_nullable
+                      as String,
+            pds: null == pds
+                ? _value.pds
+                : pds // ignore: cast_nullable_to_non_nullable
                       as String,
           )
           as $Val,
@@ -92,7 +101,7 @@ abstract class _$$SessionImplCopyWith<$Res> implements $SessionCopyWith<$Res> {
   ) = __$$SessionImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({AtprotoSession session, String token});
+  $Res call({AtprotoSession session, String token, String pds});
 
   @override
   $AtprotoSessionCopyWith<$Res> get session;
@@ -111,7 +120,11 @@ class __$$SessionImplCopyWithImpl<$Res>
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({Object? session = null, Object? token = null}) {
+  $Res call({
+    Object? session = null,
+    Object? token = null,
+    Object? pds = null,
+  }) {
     return _then(
       _$SessionImpl(
         session: null == session
@@ -122,6 +135,10 @@ class __$$SessionImplCopyWithImpl<$Res>
             ? _value.token
             : token // ignore: cast_nullable_to_non_nullable
                   as String,
+        pds: null == pds
+            ? _value.pds
+            : pds // ignore: cast_nullable_to_non_nullable
+                  as String,
       ),
     );
   }
@@ -130,7 +147,11 @@ class __$$SessionImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$SessionImpl implements _Session {
-  const _$SessionImpl({required this.session, required this.token});
+  const _$SessionImpl({
+    required this.session,
+    required this.token,
+    required this.pds,
+  });
 
   factory _$SessionImpl.fromJson(Map<String, dynamic> json) =>
       _$$SessionImplFromJson(json);
@@ -139,10 +160,12 @@ class _$SessionImpl implements _Session {
   final AtprotoSession session;
   @override
   final String token;
+  @override
+  final String pds;
 
   @override
   String toString() {
-    return 'Session(session: $session, token: $token)';
+    return 'Session(session: $session, token: $token, pds: $pds)';
   }
 
   @override
@@ -151,12 +174,13 @@ class _$SessionImpl implements _Session {
         (other.runtimeType == runtimeType &&
             other is _$SessionImpl &&
             (identical(other.session, session) || other.session == session) &&
-            (identical(other.token, token) || other.token == token));
+            (identical(other.token, token) || other.token == token) &&
+            (identical(other.pds, pds) || other.pds == pds));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, session, token);
+  int get hashCode => Object.hash(runtimeType, session, token, pds);
 
   /// Create a copy of Session
   /// with the given fields replaced by the non-null parameter values.
@@ -176,6 +200,7 @@ abstract class _Session implements Session {
   const factory _Session({
     required final AtprotoSession session,
     required final String token,
+    required final String pds,
   }) = _$SessionImpl;
 
   factory _Session.fromJson(Map<String, dynamic> json) = _$SessionImpl.fromJson;
@@ -184,6 +209,8 @@ abstract class _Session implements Session {
   AtprotoSession get session;
   @override
   String get token;
+  @override
+  String get pds;
 
   /// Create a copy of Session
   /// with the given fields replaced by the non-null parameter values.

@@ -300,9 +300,8 @@ class ApiService {
       return null;
     }
     final dpopClient = DpopHttpClient(dpopKey: session.session.dpopJwk);
-    final issuer = session.session.issuer;
     final did = session.session.subject;
-    final url = Uri.parse('$issuer/xrpc/com.atproto.repo.createRecord');
+    final url = Uri.parse('${session.pds}/xrpc/com.atproto.repo.createRecord');
     final record = {
       'collection': 'social.grain.gallery',
       'repo': did,
@@ -391,8 +390,7 @@ class ApiService {
       return null;
     }
     final dpopClient = DpopHttpClient(dpopKey: session.session.dpopJwk);
-    final issuer = session.session.issuer;
-    final url = Uri.parse('$issuer/xrpc/com.atproto.repo.uploadBlob');
+    final url = Uri.parse('${session.pds}/xrpc/com.atproto.repo.uploadBlob');
 
     // Detect MIME type, fallback to application/octet-stream if unknown
     String? mimeType = lookupMimeType(file.path);
@@ -439,9 +437,8 @@ class ApiService {
       return null;
     }
     final dpopClient = DpopHttpClient(dpopKey: session.session.dpopJwk);
-    final issuer = session.session.issuer;
     final did = session.session.subject;
-    final url = Uri.parse('$issuer/xrpc/com.atproto.repo.createRecord');
+    final url = Uri.parse('${session.pds}/xrpc/com.atproto.repo.createRecord');
     final record = {
       'collection': 'social.grain.photo',
       'repo': did,
@@ -480,9 +477,8 @@ class ApiService {
       return null;
     }
     final dpopClient = DpopHttpClient(dpopKey: session.session.dpopJwk);
-    final issuer = session.session.issuer;
     final did = session.session.subject;
-    final url = Uri.parse('$issuer/xrpc/com.atproto.repo.createRecord');
+    final url = Uri.parse('${session.pds}/xrpc/com.atproto.repo.createRecord');
     final record = {
       'collection': 'social.grain.gallery.item',
       'repo': did,
@@ -523,9 +519,8 @@ class ApiService {
       return null;
     }
     final dpopClient = DpopHttpClient(dpopKey: session.session.dpopJwk);
-    final issuer = session.session.issuer;
     final did = session.session.subject;
-    final url = Uri.parse('$issuer/xrpc/com.atproto.repo.createRecord');
+    final url = Uri.parse('${session.pds}/xrpc/com.atproto.repo.createRecord');
     final record = {
       'collection': 'social.grain.comment',
       'repo': did,
@@ -562,9 +557,8 @@ class ApiService {
       return null;
     }
     final dpopClient = DpopHttpClient(dpopKey: session.session.dpopJwk);
-    final issuer = session.session.issuer;
     final did = session.session.subject;
-    final url = Uri.parse('$issuer/xrpc/com.atproto.repo.createRecord');
+    final url = Uri.parse('${session.pds}/xrpc/com.atproto.repo.createRecord');
     final record = {
       'collection': 'social.grain.favorite',
       'repo': did,
@@ -594,9 +588,8 @@ class ApiService {
       return null;
     }
     final dpopClient = DpopHttpClient(dpopKey: session.session.dpopJwk);
-    final issuer = session.session.issuer;
     final did = session.session.subject;
-    final url = Uri.parse('$issuer/xrpc/com.atproto.repo.createRecord');
+    final url = Uri.parse('${session.pds}/xrpc/com.atproto.repo.createRecord');
     final record = {
       'collection': 'social.grain.graph.follow',
       'repo': did,
@@ -628,8 +621,7 @@ class ApiService {
       return false;
     }
     final dpopClient = DpopHttpClient(dpopKey: session.session.dpopJwk);
-    final issuer = session.session.issuer;
-    final url = Uri.parse('$issuer/xrpc/com.atproto.repo.deleteRecord');
+    final url = Uri.parse('${session.pds}/xrpc/com.atproto.repo.deleteRecord');
     final repo = session.session.subject;
     if (repo.isEmpty) {
       appLogger.w('No repo (DID) available from session for deleteRecord');
@@ -679,11 +671,10 @@ class ApiService {
       return false;
     }
     final dpopClient = DpopHttpClient(dpopKey: session.session.dpopJwk);
-    final issuer = session.session.issuer;
     final did = session.session.subject;
     // Fetch the raw profile record from atproto getRecord endpoint
     final getUrl = Uri.parse(
-      '$issuer/xrpc/com.atproto.repo.getRecord?repo=$did&collection=social.grain.actor.profile&rkey=self',
+      '${session.pds}/xrpc/com.atproto.repo.getRecord?repo=$did&collection=social.grain.actor.profile&rkey=self',
     );
     final getResp = await dpopClient.send(
       method: 'GET',
@@ -713,7 +704,7 @@ class ApiService {
       }
     }
     // Update the profile record
-    final url = Uri.parse('$issuer/xrpc/com.atproto.repo.putRecord');
+    final url = Uri.parse('${session.pds}/xrpc/com.atproto.repo.putRecord');
     final record = {
       'collection': 'social.grain.actor.profile',
       'repo': did,
@@ -781,9 +772,8 @@ class ApiService {
       return false;
     }
     final dpopClient = DpopHttpClient(dpopKey: session.session.dpopJwk);
-    final issuer = session.session.issuer;
     final did = session.session.subject;
-    final url = Uri.parse('$issuer/xrpc/com.atproto.repo.applyWrites');
+    final url = Uri.parse('${session.pds}/xrpc/com.atproto.repo.applyWrites');
 
     final updates = <Map<String, dynamic>>[];
     int position = 0;
@@ -843,9 +833,8 @@ class ApiService {
       return false;
     }
     final dpopClient = DpopHttpClient(dpopKey: session.session.dpopJwk);
-    final issuer = session.session.issuer;
     final did = session.session.subject;
-    final url = Uri.parse('$issuer/xrpc/com.atproto.repo.putRecord');
+    final url = Uri.parse('${session.pds}/xrpc/com.atproto.repo.putRecord');
     // Extract rkey from galleryUri
     String rkey = '';
     try {
@@ -905,9 +894,8 @@ class ApiService {
       return null;
     }
     final dpopClient = DpopHttpClient(dpopKey: session.session.dpopJwk);
-    final issuer = session.session.issuer;
     final did = session.session.subject;
-    final url = Uri.parse('$issuer/xrpc/com.atproto.repo.createRecord');
+    final url = Uri.parse('${session.pds}/xrpc/com.atproto.repo.createRecord');
     final record = {
       'collection': 'social.grain.photo.exif',
       'repo': did,
@@ -955,9 +943,8 @@ class ApiService {
       return false;
     }
     final dpopClient = DpopHttpClient(dpopKey: session.session.dpopJwk);
-    final issuer = session.session.issuer;
     final did = session.session.subject;
-    final url = Uri.parse('$issuer/xrpc/com.atproto.repo.applyWrites');
+    final url = Uri.parse('${session.pds}/xrpc/com.atproto.repo.applyWrites');
 
     // Fetch current photo records for all photos
     final photoRecords = await fetchPhotoRecords();
@@ -1032,10 +1019,9 @@ class ApiService {
       return {};
     }
     final dpopClient = DpopHttpClient(dpopKey: session.session.dpopJwk);
-    final issuer = session.session.issuer;
     final did = session.session.subject;
     final url = Uri.parse(
-      '$issuer/xrpc/com.atproto.repo.listRecords?repo=$did&collection=social.grain.photo',
+      '${session.pds}/xrpc/com.atproto.repo.listRecords?repo=$did&collection=social.grain.photo',
     );
 
     final response = await dpopClient.send(

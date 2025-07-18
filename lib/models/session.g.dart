@@ -10,7 +10,12 @@ _$SessionImpl _$$SessionImplFromJson(Map<String, dynamic> json) =>
     _$SessionImpl(
       session: AtprotoSession.fromJson(json['session'] as Map<String, dynamic>),
       token: json['token'] as String,
+      pds: json['pds'] as String,
     );
 
 Map<String, dynamic> _$$SessionImplToJson(_$SessionImpl instance) =>
-    <String, dynamic>{'session': instance.session, 'token': instance.token};
+    <String, dynamic>{
+      'session': instance.session,
+      'token': instance.token,
+      'pds': instance.pds,
+    };
