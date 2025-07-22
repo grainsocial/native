@@ -26,10 +26,7 @@ class ApiService {
 
   Future<Session?> refreshSession(Session session) async {
     final url = Uri.parse('$_apiUrl/api/token/refresh');
-    final headers = {
-      'Authorization': 'Bearer ${session.token}',
-      'Content-Type': 'application/json',
-    };
+    final headers = {'Content-Type': 'application/json'};
     try {
       final response = await http.post(
         url,
@@ -51,10 +48,7 @@ class ApiService {
 
   Future<bool> revokeSession(Session session) async {
     final url = Uri.parse('$_apiUrl/api/token/revoke');
-    final headers = {
-      'Authorization': 'Bearer ${session.token}',
-      'Content-Type': 'application/json',
-    };
+    final headers = {'Content-Type': 'application/json'};
     try {
       final response = await http.post(
         url,
