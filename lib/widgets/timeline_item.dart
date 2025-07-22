@@ -8,6 +8,7 @@ import 'package:grain/widgets/app_image.dart';
 import 'package:grain/widgets/faceted_text.dart';
 import 'package:grain/widgets/gallery_action_buttons.dart';
 import 'package:grain/widgets/gallery_preview.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../providers/gallery_cache_provider.dart';
 import '../screens/gallery_page.dart';
@@ -159,6 +160,12 @@ class TimelineItemWidget extends ConsumerWidget {
                 context,
                 MaterialPageRoute(builder: (_) => HashtagPage(hashtag: tag)),
               ),
+              onLinkTap: (url) async {
+                final uri = Uri.parse(url);
+                if (!await launchUrl(uri)) {
+                  throw Exception('Could not launch $url');
+                }
+              },
             ),
           ),
         const SizedBox(height: 8),
