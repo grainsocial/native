@@ -74,32 +74,46 @@ class TimelineItemWidget extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Flexible(
-                      child: Text.rich(
-                        TextSpan(
-                          children: [
-                            if (actor?.displayName?.isNotEmpty ?? false)
-                              TextSpan(
-                                text: actor!.displayName ?? '',
-                                style: theme.textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 16,
+                      child: GestureDetector(
+                        onTap:
+                            onProfileTap ??
+                            () {
+                              if (actor?.did != null) {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        ProfilePage(did: actor!.did, showAppBar: true),
+                                  ),
+                                );
+                              }
+                            },
+                        child: Text.rich(
+                          TextSpan(
+                            children: [
+                              if (actor?.displayName?.isNotEmpty ?? false)
+                                TextSpan(
+                                  text: actor!.displayName ?? '',
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 16,
+                                  ),
                                 ),
-                              ),
-                            if (actor != null && actor.handle.isNotEmpty)
-                              TextSpan(
-                                text: (actor.displayName?.isNotEmpty ?? false)
-                                    ? ' @${actor.handle}'
-                                    : '@${actor.handle}',
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  fontSize: 14,
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                  fontWeight: FontWeight.normal,
+                              if (actor != null && actor.handle.isNotEmpty)
+                                TextSpan(
+                                  text: (actor.displayName?.isNotEmpty ?? false)
+                                      ? ' @${actor.handle}'
+                                      : '@${actor.handle}',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    fontSize: 14,
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                    fontWeight: FontWeight.normal,
+                                  ),
                                 ),
-                              ),
-                          ],
+                            ],
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
                         ),
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
                       ),
                     ),
                     Text(

@@ -273,8 +273,8 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
                                       );
                                     }
                                   : null,
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     gallery.creator?.displayName ?? '',
@@ -282,15 +282,13 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
-                                  if ((gallery.creator?.displayName ?? '').isNotEmpty &&
-                                      (gallery.creator?.handle ?? '').isNotEmpty)
-                                    const SizedBox(width: 8),
-                                  Text(
-                                    '@${gallery.creator?.handle ?? ''}',
-                                    style: theme.textTheme.bodyMedium?.copyWith(
-                                      color: theme.hintColor,
+                                  if ((gallery.creator?.handle ?? '').isNotEmpty)
+                                    Text(
+                                      '@${gallery.creator?.handle ?? ''}',
+                                      style: theme.textTheme.bodyMedium?.copyWith(
+                                        color: theme.hintColor,
+                                      ),
                                     ),
-                                  ),
                                 ],
                               ),
                             ),
