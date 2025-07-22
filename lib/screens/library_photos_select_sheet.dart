@@ -40,9 +40,14 @@ class _LibraryPhotosSelectSheetState extends ConsumerState<LibraryPhotosSelectSh
   Future<void> _fetchPhotos() async {
     setState(() => _loading = true);
     final photos = await apiService.fetchActorPhotos(did: widget.actorDid);
+    // Get gallery items from provider
+    final galleryItems = ref.read(galleryCacheProvider)[widget.galleryUri]?.items ?? [];
+    final galleryUris = galleryItems.map((item) => item.uri).toSet();
+    // Filter out photos already in gallery
+    final filteredPhotos = photos.where((photo) => !galleryUris.contains(photo.uri)).toList();
     if (mounted) {
       setState(() {
-        _photos = photos;
+        _photos = filteredPhotos;
         _loading = false;
       });
     }
