@@ -1,10 +1,14 @@
 import 'dart:io';
 
 import 'package:bluesky_text/bluesky_text.dart';
+import 'package:flutter/foundation.dart';
 import 'package:grain/api.dart';
 import 'package:grain/models/gallery.dart';
-import 'package:grain/models/profile.dart';
+import 'package:grain/models/procedures/create_follow_request.dart';
+import 'package:grain/models/procedures/delete_follow_request.dart';
+import 'package:grain/models/procedures/update_profile_request.dart';
 import 'package:grain/models/profile_with_galleries.dart';
+import 'package:grain/photo_manip.dart';
 import 'package:grain/providers/gallery_cache_provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -82,16 +86,6 @@ class ProfileNotifier extends _$ProfileNotifier {
     required String description,
     dynamic avatarFile,
   }) async {
-    final currentProfile = state.value?.profile;
-    final isUnchanged =
-        currentProfile != null &&
-        currentProfile.displayName == displayName &&
-        currentProfile.description == description &&
-        avatarFile == null;
-    if (isUnchanged) {
-      // No changes, skip API call
-      return true;
-    }
     File? file;
     if (avatarFile is XFile) {
       file = File(avatarFile.path);
@@ -100,30 +94,21 @@ class ProfileNotifier extends _$ProfileNotifier {
     } else {
       file = null;
     }
-    final success = await apiService.updateProfile(
-      displayName: displayName,
-      description: description,
-      avatarFile: file,
+    final profileRes = await apiService.updateProfile(
+      request: UpdateProfileRequest(displayName: displayName, description: description),
     );
-    if (success) {
-      final start = DateTime.now();
-      const timeout = Duration(seconds: 20);
-      const pollInterval = Duration(milliseconds: 1000);
-      Profile? updated;
-      final prevCid = state.value?.profile.cid;
-      state = const AsyncValue.loading(); // Force UI to show loading and rebuild
-      while (DateTime.now().difference(start) < timeout) {
-        updated = await apiService.fetchProfile(did: did);
-        if (updated != null && updated.cid != prevCid) {
-          break;
-        }
-        await Future.delayed(pollInterval);
-      }
-      // Always assign a new instance to state
+    bool avatarSuccess = true;
+    if (file != null) {
+      final resizedResult = await compute<File, ResizeResult>((f) => resizeImage(file: f), file);
+      final avatarRes = await apiService.updateAvatar(avatarFile: resizedResult.file);
+      avatarSuccess = avatarRes.success;
+    }
+    // Refetch updated profile if update succeeded
+    if (profileRes.success || avatarSuccess) {
+      final updated = await apiService.fetchProfile(did: did);
       if (updated != null) {
         final galleries = await apiService.fetchActorGalleries(did: did);
         final facets = await computeAndFilterFacets(updated.description);
-        // Update the gallery cache provider
         ref.read(galleryCacheProvider.notifier).setGalleriesForActor(did, galleries);
         state = AsyncValue.data(
           ProfileWithGalleries(
@@ -134,12 +119,13 @@ class ProfileNotifier extends _$ProfileNotifier {
         );
       } else {
         state = const AsyncValue.data(null);
-      }
-      if (updated == null) {
         await refresh();
       }
+      return true;
+    } else {
+      await refresh();
+      return false;
     }
-    return success;
   }
 
   Future<void> toggleFollow(String? followerDid) async {
@@ -150,8 +136,8 @@ class ProfileNotifier extends _$ProfileNotifier {
     final followUri = viewer?.following;
     if (followUri != null && followUri.isNotEmpty) {
       // Unfollow
-      final success = await apiService.deleteRecord(followUri);
-      if (success) {
+      final res = await apiService.deleteFollow(request: DeleteFollowRequest(uri: followUri));
+      if (res.success) {
         final updatedProfile = profile.copyWith(
           viewer: viewer?.copyWith(following: null),
           followersCount: (profile.followersCount ?? 1) - 1,
@@ -166,10 +152,10 @@ class ProfileNotifier extends _$ProfileNotifier {
       }
     } else {
       // Follow
-      final newFollowUri = await apiService.createFollow(followeeDid: did);
-      if (newFollowUri != null) {
+      final res = await apiService.createFollow(request: CreateFollowRequest(subject: followerDid));
+      if (res.followUri.isNotEmpty) {
         final updatedProfile = profile.copyWith(
-          viewer: viewer?.copyWith(following: newFollowUri),
+          viewer: viewer?.copyWith(following: res.followUri),
           followersCount: (profile.followersCount ?? 0) + 1,
         );
         state = AsyncValue.data(
@@ -212,6 +198,36 @@ class ProfileNotifier extends _$ProfileNotifier {
           profile: updatedProfile,
           galleries: updatedGalleries,
           favs: currentProfile.favs,
+        ),
+      );
+    }
+  }
+
+  /// Adds a gallery to the user's favorites in the profile state.
+  void addFavorite(Gallery gallery) {
+    final currentProfile = state.value;
+    if (currentProfile != null) {
+      final updatedFavs = [gallery, ...?currentProfile.favs];
+      state = AsyncValue.data(
+        ProfileWithGalleries(
+          profile: currentProfile.profile,
+          galleries: currentProfile.galleries,
+          favs: updatedFavs,
+        ),
+      );
+    }
+  }
+
+  /// Removes a gallery from the user's favorites in the profile state by URI.
+  void removeFavorite(String galleryUri) {
+    final currentProfile = state.value;
+    if (currentProfile != null) {
+      final updatedFavs = (currentProfile.favs ?? []).where((g) => g.uri != galleryUri).toList();
+      state = AsyncValue.data(
+        ProfileWithGalleries(
+          profile: currentProfile.profile,
+          galleries: currentProfile.galleries,
+          favs: updatedFavs,
         ),
       );
     }

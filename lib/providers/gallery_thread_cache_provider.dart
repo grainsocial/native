@@ -1,7 +1,8 @@
-import 'package:bluesky_text/bluesky_text.dart';
 import 'package:grain/api.dart';
 import 'package:grain/models/comment.dart';
 import 'package:grain/models/gallery.dart';
+import 'package:grain/models/procedures/create_comment_request.dart';
+import 'package:grain/models/procedures/delete_comment_request.dart';
 import 'package:grain/providers/gallery_cache_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -65,29 +66,17 @@ class GalleryThread extends _$GalleryThread {
     }
   }
 
-  Future<List<Map<String, dynamic>>> _extractFacets(String text) async {
-    final blueskyText = BlueskyText(text);
-    final entities = blueskyText.entities;
-    final facets = await entities.toFacets();
-    return List<Map<String, dynamic>>.from(facets);
-  }
-
   Future<bool> createComment({required String text, String? replyTo, String? focus}) async {
     try {
-      final facetsList = await _extractFacets(text);
-      final facets = facetsList.isEmpty ? null : facetsList;
-      final uri = await apiService.createComment(
+      final request = CreateCommentRequest(
         text: text,
         subject: galleryUri,
         replyTo: replyTo,
-        facets: facets,
         focus: focus,
       );
-      if (uri != null) {
-        final thread = await apiService.pollGalleryThreadComments(
-          galleryUri: galleryUri,
-          expectedCount: state.comments.length + 1,
-        );
+      final res = await apiService.createComment(request: request);
+      if (res.commentUri.isNotEmpty) {
+        final thread = await apiService.getGalleryThread(uri: galleryUri);
         if (thread != null) {
           state = state.copyWith(gallery: thread.gallery, comments: thread.comments);
           // Update the gallery cache with the latest gallery
@@ -102,13 +91,10 @@ class GalleryThread extends _$GalleryThread {
   }
 
   Future<bool> deleteComment(Comment comment) async {
-    final deleted = await apiService.deleteRecord(comment.uri);
-    if (!deleted) return false;
-    final expectedCount = state.comments.length - 1;
-    final thread = await apiService.pollGalleryThreadComments(
-      galleryUri: galleryUri,
-      expectedCount: expectedCount,
-    );
+    final request = DeleteCommentRequest(uri: comment.uri);
+    final res = await apiService.deleteComment(request: request);
+    if (!res.success) return false;
+    final thread = await apiService.getGalleryThread(uri: galleryUri);
     if (thread != null) {
       state = state.copyWith(gallery: thread.gallery, comments: thread.comments);
       // Update the gallery cache with the latest gallery

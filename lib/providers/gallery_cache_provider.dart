@@ -1,14 +1,17 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:ui' as ui;
 
 import 'package:bluesky_text/bluesky_text.dart';
 import 'package:flutter/foundation.dart';
 import 'package:grain/models/gallery_photo.dart';
+import 'package:grain/models/procedures/apply_alts_update.dart';
+import 'package:grain/models/procedures/procedures.dart';
+import 'package:grain/providers/profile_provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../api.dart';
+import '../app_logger.dart';
 import '../models/gallery.dart';
 import '../models/gallery_item.dart';
 import '../photo_manip.dart';
@@ -59,16 +62,33 @@ class GalleryCache extends _$GalleryCache {
     bool success = false;
     String? newFavUri;
     if (isFav) {
-      newFavUri = await apiService.createFavorite(galleryUri: uri);
-      success = newFavUri != null;
+      final response = await apiService.createFavorite(
+        request: CreateFavoriteRequest(subject: latestGallery.uri),
+      );
+      newFavUri = response.favoriteUri;
+      success = true;
     } else {
-      success = await apiService.deleteRecord(latestGallery.viewer?.fav ?? uri);
+      final deleteResponse = await apiService.deleteFavorite(
+        request: DeleteFavoriteRequest(uri: latestGallery.viewer?.fav ?? uri),
+      );
+      success = deleteResponse.success;
       newFavUri = null;
     }
     if (success) {
       final newCount = (latestGallery.favCount ?? 0) + (isFav ? 1 : -1);
       final updatedViewer = latestGallery.viewer?.copyWith(fav: newFavUri);
-      state = {...state, uri: latestGallery.copyWith(favCount: newCount, viewer: updatedViewer)};
+      final updatedGallery = latestGallery.copyWith(favCount: newCount, viewer: updatedViewer);
+      state = {...state, uri: updatedGallery};
+
+      // Push favorite change to profile provider favs
+      final profileProvider = ref.read(
+        profileNotifierProvider(apiService.currentUser!.did).notifier,
+      );
+      if (isFav) {
+        profileProvider.addFavorite(updatedGallery);
+      } else {
+        profileProvider.removeFavorite(updatedGallery.uri);
+      }
     }
   }
 
@@ -77,16 +97,13 @@ class GalleryCache extends _$GalleryCache {
     final gallery = state[galleryUri];
     if (gallery == null) return;
     // Call backend to delete the gallery item
-    await apiService.deleteRecord(galleryItemUri);
+    await apiService.deleteGalleryItem(request: DeleteGalleryItemRequest(uri: galleryItemUri));
     // Remove by gallery item record URI, not photo URI
     final updatedItems = gallery.items.where((p) => p.gallery?.item != galleryItemUri).toList();
     final updatedGallery = gallery.copyWith(items: updatedItems);
     state = {...state, galleryUri: updatedGallery};
   }
 
-  /// Uploads multiple photos, gets their dimensions, resizes them, creates the photos, and adds them as gallery items.
-  /// At the end, polls for the updated gallery items and updates the cache.
-  /// Returns the list of new photoUris if successful, or empty list otherwise.
   Future<List<String>> uploadAndAddPhotosToGallery({
     required String galleryUri,
     required List<XFile> xfiles,
@@ -110,52 +127,38 @@ class GalleryCache extends _$GalleryCache {
       // Resize the image
       final resizedResult = await compute<File, ResizeResult>((f) => resizeImage(file: f), file);
       // Upload the blob
-      final blobResult = await apiService.uploadBlob(resizedResult.file);
-      if (blobResult == null) continue;
-      // Get image dimensions
-      final bytes = await xfile.readAsBytes();
-      final completer = Completer<Map<String, int>>();
-      ui.decodeImageFromList(bytes, (image) {
-        completer.complete({'width': image.width, 'height': image.height});
-      });
-      final dims = await completer.future;
-      // Create the photo
-      final photoUri = await apiService.createPhoto(
-        blob: blobResult,
-        width: dims['width']!,
-        height: dims['height']!,
-      );
-      if (photoUri == null) continue;
-
+      final res = await apiService.uploadPhoto(resizedResult.file);
+      if (res.photoUri.isEmpty) continue;
       // If EXIF data was found, create photo exif record
       if (exif != null) {
-        await apiService.createPhotoExif(
-          photo: photoUri,
-          dateTimeOriginal: exif['dateTimeOriginal'] as String?,
-          exposureTime: exif['exposureTime'] as int?,
-          fNumber: exif['fNumber'] as int?,
-          flash: exif['flash'] as String?,
-          focalLengthIn35mmFormat: exif['focalLengthIn35mmFilm'] as int?,
-          iSO: exif['iSOSpeedRatings'] as int?,
-          lensMake: exif['lensMake'] as String?,
-          lensModel: exif['lensModel'] as String?,
-          make: exif['make'] as String?,
-          model: exif['model'] as String?,
+        await apiService.createExif(
+          request: CreateExifRequest(
+            photo: res.photoUri,
+            dateTimeOriginal: exif['dateTimeOriginal'],
+            exposureTime: exif['exposureTime'],
+            fNumber: exif['fNumber'],
+            flash: exif['flash'],
+            focalLengthIn35mmFormat: exif['focalLengthIn35mmFilm'],
+            iSO: exif['iSOSpeedRatings'],
+            lensMake: exif['lensMake'],
+            lensModel: exif['lensModel'],
+            make: exif['make'],
+            model: exif['model'],
+          ),
         );
       }
 
       // Create the gallery item
       await apiService.createGalleryItem(
-        galleryUri: galleryUri,
-        photoUri: photoUri,
-        position: position,
+        request: CreateGalleryItemRequest(
+          galleryUri: galleryUri,
+          photoUri: res.photoUri,
+          position: position,
+        ),
       );
-      photoUris.add(photoUri);
+      photoUris.add(res.photoUri);
       position++;
     }
-    // Poll for updated gallery items
-    final expectedCount = (gallery?.items.length ?? 0) + photoUris.length;
-    await apiService.pollGalleryItems(galleryUri: galleryUri, expectedCount: expectedCount);
     // Fetch the updated gallery and update the cache
     final updatedGallery = await apiService.getGallery(uri: galleryUri);
     if (updatedGallery != null) {
@@ -172,26 +175,19 @@ class GalleryCache extends _$GalleryCache {
     required List<XFile> xfiles,
     bool includeExif = true,
   }) async {
-    // Extract facets from description
-    final facetsList = await _extractFacets(description);
-    final facets = facetsList.isEmpty ? null : facetsList;
-    // Create the gallery with facets
-    final galleryUri = await apiService.createGallery(
-      title: title,
-      description: description,
-      facets: facets,
+    final res = await apiService.createGallery(
+      request: CreateGalleryRequest(title: title, description: description),
     );
-    if (galleryUri == null) return (null, <String>[]);
     // Upload and add photos
     final photoUris = await uploadAndAddPhotosToGallery(
-      galleryUri: galleryUri,
+      galleryUri: res.galleryUri,
       xfiles: xfiles,
       includeExif: includeExif,
     );
-    return (galleryUri, photoUris);
+    return (res.galleryUri, photoUris);
   }
 
-  /// Creates gallery items for existing photoUris, polls for updated gallery items, and updates the cache.
+  /// Creates gallery items for existing photoUris and updates the cache.
   /// Returns the list of new gallery item URIs if successful, or empty list otherwise.
   Future<List<String>> addGalleryItemsToGallery({
     required String galleryUri,
@@ -210,19 +206,18 @@ class GalleryCache extends _$GalleryCache {
     int position = positionOffset;
     for (final photoUri in photoUris) {
       // Create the gallery item
-      final itemUri = await apiService.createGalleryItem(
-        galleryUri: galleryUri,
-        photoUri: photoUri,
-        position: position,
+      final res = await apiService.createGalleryItem(
+        request: CreateGalleryItemRequest(
+          galleryUri: galleryUri,
+          photoUri: photoUri,
+          position: position,
+        ),
       );
-      if (itemUri != null) {
-        galleryItemUris.add(itemUri);
+      if (res.itemUri.isNotEmpty) {
+        galleryItemUris.add(res.itemUri);
         position++;
       }
     }
-    // Poll for updated gallery items
-    final expectedCount = (gallery?.items.length ?? 0) + galleryItemUris.length;
-    await apiService.pollGalleryItems(galleryUri: galleryUri, expectedCount: expectedCount);
     // Fetch the updated gallery and update the cache
     final updatedGallery = await apiService.getGallery(uri: galleryUri);
     if (updatedGallery != null) {
@@ -233,18 +228,7 @@ class GalleryCache extends _$GalleryCache {
 
   /// Deletes a gallery from the backend and removes it from the cache.
   Future<void> deleteGallery(String uri) async {
-    // Fetch the latest gallery from backend to ensure all items are deleted
-    final gallery = await apiService.getGallery(uri: uri);
-    if (gallery != null) {
-      // Delete all gallery item records
-      for (final item in gallery.items) {
-        final itemUri = item.gallery?.item;
-        if (itemUri != null && itemUri.isNotEmpty) {
-          await apiService.deleteRecord(itemUri);
-        }
-      }
-    }
-    await apiService.deleteRecord(uri);
+    await apiService.deleteGallery(request: DeleteGalleryRequest(uri: uri));
     removeGallery(uri);
   }
 
@@ -269,7 +253,17 @@ class GalleryCache extends _$GalleryCache {
     for (int i = 0; i < orderedItems.length; i++) {
       orderedItems[i] = orderedItems[i].copyWith(position: i);
     }
-    await apiService.updateGallerySortOrder(galleryUri: galleryUri, orderedItems: orderedItems);
+    final res = await apiService.applySort(
+      request: ApplySortRequest(
+        writes: orderedItems
+            .map((item) => ApplySortUpdate(itemUri: item.uri, position: item.position))
+            .toList(),
+      ),
+    );
+    if (!res.success) {
+      appLogger.w('Failed to reorder gallery items for $galleryUri');
+      return;
+    }
     // Update cache with new order
     final updatedPhotos = orderedItems
         .where((item) => gallery.items.any((p) => p.uri == item.item))
@@ -282,42 +276,30 @@ class GalleryCache extends _$GalleryCache {
     state = {...state, galleryUri: updatedGallery};
   }
 
-  /// Updates gallery details (title, description), polls for cid change, and updates cache.
+  /// Updates gallery details (title, description) and updates cache.
   Future<bool> updateGalleryDetails({
     required String galleryUri,
     required String title,
     required String description,
     required String createdAt,
   }) async {
-    final prevGallery = state[galleryUri];
-    final prevCid = prevGallery?.cid;
-    // Extract facets from description
-    final facetsList = await _extractFacets(description);
-    final facets = facetsList.isEmpty ? null : facetsList;
-    final success = await apiService.updateGallery(
-      galleryUri: galleryUri,
-      title: title,
-      description: description,
-      createdAt: createdAt,
-      facets: facets,
-    );
-    if (success) {
-      final start = DateTime.now();
-      const timeout = Duration(seconds: 20);
-      const pollInterval = Duration(milliseconds: 1000);
-      Gallery? updatedGallery;
-      while (DateTime.now().difference(start) < timeout) {
-        updatedGallery = await apiService.getGallery(uri: galleryUri);
-        if (updatedGallery != null && updatedGallery.cid != prevCid) {
-          break;
-        }
-        await Future.delayed(pollInterval);
-      }
-      if (updatedGallery != null) {
-        state = {...state, galleryUri: updatedGallery};
-      }
+    try {
+      await apiService.updateGallery(
+        request: UpdateGalleryRequest(
+          galleryUri: galleryUri,
+          title: title,
+          description: description,
+        ),
+      );
+    } catch (e, st) {
+      appLogger.e('Failed to update gallery details: $e', stackTrace: st);
+      return false;
     }
-    return success;
+    final updatedGallery = await apiService.getGallery(uri: galleryUri);
+    if (updatedGallery != null) {
+      state = {...state, galleryUri: updatedGallery};
+    }
+    return true;
   }
 
   /// Fetches timeline galleries from the API and updates the cache.
@@ -335,8 +317,17 @@ class GalleryCache extends _$GalleryCache {
     required String galleryUri,
     required List<Map<String, dynamic>> altUpdates,
   }) async {
-    final success = await apiService.updatePhotos(altUpdates);
-    if (!success) return false;
+    final res = await apiService.applyAlts(
+      request: ApplyAltsRequest(
+        writes: altUpdates.map((update) {
+          return ApplyAltsUpdate(
+            photoUri: update['photoUri'] as String,
+            alt: update['alt'] as String,
+          );
+        }).toList(),
+      ),
+    );
+    if (!res.success) return false;
 
     // Update the gallery photos' alt text in the cache manually
     final gallery = state[galleryUri];

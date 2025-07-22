@@ -5,7 +5,6 @@ import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:grain/api.dart';
 import 'package:grain/app_logger.dart';
 import 'package:grain/main.dart';
-import 'package:grain/models/atproto_session.dart';
 import 'package:grain/models/session.dart';
 
 class Auth {
@@ -14,25 +13,62 @@ class Auth {
 
   Future<bool> hasToken() async {
     final session = await _loadSession();
-    return session != null && session.token.isNotEmpty && !isSessionExpired(session.session);
+    return session != null && session.token.isNotEmpty && !isSessionExpired(session);
   }
 
   Future<void> login(String handle) async {
     final apiUrl = AppConfig.apiUrl;
-    final redirectedUrl = await FlutterWebAuth2.authenticate(
-      url: '$apiUrl/oauth/login?client=native&handle=${Uri.encodeComponent(handle)}',
-      callbackUrlScheme: 'grainflutter',
-    );
-    final uri = Uri.parse(redirectedUrl);
-    final token = uri.queryParameters['token'];
+    String? token;
+    String? refreshToken;
+    String? expiresAtStr;
+    String? did;
 
-    appLogger.i('Redirected URL: $redirectedUrl');
+    try {
+      final redirectUrl = await FlutterWebAuth2.authenticate(
+        url: '$apiUrl/oauth/login?client=native&handle=${Uri.encodeComponent(handle)}',
+        callbackUrlScheme: 'grainflutter',
+      );
+
+      appLogger.i('Redirected URL: $redirectUrl');
+
+      final uri = Uri.parse(redirectUrl);
+      token = uri.queryParameters['token'];
+      refreshToken = uri.queryParameters['refreshToken'];
+      expiresAtStr = uri.queryParameters['expiresAt'];
+      did = uri.queryParameters['did'];
+    } catch (e) {
+      appLogger.e('Error during authentication: $e');
+      throw Exception('Authentication failed');
+    }
+
     appLogger.i('User signed in with handle: $handle');
 
-    final session = await apiService.fetchSession(token);
-    if (session == null) {
-      throw Exception('Failed to fetch session after login');
+    if (token == null || token.isEmpty) {
+      throw Exception('No token found in redirect URL');
     }
+    if (refreshToken == null || refreshToken.isEmpty) {
+      throw Exception('No refreshToken found in redirect URL');
+    }
+    if (expiresAtStr == null || expiresAtStr.isEmpty) {
+      throw Exception('No expiresAt found in redirect URL');
+    }
+    if (did == null || did.isEmpty) {
+      throw Exception('No did found in redirect URL');
+    }
+
+    DateTime expiresAt;
+    try {
+      expiresAt = DateTime.parse(expiresAtStr);
+    } catch (e) {
+      throw Exception('Invalid expiresAt format');
+    }
+
+    final session = Session(
+      token: token,
+      refreshToken: refreshToken,
+      expiresAt: expiresAt,
+      did: did,
+    );
     await _saveSession(session);
   }
 
@@ -54,10 +90,7 @@ class Auth {
     }
   }
 
-  bool isSessionExpired(
-    AtprotoSession session, {
-    Duration tolerance = const Duration(seconds: 30),
-  }) {
+  bool isSessionExpired(Session session, {Duration tolerance = const Duration(seconds: 30)}) {
     final now = DateTime.now().toUtc();
     return session.expiresAt.subtract(tolerance).isBefore(now);
   }
@@ -68,11 +101,11 @@ class Auth {
       // No session at all, do not attempt refresh
       return null;
     }
-    if (isSessionExpired(session.session)) {
+    if (isSessionExpired(session)) {
       appLogger.w('Session is expired, attempting refresh');
       try {
-        final refreshed = await apiService.fetchSession();
-        if (refreshed != null && !isSessionExpired(refreshed.session)) {
+        final refreshed = await apiService.refreshSession(session);
+        if (refreshed != null && !isSessionExpired(refreshed)) {
           await _saveSession(refreshed);
           appLogger.i('Session refreshed and saved');
           return refreshed;
@@ -91,12 +124,28 @@ class Auth {
   }
 
   Future<void> clearSession() async {
-    // Revoke session on the server
-    await apiService.revokeSession();
     // Remove session from secure storage
     await _storage.delete(key: 'session');
+  }
+
+  Future<void> logout() async {
+    final session = await _loadSession();
+
+    appLogger.i('Logging out user with session: $session');
+
     // Clear any in-memory session/user data
     apiService.currentUser = null;
+
+    if (session == null) {
+      appLogger.w('No session to revoke');
+      return;
+    }
+
+    await apiService.revokeSession(session);
+
+    await clearSession();
+
+    appLogger.i('User logged out and session cleared');
   }
 }
 

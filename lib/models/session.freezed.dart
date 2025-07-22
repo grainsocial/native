@@ -21,9 +21,10 @@ Session _$SessionFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$Session {
-  AtprotoSession get session => throw _privateConstructorUsedError;
   String get token => throw _privateConstructorUsedError;
-  String get pds => throw _privateConstructorUsedError;
+  String get refreshToken => throw _privateConstructorUsedError;
+  DateTime get expiresAt => throw _privateConstructorUsedError;
+  String get did => throw _privateConstructorUsedError;
 
   /// Serializes this Session to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -39,9 +40,12 @@ abstract class $SessionCopyWith<$Res> {
   factory $SessionCopyWith(Session value, $Res Function(Session) then) =
       _$SessionCopyWithImpl<$Res, Session>;
   @useResult
-  $Res call({AtprotoSession session, String token, String pds});
-
-  $AtprotoSessionCopyWith<$Res> get session;
+  $Res call({
+    String token,
+    String refreshToken,
+    DateTime expiresAt,
+    String did,
+  });
 }
 
 /// @nodoc
@@ -59,37 +63,32 @@ class _$SessionCopyWithImpl<$Res, $Val extends Session>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? session = null,
     Object? token = null,
-    Object? pds = null,
+    Object? refreshToken = null,
+    Object? expiresAt = null,
+    Object? did = null,
   }) {
     return _then(
       _value.copyWith(
-            session: null == session
-                ? _value.session
-                : session // ignore: cast_nullable_to_non_nullable
-                      as AtprotoSession,
             token: null == token
                 ? _value.token
                 : token // ignore: cast_nullable_to_non_nullable
                       as String,
-            pds: null == pds
-                ? _value.pds
-                : pds // ignore: cast_nullable_to_non_nullable
+            refreshToken: null == refreshToken
+                ? _value.refreshToken
+                : refreshToken // ignore: cast_nullable_to_non_nullable
+                      as String,
+            expiresAt: null == expiresAt
+                ? _value.expiresAt
+                : expiresAt // ignore: cast_nullable_to_non_nullable
+                      as DateTime,
+            did: null == did
+                ? _value.did
+                : did // ignore: cast_nullable_to_non_nullable
                       as String,
           )
           as $Val,
     );
-  }
-
-  /// Create a copy of Session
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @pragma('vm:prefer-inline')
-  $AtprotoSessionCopyWith<$Res> get session {
-    return $AtprotoSessionCopyWith<$Res>(_value.session, (value) {
-      return _then(_value.copyWith(session: value) as $Val);
-    });
   }
 }
 
@@ -101,10 +100,12 @@ abstract class _$$SessionImplCopyWith<$Res> implements $SessionCopyWith<$Res> {
   ) = __$$SessionImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({AtprotoSession session, String token, String pds});
-
-  @override
-  $AtprotoSessionCopyWith<$Res> get session;
+  $Res call({
+    String token,
+    String refreshToken,
+    DateTime expiresAt,
+    String did,
+  });
 }
 
 /// @nodoc
@@ -121,23 +122,28 @@ class __$$SessionImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? session = null,
     Object? token = null,
-    Object? pds = null,
+    Object? refreshToken = null,
+    Object? expiresAt = null,
+    Object? did = null,
   }) {
     return _then(
       _$SessionImpl(
-        session: null == session
-            ? _value.session
-            : session // ignore: cast_nullable_to_non_nullable
-                  as AtprotoSession,
         token: null == token
             ? _value.token
             : token // ignore: cast_nullable_to_non_nullable
                   as String,
-        pds: null == pds
-            ? _value.pds
-            : pds // ignore: cast_nullable_to_non_nullable
+        refreshToken: null == refreshToken
+            ? _value.refreshToken
+            : refreshToken // ignore: cast_nullable_to_non_nullable
+                  as String,
+        expiresAt: null == expiresAt
+            ? _value.expiresAt
+            : expiresAt // ignore: cast_nullable_to_non_nullable
+                  as DateTime,
+        did: null == did
+            ? _value.did
+            : did // ignore: cast_nullable_to_non_nullable
                   as String,
       ),
     );
@@ -148,24 +154,27 @@ class __$$SessionImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$SessionImpl implements _Session {
   const _$SessionImpl({
-    required this.session,
     required this.token,
-    required this.pds,
+    required this.refreshToken,
+    required this.expiresAt,
+    required this.did,
   });
 
   factory _$SessionImpl.fromJson(Map<String, dynamic> json) =>
       _$$SessionImplFromJson(json);
 
   @override
-  final AtprotoSession session;
-  @override
   final String token;
   @override
-  final String pds;
+  final String refreshToken;
+  @override
+  final DateTime expiresAt;
+  @override
+  final String did;
 
   @override
   String toString() {
-    return 'Session(session: $session, token: $token, pds: $pds)';
+    return 'Session(token: $token, refreshToken: $refreshToken, expiresAt: $expiresAt, did: $did)';
   }
 
   @override
@@ -173,14 +182,18 @@ class _$SessionImpl implements _Session {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$SessionImpl &&
-            (identical(other.session, session) || other.session == session) &&
             (identical(other.token, token) || other.token == token) &&
-            (identical(other.pds, pds) || other.pds == pds));
+            (identical(other.refreshToken, refreshToken) ||
+                other.refreshToken == refreshToken) &&
+            (identical(other.expiresAt, expiresAt) ||
+                other.expiresAt == expiresAt) &&
+            (identical(other.did, did) || other.did == did));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, session, token, pds);
+  int get hashCode =>
+      Object.hash(runtimeType, token, refreshToken, expiresAt, did);
 
   /// Create a copy of Session
   /// with the given fields replaced by the non-null parameter values.
@@ -198,19 +211,22 @@ class _$SessionImpl implements _Session {
 
 abstract class _Session implements Session {
   const factory _Session({
-    required final AtprotoSession session,
     required final String token,
-    required final String pds,
+    required final String refreshToken,
+    required final DateTime expiresAt,
+    required final String did,
   }) = _$SessionImpl;
 
   factory _Session.fromJson(Map<String, dynamic> json) = _$SessionImpl.fromJson;
 
   @override
-  AtprotoSession get session;
-  @override
   String get token;
   @override
-  String get pds;
+  String get refreshToken;
+  @override
+  DateTime get expiresAt;
+  @override
+  String get did;
 
   /// Create a copy of Session
   /// with the given fields replaced by the non-null parameter values.

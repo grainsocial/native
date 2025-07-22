@@ -8,14 +8,16 @@ part of 'session.dart';
 
 _$SessionImpl _$$SessionImplFromJson(Map<String, dynamic> json) =>
     _$SessionImpl(
-      session: AtprotoSession.fromJson(json['session'] as Map<String, dynamic>),
       token: json['token'] as String,
-      pds: json['pds'] as String,
+      refreshToken: json['refreshToken'] as String,
+      expiresAt: DateTime.parse(json['expiresAt'] as String),
+      did: json['did'] as String,
     );
 
 Map<String, dynamic> _$$SessionImplToJson(_$SessionImpl instance) =>
     <String, dynamic>{
-      'session': instance.session,
       'token': instance.token,
-      'pds': instance.pds,
+      'refreshToken': instance.refreshToken,
+      'expiresAt': instance.expiresAt.toIso8601String(),
+      'did': instance.did,
     };

@@ -129,7 +129,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   }
 
   void _handleSignOut(BuildContext context) async {
-    await auth.clearSession();
+    await auth.logout();
     setState(() {
       isSignedIn = false;
     });
