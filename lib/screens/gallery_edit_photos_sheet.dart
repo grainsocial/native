@@ -222,10 +222,17 @@ class _GalleryEditPhotosSheetState extends ConsumerState<GalleryEditPhotosSheet>
                                 context,
                                 actorDid: actorDid,
                                 galleryUri: widget.galleryUri,
-                                onSelect: (photos) {
-                                  setState(() {
-                                    _photos.addAll(photos);
-                                  });
+                                onSelect: (photos) async {
+                                  // Wait for provider to update after adding
+                                  await Future.delayed(const Duration(milliseconds: 100));
+                                  final updatedGallery = ref.read(
+                                    galleryCacheProvider,
+                                  )[widget.galleryUri];
+                                  if (updatedGallery != null && mounted) {
+                                    setState(() {
+                                      _photos = List.from(updatedGallery.items);
+                                    });
+                                  }
                                 },
                               );
                             },
