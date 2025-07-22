@@ -34,6 +34,10 @@ class CreateGalleryPage extends StatefulWidget {
 }
 
 class _CreateGalleryPageState extends State<CreateGalleryPage> {
+  bool isValidGraphemeLength(String input, int maxLength) {
+    return input.characters.length <= maxLength;
+  }
+
   final _titleController = TextEditingController();
   final _descController = TextEditingController();
   final List<GalleryImage> _images = [];
@@ -48,6 +52,9 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
       _descController.text = widget.gallery?.description ?? '';
     }
     _titleController.addListener(() {
+      setState(() {});
+    });
+    _descController.addListener(() {
       setState(() {});
     });
   }
@@ -102,6 +109,27 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
   }
 
   Future<void> _submit() async {
+    final titleGraphemes = _titleController.text.characters.length;
+    final descGraphemes = _descController.text.characters.length;
+    if (titleGraphemes > 100 || descGraphemes > 1000) {
+      if (mounted) {
+        await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Character Limit Exceeded'),
+            content: Text(
+              titleGraphemes > 100
+                  ? 'Title must be 100 characters or fewer.'
+                  : 'Description must be 1000 characters or fewer.',
+            ),
+            actions: [
+              TextButton(child: const Text('OK'), onPressed: () => Navigator.of(context).pop()),
+            ],
+          ),
+        );
+      }
+      return;
+    }
     if (widget.gallery == null && _images.length > 10) {
       if (mounted) {
         await showDialog(
@@ -109,7 +137,7 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
           builder: (context) => AlertDialog(
             title: const Text('Photo Limit'),
             content: const Text(
-              'You can only add up to 10 photos on initial create but can add more later on.',
+              'You can only add up to 10 photos initially but you can add more later on.',
             ),
             actions: [
               TextButton(child: const Text('OK'), onPressed: () => Navigator.of(context).pop()),
@@ -236,12 +264,46 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
                 controller: _titleController,
                 hintText: 'Enter a title',
               ),
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const SizedBox(),
+                    Text(
+                      '${_titleController.text.characters.length}/100',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: _titleController.text.characters.length > 100
+                            ? theme.colorScheme.error
+                            : theme.textTheme.bodySmall?.color,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(height: 16),
               PlainTextField(
                 label: 'Description',
                 controller: _descController,
                 maxLines: 6,
                 hintText: 'Enter a description',
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const SizedBox(),
+                    Text(
+                      '${_descController.text.characters.length}/1000',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: _descController.text.characters.length > 1000
+                            ? theme.colorScheme.error
+                            : theme.textTheme.bodySmall?.color,
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
               if (widget.gallery == null)

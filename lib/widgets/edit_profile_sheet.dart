@@ -61,38 +61,27 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
   late TextEditingController _descriptionController;
   XFile? _selectedAvatar;
   bool _saving = false;
-  bool _hasChanged = false;
+  static const int maxDisplayNameGraphemes = 64;
+  static const int maxDescriptionGraphemes = 256;
 
   @override
   void initState() {
     super.initState();
     _displayNameController = TextEditingController(text: widget.initialDisplayName ?? '');
     _descriptionController = TextEditingController(text: widget.initialDescription ?? '');
+    // No need to track changes
     _displayNameController.addListener(_onInputChanged);
     _descriptionController.addListener(_onInputChanged);
   }
 
   void _onInputChanged() {
-    final displayName = _displayNameController.text.trim();
-    final initialDisplayName = widget.initialDisplayName ?? '';
-    final displayNameChanged = displayName != initialDisplayName;
-    final descriptionChanged =
-        _descriptionController.text.trim() != (widget.initialDescription ?? '');
-    final avatarChanged = _selectedAvatar != null;
-    // Only allow Save if displayName is not empty and at least one field changed
-    final changed =
-        (displayNameChanged || descriptionChanged || avatarChanged) && displayName.isNotEmpty;
-    if (_hasChanged != changed) {
-      setState(() {
-        _hasChanged = changed;
-      });
-    }
+    setState(() {
+      // Trigger rebuild to update character counts
+    });
   }
 
   @override
   void dispose() {
-    _displayNameController.removeListener(_onInputChanged);
-    _descriptionController.removeListener(_onInputChanged);
     _displayNameController.dispose();
     _descriptionController.dispose();
     super.dispose();
@@ -104,7 +93,6 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
     if (picked != null) {
       setState(() {
         _selectedAvatar = picked;
-        _onInputChanged();
       });
     }
   }
@@ -113,6 +101,8 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final avatarRadius = 44.0;
+    final displayNameGraphemes = _displayNameController.text.characters.length;
+    final descriptionGraphemes = _descriptionController.text.characters.length;
     return CupertinoPageScaffold(
       backgroundColor: theme.colorScheme.surface,
       navigationBar: CupertinoNavigationBar(
@@ -132,9 +122,30 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
         ),
         trailing: CupertinoButton(
           padding: EdgeInsets.zero,
-          onPressed: (!_hasChanged || _saving)
+          onPressed: _saving
               ? null
               : () async {
+                  if (displayNameGraphemes > maxDisplayNameGraphemes ||
+                      descriptionGraphemes > maxDescriptionGraphemes) {
+                    await showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Character Limit Exceeded'),
+                        content: Text(
+                          displayNameGraphemes > maxDisplayNameGraphemes
+                              ? 'Display Name must be $maxDisplayNameGraphemes characters or fewer.'
+                              : 'Description must be $maxDescriptionGraphemes characters or fewer.',
+                        ),
+                        actions: [
+                          TextButton(
+                            child: const Text('OK'),
+                            onPressed: () => Navigator.of(context).pop(),
+                          ),
+                        ],
+                      ),
+                    );
+                    return;
+                  }
                   if (widget.onSave != null) {
                     setState(() {
                       _saving = true;
@@ -155,9 +166,7 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
               Text(
                 'Save',
                 style: TextStyle(
-                  color: (!_hasChanged || _saving)
-                      ? theme.disabledColor
-                      : theme.colorScheme.primary,
+                  color: _saving ? theme.disabledColor : theme.colorScheme.primary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -233,11 +242,45 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
                         controller: _displayNameController,
                         maxLines: 1,
                       ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const SizedBox(),
+                            Text(
+                              '$displayNameGraphemes/$maxDisplayNameGraphemes',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: displayNameGraphemes > maxDisplayNameGraphemes
+                                    ? theme.colorScheme.error
+                                    : theme.textTheme.bodySmall?.color,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                       const SizedBox(height: 12),
                       PlainTextField(
                         label: 'Description',
                         controller: _descriptionController,
                         maxLines: 6,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const SizedBox(),
+                            Text(
+                              '$descriptionGraphemes/$maxDescriptionGraphemes',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: descriptionGraphemes > maxDescriptionGraphemes
+                                    ? theme.colorScheme.error
+                                    : theme.textTheme.bodySmall?.color,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
