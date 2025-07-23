@@ -26,6 +26,12 @@ class UploadProgressOverlay extends StatelessWidget {
     // Get the current image being uploaded
     final currentImage = currentIndex < images.length ? images[currentIndex] : null;
 
+    // Calculate overall progress: completed images + current image's progress
+    double overallProgress = 0.0;
+    if (images.isNotEmpty) {
+      overallProgress = (currentIndex + progress) / images.length;
+    }
+
     return Material(
       color: Colors.transparent,
       child: Stack(
@@ -38,9 +44,23 @@ class UploadProgressOverlay extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    'Uploading photos...',
-                    style: theme.textTheme.titleMedium?.copyWith(color: Colors.white),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Uploading photos...',
+                        style: theme.textTheme.titleMedium?.copyWith(color: Colors.white),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 16),
 
@@ -56,11 +76,11 @@ class UploadProgressOverlay extends StatelessWidget {
 
                   const SizedBox(height: 16),
 
-                  // Progress indicator
+                  // Progress indicator (overall progress)
                   SizedBox(
                     width: 300,
                     child: LinearProgressIndicator(
-                      value: progress,
+                      value: overallProgress,
                       backgroundColor: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
                       valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
                     ),
@@ -70,7 +90,7 @@ class UploadProgressOverlay extends StatelessWidget {
 
                   // Position counter and progress percentage
                   Text(
-                    '${currentIndex + 1} of ${images.length} • ${(progress * 100).toInt()}%',
+                    '${currentIndex + 1} of ${images.length} • ${(overallProgress * 100).toInt()}%',
                     style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white70),
                   ),
                 ],
