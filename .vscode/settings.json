@@ -2,5 +2,6 @@
   "editor.codeActionsOnSave": {
     "source.organizeImports": "always"
   },
-  "dart.lineLength": 100
+  "dart.lineLength": 100,
+  "dart.flutterHotReloadOnSave": "all"
 }

@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:bluesky_text/bluesky_text.dart';
 import 'package:flutter/foundation.dart';
 import 'package:grain/models/gallery_photo.dart';
 import 'package:grain/models/procedures/apply_alts_update.dart';
@@ -43,14 +42,6 @@ class GalleryCache extends _$GalleryCache {
 
   void setGalleriesForActor(String did, List<Gallery> galleries) {
     setGalleries(galleries);
-    // Optionally, you could keep a mapping of actor DID to gallery URIs if needed
-  }
-
-  Future<List<Map<String, dynamic>>> _extractFacets(String text) async {
-    final blueskyText = BlueskyText(text);
-    final entities = blueskyText.entities;
-    final facets = await entities.toFacets();
-    return List<Map<String, dynamic>>.from(facets);
   }
 
   Future<void> toggleFavorite(String uri) async {
@@ -109,6 +100,7 @@ class GalleryCache extends _$GalleryCache {
     required List<XFile> xfiles,
     int? startPosition,
     bool includeExif = true,
+    void Function(int imageIndex, double progress)? onProgress,
   }) async {
     // Fetch the latest gallery from the API to avoid stale state
     final latestGallery = await apiService.getGallery(uri: galleryUri);
@@ -120,10 +112,21 @@ class GalleryCache extends _$GalleryCache {
     final int positionOffset = startPosition ?? initialCount;
     final List<String> photoUris = [];
     int position = positionOffset;
-    for (final xfile in xfiles) {
+    for (int i = 0; i < xfiles.length; i++) {
+      final xfile = xfiles[i];
+      // Report progress if callback is provided
+      onProgress?.call(i, 0.0);
+
       final file = File(xfile.path);
       // Parse EXIF if requested
       final exif = includeExif ? await parseAndNormalizeExif(file: file) : null;
+
+      // Simulate progress steps
+      for (int p = 1; p <= 10; p++) {
+        await Future.delayed(const Duration(milliseconds: 30));
+        onProgress?.call(i, p / 10.0);
+      }
+
       // Resize the image
       final resizedResult = await compute<File, ResizeResult>((f) => resizeImage(file: f), file);
       // Upload the blob
@@ -174,6 +177,7 @@ class GalleryCache extends _$GalleryCache {
     required String description,
     required List<XFile> xfiles,
     bool includeExif = true,
+    void Function(int imageIndex, double progress)? onProgress,
   }) async {
     final res = await apiService.createGallery(
       request: CreateGalleryRequest(title: title, description: description),
@@ -183,6 +187,7 @@ class GalleryCache extends _$GalleryCache {
       galleryUri: res.galleryUri,
       xfiles: xfiles,
       includeExif: includeExif,
+      onProgress: onProgress,
     );
     return (res.galleryUri, photoUris);
   }
