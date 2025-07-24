@@ -80,6 +80,20 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
 
   Future<void> _pickImages() async {
     if (widget.gallery != null) return; // Only allow picking on create
+
+    final remainingSlots = 10 - _images.length;
+    if (remainingSlots <= 0) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('You\'ve already added the maximum of 10 photos.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+      return;
+    }
+
     final picker = ImagePicker();
     final picked = await picker.pickMultiImage(imageQuality: 85);
     if (picked.isNotEmpty) {
@@ -89,9 +103,18 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
         final hash = await _computeMd5(img.file);
         existingHashes.add(hash);
       }
+
       final newImages = <GalleryImage>[];
       int skipped = 0;
+      int limitReached = 0;
+
       for (final xfile in picked) {
+        // Check if we've reached the limit
+        if (_images.length + newImages.length >= 10) {
+          limitReached = picked.length - picked.indexOf(xfile);
+          break;
+        }
+
         final hash = await _computeMd5(xfile);
         if (!existingHashes.contains(hash)) {
           newImages.add(GalleryImage(file: xfile, isExisting: false));
@@ -100,18 +123,31 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
           skipped++;
         }
       }
+
       if (newImages.isNotEmpty) {
         setState(() {
           _images.addAll(newImages);
         });
       }
-      if (skipped > 0 && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Some images were skipped (duplicates).'),
-            duration: const Duration(seconds: 2),
-          ),
-        );
+
+      // Show appropriate feedback messages
+      if (mounted) {
+        String message = '';
+        if (limitReached > 0 && skipped > 0) {
+          message =
+              'Added ${newImages.length} photos. $skipped duplicates and $limitReached photos skipped (10 photo limit).';
+        } else if (limitReached > 0) {
+          message =
+              'Added ${newImages.length} photos. $limitReached photos skipped (10 photo limit).';
+        } else if (skipped > 0) {
+          message = 'Added ${newImages.length} photos. $skipped duplicates skipped.';
+        }
+
+        if (message.isNotEmpty) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(message), duration: const Duration(seconds: 3)));
+        }
       }
     }
   }
@@ -402,8 +438,10 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
                           children: [
                             Expanded(
                               child: AppButton(
-                                label: 'Add photos (${_images.length}/10)',
-                                onPressed: _pickImages,
+                                label: _images.length >= 10
+                                    ? 'Photos limit reached (10/10)'
+                                    : 'Add photos (${_images.length}/10)',
+                                onPressed: _images.length >= 10 ? null : _pickImages,
                                 icon: AppIcons.photoLibrary,
                                 variant: AppButtonVariant.primary,
                                 height: 40,
