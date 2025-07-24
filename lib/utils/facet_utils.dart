@@ -50,17 +50,29 @@ class FacetUtils {
       int aLength = a.end - a.start;
       int bLength = b.end - b.start;
 
-      // For links, use the display text length
+      // For links, use the length of the text that will actually be found
       if (a.type?.contains('link') == true && a.data['uri'] != null) {
-        String displayText = a.data['uri'] as String;
-        displayText = _extractDisplayTextFromUri(displayText);
-        aLength = displayText.length;
+        final uri = a.data['uri'] as String;
+        final possibleTexts = [_extractDisplayTextFromUri(uri), _extractDomainOnly(uri), uri];
+        // Use the longest text that exists in the original text
+        for (final testText in possibleTexts) {
+          if (text.contains(testText)) {
+            aLength = testText.length;
+            break;
+          }
+        }
       }
 
       if (b.type?.contains('link') == true && b.data['uri'] != null) {
-        String displayText = b.data['uri'] as String;
-        displayText = _extractDisplayTextFromUri(displayText);
-        bLength = displayText.length;
+        final uri = b.data['uri'] as String;
+        final possibleTexts = [_extractDisplayTextFromUri(uri), _extractDomainOnly(uri), uri];
+        // Use the longest text that exists in the original text
+        for (final testText in possibleTexts) {
+          if (text.contains(testText)) {
+            bLength = testText.length;
+            break;
+          }
+        }
       }
 
       // Sort by length descending, then by start position ascending
@@ -80,37 +92,92 @@ class FacetUtils {
 
       if (range.type?.contains('link') == true && range.data['uri'] != null) {
         final uri = range.data['uri'] as String;
-        final displayText = _extractDisplayTextFromUri(uri);
 
-        // Find all occurrences of this text and pick the one that doesn't overlap with used positions
-        int searchIndex = 0;
-        bool foundValidMatch = false;
+        // First, try to use the exact facet positions if they seem valid
+        if (range.start >= 0 && range.end <= text.length && range.start < range.end) {
+          final facetText = text.substring(range.start, range.end);
 
-        while (!foundValidMatch) {
-          final globalIndex = text.indexOf(displayText, searchIndex);
-          if (globalIndex == -1) break;
+          // Check if the facet text matches any of our expected URL formats
+          final possibleTexts = [
+            _extractDisplayTextFromUri(uri), // Full URL with protocol
+            _extractDomainOnly(uri), // Just the domain
+            uri, // Original URI as-is
+          ];
 
-          // Check if this range overlaps with any used positions
-          bool overlaps = false;
-          for (int i = globalIndex; i < globalIndex + displayText.length; i++) {
-            if (usedPositions.contains(i)) {
-              overlaps = true;
-              break;
+          bool facetTextMatches = possibleTexts.any(
+            (possible) =>
+                facetText == possible ||
+                facetText.contains(possible) ||
+                possible.contains(facetText),
+          );
+
+          if (facetTextMatches) {
+            // Check if this range overlaps with used positions
+            bool overlaps = false;
+            for (int i = range.start; i < range.end; i++) {
+              if (usedPositions.contains(i)) {
+                overlaps = true;
+                break;
+              }
+            }
+
+            if (!overlaps) {
+              actualStart = range.start;
+              actualEnd = range.end;
+              actualContent =
+                  facetText; // Use exactly what's in the original text at facet position
+
+              // Mark these positions as used
+              for (int i = actualStart; i < actualEnd; i++) {
+                usedPositions.add(i);
+              }
             }
           }
+        }
 
-          if (!overlaps) {
-            actualStart = globalIndex;
-            actualEnd = globalIndex + displayText.length;
-            actualContent = displayText;
-            foundValidMatch = true;
+        // If facet positions didn't work, fall back to searching
+        if (actualContent == null) {
+          final possibleTexts = [
+            _extractDisplayTextFromUri(uri), // Full URL with protocol
+            _extractDomainOnly(uri), // Just the domain
+            uri, // Original URI as-is
+          ];
 
-            // Mark these positions as used
-            for (int i = actualStart; i < actualEnd; i++) {
-              usedPositions.add(i);
+          int searchIndex = 0;
+          bool foundValidMatch = false;
+
+          // Try each possible text representation
+          for (final searchText in possibleTexts) {
+            searchIndex = 0;
+            while (!foundValidMatch) {
+              final globalIndex = text.indexOf(searchText, searchIndex);
+              if (globalIndex == -1) break;
+
+              // Check if this range overlaps with any used positions
+              bool overlaps = false;
+              for (int i = globalIndex; i < globalIndex + searchText.length; i++) {
+                if (usedPositions.contains(i)) {
+                  overlaps = true;
+                  break;
+                }
+              }
+
+              if (!overlaps) {
+                actualStart = globalIndex;
+                actualEnd = globalIndex + searchText.length;
+                actualContent = searchText; // Use exactly what we found in the text
+                foundValidMatch = true;
+
+                // Mark these positions as used
+                for (int i = actualStart; i < actualEnd; i++) {
+                  usedPositions.add(i);
+                }
+                break;
+              } else {
+                searchIndex = globalIndex + 1;
+              }
             }
-          } else {
-            searchIndex = globalIndex + 1;
+            if (foundValidMatch) break;
           }
         }
       }
@@ -198,19 +265,46 @@ class FacetUtils {
     return spans;
   }
 
-  /// Extracts the display text from a URI (removes protocol but keeps subdomain, removes path)
+  /// Extracts the display text from a URI (keeps protocol and domain, removes path)
   static String _extractDisplayTextFromUri(String uri) {
-    String displayText = uri;
+    // Find the first slash after the protocol to remove the path
+    String protocolAndDomain = uri;
     if (uri.startsWith('https://')) {
-      displayText = uri.substring(8);
+      final pathIndex = uri.indexOf('/', 8); // Start search after "https://"
+      if (pathIndex != -1) {
+        protocolAndDomain = uri.substring(0, pathIndex);
+      }
     } else if (uri.startsWith('http://')) {
-      displayText = uri.substring(7);
+      final pathIndex = uri.indexOf('/', 7); // Start search after "http://"
+      if (pathIndex != -1) {
+        protocolAndDomain = uri.substring(0, pathIndex);
+      }
+    } else {
+      // For URIs without protocol, just remove the path
+      final slashIndex = uri.indexOf('/');
+      if (slashIndex != -1) {
+        protocolAndDomain = uri.substring(0, slashIndex);
+      }
     }
-    // Remove path but keep subdomain (everything before the first slash after protocol)
-    final slashIndex = displayText.indexOf('/');
+
+    return protocolAndDomain;
+  }
+
+  /// Extracts just the domain part from a URI (removes protocol and path)
+  static String _extractDomainOnly(String uri) {
+    String domain = uri;
+    if (uri.startsWith('https://')) {
+      domain = uri.substring(8);
+    } else if (uri.startsWith('http://')) {
+      domain = uri.substring(7);
+    }
+
+    // Remove path
+    final slashIndex = domain.indexOf('/');
     if (slashIndex != -1) {
-      displayText = displayText.substring(0, slashIndex);
+      domain = domain.substring(0, slashIndex);
     }
-    return displayText;
+
+    return domain;
   }
 }
