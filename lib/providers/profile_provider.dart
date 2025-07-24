@@ -22,40 +22,14 @@ class ProfileNotifier extends _$ProfileNotifier {
     return _fetchProfile(did);
   }
 
-  // @TODO: Facets don't always render correctly.
-  List<Map<String, dynamic>>? _filterValidFacets(
-    List<Map<String, dynamic>>? computedFacets,
-    String desc,
-  ) {
-    if (computedFacets == null) return null;
-    return computedFacets.where((facet) {
-      final index = facet['index'];
-      if (index is Map) {
-        final start = index['byteStart'] ?? 0;
-        final end = index['byteEnd'] ?? 0;
-        return start is int && end is int && start >= 0 && end > start && end <= desc.length;
-      }
-      final start = facet['index'] ?? facet['offset'] ?? 0;
-      final end = facet['end'];
-      final length = facet['length'];
-      if (end is int && start is int) {
-        return start >= 0 && end > start && end <= desc.length;
-      } else if (length is int && start is int) {
-        return start >= 0 && length > 0 && start + length <= desc.length;
-      }
-      return false;
-    }).toList();
-  }
-
-  // Extract facet computation and filtering for reuse
-  Future<List<Map<String, dynamic>>?> computeAndFilterFacets(String? description) async {
+  // Extract facets
+  Future<List<Map<String, dynamic>>?> _extractFacets(String? description) async {
     final desc = description ?? '';
     if (desc.isEmpty) return null;
     try {
       final blueskyText = BlueskyText(desc);
       final entities = blueskyText.entities;
-      final computedFacets = await entities.toFacets();
-      return _filterValidFacets(computedFacets, desc);
+      return entities.toFacets();
     } catch (_) {
       return null;
     }
@@ -66,7 +40,7 @@ class ProfileNotifier extends _$ProfileNotifier {
     final galleries = await apiService.fetchActorGalleries(did: did);
     final favs = await apiService.getActorFavs(did: did);
     if (profile != null) {
-      final facets = await computeAndFilterFacets(profile.description);
+      final facets = await _extractFacets(profile.description);
       return ProfileWithGalleries(
         profile: profile.copyWith(descriptionFacets: facets),
         galleries: galleries,
@@ -108,7 +82,7 @@ class ProfileNotifier extends _$ProfileNotifier {
       final updated = await apiService.fetchProfile(did: did);
       if (updated != null) {
         final galleries = await apiService.fetchActorGalleries(did: did);
-        final facets = await computeAndFilterFacets(updated.description);
+        final facets = await _extractFacets(updated.description);
         ref.read(galleryCacheProvider.notifier).setGalleriesForActor(did, galleries);
         state = AsyncValue.data(
           ProfileWithGalleries(

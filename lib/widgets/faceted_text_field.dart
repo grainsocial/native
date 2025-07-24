@@ -1,20 +1,12 @@
 import 'dart:async';
 
 import 'package:bluesky_text/bluesky_text.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/profile.dart';
 import '../providers/actor_search_provider.dart';
-
-class _FacetRange {
-  final int start;
-  final int end;
-  final String? type;
-  final Map<String, dynamic> data;
-  _FacetRange({required this.start, required this.end, required this.type, required this.data});
-}
+import '../utils/facet_utils.dart';
 
 class FacetedTextField extends ConsumerStatefulWidget {
   final String? label;
@@ -409,73 +401,18 @@ class _MentionHighlightTextFieldState extends State<_MentionHighlightTextField> 
     final theme = Theme.of(context);
     final text = widget.controller.text;
     final baseStyle = theme.textTheme.bodyMedium?.copyWith(fontSize: 15);
+    final linkStyle = baseStyle?.copyWith(color: theme.colorScheme.primary);
 
-    final List<InlineSpan> spans = [];
-    final List<_FacetRange> ranges = _parsedFacets.map((facet) {
-      final feature = facet['features']?[0] ?? {};
-      final type = feature['\$type'] ?? feature['type'];
-      final data = Map<String, dynamic>.from(feature);
-      if (type?.contains('link') == true || type == 'app.bsky.richtext.facet#link') {
-        data['uri'] = feature['uri'] ?? facet['uri'];
-      }
-      if (type?.contains('tag') == true || type == 'app.bsky.richtext.facet#tag') {
-        data['tag'] = feature['tag'] ?? facet['tag'];
-      }
-      return _FacetRange(
-        start: facet['index']?['byteStart'] ?? facet['byteStart'] ?? 0,
-        end: facet['index']?['byteEnd'] ?? facet['byteEnd'] ?? 0,
-        type: type,
-        data: data,
-      );
-    }).toList();
-    ranges.sort((a, b) => a.start.compareTo(b.start));
-    int pos = 0;
-    final textLength = text.length;
-    for (final range in ranges) {
-      final safeStart = range.start.clamp(0, textLength);
-      final safeEnd = range.end.clamp(0, textLength);
-      if (safeStart > pos) {
-        spans.add(TextSpan(text: text.substring(pos, safeStart), style: baseStyle));
-      }
-      if (safeEnd > safeStart) {
-        final content = text.substring(safeStart, safeEnd);
-        if ((range.type?.contains('mention') == true ||
-                range.type == 'app.bsky.richtext.facet#mention') &&
-            range.data['did'] != null) {
-          spans.add(
-            TextSpan(
-              text: content,
-              style: baseStyle?.copyWith(color: theme.colorScheme.primary),
-              recognizer: TapGestureRecognizer()..onTap = () => _onMentionTap(range.data['did']),
-            ),
-          );
-        } else if ((range.type?.contains('link') == true ||
-                range.type == 'app.bsky.richtext.facet#link') &&
-            range.data['uri'] != null) {
-          spans.add(
-            TextSpan(
-              text: content,
-              style: baseStyle?.copyWith(color: theme.colorScheme.primary),
-            ),
-          );
-        } else if ((range.type?.contains('tag') == true ||
-                range.type == 'app.bsky.richtext.facet#tag') &&
-            range.data['tag'] != null) {
-          spans.add(
-            TextSpan(
-              text: content,
-              style: baseStyle?.copyWith(color: theme.colorScheme.primary),
-            ),
-          );
-        } else {
-          spans.add(TextSpan(text: content, style: baseStyle));
-        }
-      }
-      pos = safeEnd;
-    }
-    if (pos < text.length) {
-      spans.add(TextSpan(text: text.substring(pos), style: baseStyle));
-    }
+    // Use the same facet processing logic as FacetedText
+    final spans = FacetUtils.processFacets(
+      text: text,
+      facets: _parsedFacets,
+      defaultStyle: baseStyle,
+      linkStyle: linkStyle,
+      onMentionTap: _onMentionTap,
+      onLinkTap: null, // No link tap in text field
+      onTagTap: null, // No tag tap in text field
+    );
     return LayoutBuilder(
       builder: (context, constraints) {
         return SizedBox(
