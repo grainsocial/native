@@ -66,6 +66,13 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
     });
   }
 
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descController.dispose();
+    super.dispose();
+  }
+
   Future<String> _computeMd5(XFile xfile) async {
     final bytes = await xfile.readAsBytes();
     return md5.convert(bytes).toString();
@@ -116,6 +123,8 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
   }
 
   Future<void> _submit() async {
+    FocusScope.of(context).unfocus();
+
     final titleGraphemes = _titleController.text.characters.length;
     final descGraphemes = _descController.text.characters.length;
     if (titleGraphemes > 100 || descGraphemes > 1000) {
@@ -261,7 +270,12 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
               ),
               leading: CupertinoButton(
                 padding: EdgeInsets.zero,
-                onPressed: _submitting ? null : () => Navigator.of(context).pop(),
+                onPressed: _submitting
+                    ? null
+                    : () {
+                        FocusScope.of(context).unfocus(); // Force keyboard to close
+                        Navigator.of(context).pop();
+                      },
                 child: Text(
                   'Cancel',
                   style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.w600),
@@ -493,6 +507,9 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
 
 Future<String?> showCreateGallerySheet(BuildContext context, {Gallery? gallery}) async {
   final theme = Theme.of(context);
+
+  FocusScope.of(context).unfocus();
+
   final result = await showCupertinoSheet(
     context: context,
     useNestedNavigation: false,
@@ -501,6 +518,7 @@ Future<String?> showCreateGallerySheet(BuildContext context, {Gallery? gallery})
       child: CreateGalleryPage(gallery: gallery),
     ),
   );
+
   // Restore status bar style or any other cleanup
   SystemChrome.setSystemUIOverlayStyle(
     theme.brightness == Brightness.dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
