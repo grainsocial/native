@@ -8,8 +8,10 @@ class PlainTextField extends StatelessWidget {
   final TextInputType? keyboardType;
   final String? hintText;
   final void Function(String)? onChanged;
+  final void Function(String)? onSubmitted;
   final Widget? prefixIcon;
   final Widget? suffixIcon;
+  final List<String>? autofillHints;
 
   const PlainTextField({
     super.key,
@@ -22,6 +24,8 @@ class PlainTextField extends StatelessWidget {
     this.onChanged,
     this.prefixIcon,
     this.suffixIcon,
+    this.onSubmitted,
+    this.autofillHints,
   });
 
   @override
@@ -55,6 +59,8 @@ class PlainTextField extends StatelessWidget {
                       enabled: enabled,
                       keyboardType: keyboardType,
                       onChanged: onChanged,
+                      onSubmitted: onSubmitted,
+                      autofillHints: autofillHints,
                       style: theme.textTheme.bodyMedium?.copyWith(fontSize: 15),
                       decoration: InputDecoration(
                         hintText: hintText,
