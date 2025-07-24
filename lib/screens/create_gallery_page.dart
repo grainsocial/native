@@ -11,6 +11,7 @@ import 'package:grain/app_icons.dart';
 import 'package:grain/models/gallery.dart';
 import 'package:grain/providers/profile_provider.dart';
 import 'package:grain/widgets/app_button.dart';
+import 'package:grain/widgets/faceted_text_field.dart';
 import 'package:grain/widgets/plain_text_field.dart';
 import 'package:grain/widgets/upload_progress_overlay.dart';
 import 'package:image_picker/image_picker.dart';
@@ -331,7 +332,7 @@ class _CreateGalleryPageState extends State<CreateGalleryPage> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      PlainTextField(
+                      FacetedTextField(
                         label: 'Description',
                         controller: _descController,
                         maxLines: 6,

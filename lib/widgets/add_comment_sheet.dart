@@ -5,6 +5,7 @@ import 'package:grain/api.dart';
 import 'package:grain/app_icons.dart';
 import 'package:grain/widgets/app_image.dart';
 import 'package:grain/widgets/gallery_preview.dart';
+import 'package:grain/widgets/faceted_text_field.dart';
 
 Future<void> showAddCommentSheet(
   BuildContext context, {
@@ -185,7 +186,8 @@ class _AddCommentSheetState extends State<_AddCommentSheet> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   creator is Map
@@ -199,7 +201,7 @@ class _AddCommentSheetState extends State<_AddCommentSheet> {
                                         ? (creator['handle'] ?? '')
                                         : (creator.handle ?? ''))
                                     .isNotEmpty) ...[
-                                  const SizedBox(width: 8),
+                                  const SizedBox(height: 1),
                                   Text(
                                     '@${creator is Map ? creator['handle'] : creator.handle}',
                                     style: theme.textTheme.bodySmall?.copyWith(
@@ -315,19 +317,15 @@ class _AddCommentSheetState extends State<_AddCommentSheet> {
                       ),
                     // Text input
                     Expanded(
-                      child: TextField(
-                        controller: widget.controller,
-                        focusNode: _focusNode,
-                        maxLines: 6,
-                        minLines: 2,
-                        style: theme.textTheme.bodyMedium,
-                        decoration: InputDecoration(
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 10),
+                        child: FacetedTextField(
+                          controller: widget.controller,
+                          maxLines: 6,
+                          enabled: true,
+                          keyboardType: TextInputType.multiline,
                           hintText: 'Add a comment',
-                          hintStyle: theme.textTheme.bodyMedium?.copyWith(color: theme.hintColor),
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                          isDense: true,
-                          filled: false,
+                          // The FacetedTextField handles its own style and padding internally
                         ),
                       ),
                     ),

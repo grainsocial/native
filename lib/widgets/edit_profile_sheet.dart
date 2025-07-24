@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:grain/app_icons.dart';
+import 'package:grain/widgets/faceted_text_field.dart';
 import 'package:grain/widgets/plain_text_field.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -69,9 +70,12 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
     super.initState();
     _displayNameController = TextEditingController(text: widget.initialDisplayName ?? '');
     _descriptionController = TextEditingController(text: widget.initialDescription ?? '');
-    // No need to track changes
     _displayNameController.addListener(_onInputChanged);
-    _descriptionController.addListener(_onInputChanged);
+    _descriptionController.addListener(_onDescriptionChanged);
+  }
+
+  void _onDescriptionChanged() {
+    setState(() {}); // For character count
   }
 
   void _onInputChanged() {
@@ -260,7 +264,7 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      PlainTextField(
+                      FacetedTextField(
                         label: 'Description',
                         controller: _descriptionController,
                         maxLines: 6,
