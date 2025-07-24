@@ -59,12 +59,20 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: 24),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: PlainTextField(
-                    label: '',
-                    controller: _handleController,
-                    hintText: 'Enter your handle or pds host',
-                    enabled: !_signingIn,
-                    onChanged: (_) {},
+                  child: AutofillGroup(
+                    child: PlainTextField(
+                      label: '',
+                      controller: _handleController,
+                      hintText: 'Enter your handle or pds host',
+                      enabled: !_signingIn,
+                      autofillHints: const [AutofillHints.username, 'username'],
+                      onChanged: (_) {},
+                      onSubmitted: (_) {
+                        if (!_signingIn) {
+                          _signInWithBluesky(context);
+                        }
+                      },
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
