@@ -194,7 +194,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                                     onPressed: () async {
                                       await ref
                                           .read(profileNotifierProvider(profile.did).notifier)
-                                          .toggleFollow(apiService.currentUser?.did);
+                                          .toggleFollow(profile.did);
                                     },
                                     label: (profile.viewer?.following?.isNotEmpty == true)
                                         ? 'Following'
