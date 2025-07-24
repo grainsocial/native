@@ -138,35 +138,39 @@ class _FacetedTextFieldState extends ConsumerState<FacetedTextField> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: resultsToShow.map((actor) {
-                return GestureDetector(
-                  onTap: () => _insertActor(actor.handle),
-                  child: Container(
-                    height: rowHeight,
-                    alignment: Alignment.centerLeft,
-                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                    child: Row(
-                      children: [
-                        if (actor.avatar != null && actor.avatar!.isNotEmpty)
-                          CircleAvatar(radius: 16, backgroundImage: NetworkImage(actor.avatar!))
-                        else
-                          CircleAvatar(radius: 16, child: Icon(Icons.person, size: 16)),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            actor.displayName ?? actor.handle,
-                            style: Theme.of(context).textTheme.bodyMedium,
+                return Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => _insertActor(actor.handle),
+                    child: Container(
+                      height: rowHeight,
+                      width: double.infinity,
+                      alignment: Alignment.centerLeft,
+                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                      child: Row(
+                        children: [
+                          if (actor.avatar != null && actor.avatar!.isNotEmpty)
+                            CircleAvatar(radius: 16, backgroundImage: NetworkImage(actor.avatar!))
+                          else
+                            CircleAvatar(radius: 16, child: Icon(Icons.person, size: 16)),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              actor.displayName ?? actor.handle,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '@${actor.handle}',
+                            style: Theme.of(
+                              context,
+                            ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
                             overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '@${actor.handle}',
-                          style: Theme.of(
-                            context,
-                          ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 );
