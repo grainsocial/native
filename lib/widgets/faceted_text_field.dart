@@ -348,6 +348,9 @@ class _MentionHighlightTextField extends StatefulWidget {
 }
 
 class _MentionHighlightTextFieldState extends State<_MentionHighlightTextField> {
+  final ScrollController _richTextScrollController = ScrollController();
+  final ScrollController _textFieldScrollController = ScrollController();
+
   void _onMentionTap(String did) {
     // Show overlay for this mention (simulate as if user is typing @mention)
     final parent = context.findAncestorStateOfType<_FacetedTextFieldState>();
@@ -364,12 +367,21 @@ class _MentionHighlightTextFieldState extends State<_MentionHighlightTextField> 
     super.initState();
     _parseFacets();
     widget.controller.addListener(_parseFacets);
+
+    // Sync scroll controllers
+    _textFieldScrollController.addListener(() {
+      if (_richTextScrollController.hasClients && _textFieldScrollController.hasClients) {
+        _richTextScrollController.jumpTo(_textFieldScrollController.offset);
+      }
+    });
   }
 
   @override
   void dispose() {
     widget.controller.removeListener(_parseFacets);
     _facetDebounce?.cancel();
+    _richTextScrollController.dispose();
+    _textFieldScrollController.dispose();
     super.dispose();
   }
 
@@ -466,39 +478,53 @@ class _MentionHighlightTextFieldState extends State<_MentionHighlightTextField> 
     }
     return LayoutBuilder(
       builder: (context, constraints) {
-        return Stack(
-          children: [
-            // RichText for highlight
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              child: RichText(
-                text: TextSpan(children: spans),
-                maxLines: widget.maxLines,
-                overflow: TextOverflow.visible,
+        return SizedBox(
+          width: double.infinity, // Make it full width
+          height: widget.maxLines == 1
+              ? null
+              : (baseStyle?.fontSize ?? 15) * 1.4 * widget.maxLines +
+                    24, // Line height * maxLines + padding
+          child: Stack(
+            children: [
+              // RichText for highlight wrapped in SingleChildScrollView
+              SingleChildScrollView(
+                controller: _richTextScrollController,
+                physics: const NeverScrollableScrollPhysics(), // Disable direct interaction
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  child: RichText(
+                    text: TextSpan(children: spans),
+                    maxLines: null, // Allow unlimited lines for scrolling
+                    overflow: TextOverflow.visible,
+                  ),
+                ),
               ),
-            ),
-            // Editable TextField for input, but with transparent text so only RichText is visible
-            TextField(
-              controller: widget.controller,
-              maxLines: widget.maxLines,
-              enabled: widget.enabled,
-              keyboardType: widget.keyboardType,
-              onChanged: widget.onChanged,
-              style: baseStyle?.copyWith(color: const Color(0x01000000)),
-              cursorColor: theme.colorScheme.primary,
-              showCursor: true,
-              enableInteractiveSelection: true,
-              decoration: InputDecoration(
-                hintText: widget.hintText,
-                hintStyle: baseStyle?.copyWith(color: theme.hintColor),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                isDense: true,
-                prefixIcon: widget.prefixIcon,
-                suffixIcon: widget.suffixIcon,
+              // Editable TextField for input, but with transparent text so only RichText is visible
+              Positioned.fill(
+                child: TextField(
+                  controller: widget.controller,
+                  scrollController: _textFieldScrollController,
+                  maxLines: null, // Allow unlimited lines for scrolling
+                  enabled: widget.enabled,
+                  keyboardType: widget.keyboardType,
+                  onChanged: widget.onChanged,
+                  style: baseStyle?.copyWith(color: const Color(0x01000000)),
+                  cursorColor: theme.colorScheme.primary,
+                  showCursor: true,
+                  enableInteractiveSelection: true,
+                  decoration: InputDecoration(
+                    hintText: widget.hintText,
+                    hintStyle: baseStyle?.copyWith(color: theme.hintColor),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    isDense: true,
+                    prefixIcon: widget.prefixIcon,
+                    suffixIcon: widget.suffixIcon,
+                  ),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         );
       },
     );
