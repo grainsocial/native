@@ -47,7 +47,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     if (!mounted) return;
     if (success) {
       Navigator.of(context).pop();
-      if (mounted) setState(() {}); // Force widget rebuild after modal closes
+      if (mounted) {
+        setState(() {}); // Force widget rebuild after modal closes
+      }
     } else {
       if (!mounted) return;
       ScaffoldMessenger.of(
