@@ -20,6 +20,7 @@ class PhotoExif with _$PhotoExif {
     String? lensModel,
     String? make,
     String? model,
+    Map<String, dynamic>? record,
   }) = _PhotoExif;
 
   factory PhotoExif.fromJson(Map<String, dynamic> json) => _$PhotoExifFromJson(json);

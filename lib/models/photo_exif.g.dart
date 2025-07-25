@@ -22,6 +22,7 @@ _$PhotoExifImpl _$$PhotoExifImplFromJson(Map<String, dynamic> json) =>
       lensModel: json['lensModel'] as String?,
       make: json['make'] as String?,
       model: json['model'] as String?,
+      record: json['record'] as Map<String, dynamic>?,
     );
 
 Map<String, dynamic> _$$PhotoExifImplToJson(_$PhotoExifImpl instance) =>
@@ -40,4 +41,5 @@ Map<String, dynamic> _$$PhotoExifImplToJson(_$PhotoExifImpl instance) =>
       'lensModel': instance.lensModel,
       'make': instance.make,
       'model': instance.model,
+      'record': instance.record,
     };

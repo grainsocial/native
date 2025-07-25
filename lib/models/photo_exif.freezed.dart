@@ -36,6 +36,7 @@ mixin _$PhotoExif {
   String? get lensModel => throw _privateConstructorUsedError;
   String? get make => throw _privateConstructorUsedError;
   String? get model => throw _privateConstructorUsedError;
+  Map<String, dynamic>? get record => throw _privateConstructorUsedError;
 
   /// Serializes this PhotoExif to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -67,6 +68,7 @@ abstract class $PhotoExifCopyWith<$Res> {
     String? lensModel,
     String? make,
     String? model,
+    Map<String, dynamic>? record,
   });
 }
 
@@ -99,6 +101,7 @@ class _$PhotoExifCopyWithImpl<$Res, $Val extends PhotoExif>
     Object? lensModel = freezed,
     Object? make = freezed,
     Object? model = freezed,
+    Object? record = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -158,6 +161,10 @@ class _$PhotoExifCopyWithImpl<$Res, $Val extends PhotoExif>
                 ? _value.model
                 : model // ignore: cast_nullable_to_non_nullable
                       as String?,
+            record: freezed == record
+                ? _value.record
+                : record // ignore: cast_nullable_to_non_nullable
+                      as Map<String, dynamic>?,
           )
           as $Val,
     );
@@ -188,6 +195,7 @@ abstract class _$$PhotoExifImplCopyWith<$Res>
     String? lensModel,
     String? make,
     String? model,
+    Map<String, dynamic>? record,
   });
 }
 
@@ -219,6 +227,7 @@ class __$$PhotoExifImplCopyWithImpl<$Res>
     Object? lensModel = freezed,
     Object? make = freezed,
     Object? model = freezed,
+    Object? record = freezed,
   }) {
     return _then(
       _$PhotoExifImpl(
@@ -278,6 +287,10 @@ class __$$PhotoExifImplCopyWithImpl<$Res>
             ? _value.model
             : model // ignore: cast_nullable_to_non_nullable
                   as String?,
+        record: freezed == record
+            ? _value._record
+            : record // ignore: cast_nullable_to_non_nullable
+                  as Map<String, dynamic>?,
       ),
     );
   }
@@ -301,7 +314,8 @@ class _$PhotoExifImpl implements _PhotoExif {
     this.lensModel,
     this.make,
     this.model,
-  });
+    final Map<String, dynamic>? record,
+  }) : _record = record;
 
   factory _$PhotoExifImpl.fromJson(Map<String, dynamic> json) =>
       _$$PhotoExifImplFromJson(json);
@@ -339,10 +353,19 @@ class _$PhotoExifImpl implements _PhotoExif {
   final String? make;
   @override
   final String? model;
+  final Map<String, dynamic>? _record;
+  @override
+  Map<String, dynamic>? get record {
+    final value = _record;
+    if (value == null) return null;
+    if (_record is EqualUnmodifiableMapView) return _record;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(value);
+  }
 
   @override
   String toString() {
-    return 'PhotoExif(photo: $photo, createdAt: $createdAt, uri: $uri, cid: $cid, dateTimeOriginal: $dateTimeOriginal, exposureTime: $exposureTime, fNumber: $fNumber, flash: $flash, focalLengthIn35mmFormat: $focalLengthIn35mmFormat, iSO: $iSO, lensMake: $lensMake, lensModel: $lensModel, make: $make, model: $model)';
+    return 'PhotoExif(photo: $photo, createdAt: $createdAt, uri: $uri, cid: $cid, dateTimeOriginal: $dateTimeOriginal, exposureTime: $exposureTime, fNumber: $fNumber, flash: $flash, focalLengthIn35mmFormat: $focalLengthIn35mmFormat, iSO: $iSO, lensMake: $lensMake, lensModel: $lensModel, make: $make, model: $model, record: $record)';
   }
 
   @override
@@ -372,7 +395,8 @@ class _$PhotoExifImpl implements _PhotoExif {
             (identical(other.lensModel, lensModel) ||
                 other.lensModel == lensModel) &&
             (identical(other.make, make) || other.make == make) &&
-            (identical(other.model, model) || other.model == model));
+            (identical(other.model, model) || other.model == model) &&
+            const DeepCollectionEquality().equals(other._record, _record));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -393,6 +417,7 @@ class _$PhotoExifImpl implements _PhotoExif {
     lensModel,
     make,
     model,
+    const DeepCollectionEquality().hash(_record),
   );
 
   /// Create a copy of PhotoExif
@@ -425,6 +450,7 @@ abstract class _PhotoExif implements PhotoExif {
     final String? lensModel,
     final String? make,
     final String? model,
+    final Map<String, dynamic>? record,
   }) = _$PhotoExifImpl;
 
   factory _PhotoExif.fromJson(Map<String, dynamic> json) =
@@ -458,6 +484,8 @@ abstract class _PhotoExif implements PhotoExif {
   String? get make;
   @override
   String? get model;
+  @override
+  Map<String, dynamic>? get record;
 
   /// Create a copy of PhotoExif
   /// with the given fields replaced by the non-null parameter values.

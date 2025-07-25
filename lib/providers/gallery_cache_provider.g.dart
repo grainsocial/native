@@ -6,7 +6,7 @@ part of 'gallery_cache_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$galleryCacheHash() => r'd74ced0d6fcf6369bed80f7f0219bd591c13db5a';
+String _$galleryCacheHash() => r'd604bfc71f008251a36d7943b99294728c31de1f';
 
 /// Holds a cache of galleries by URI.
 ///

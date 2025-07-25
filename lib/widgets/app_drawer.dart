@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:grain/api.dart';
 import 'package:grain/app_icons.dart';
 import 'package:grain/screens/log_page.dart';
+import 'package:grain/screens/photo_library_page.dart';
 import 'package:grain/widgets/app_version_text.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -176,6 +177,20 @@ class AppDrawer extends StatelessWidget {
             onTap: () {
               Navigator.pop(context);
               onProfile();
+            },
+          ),
+          ListTile(
+            leading: Icon(
+              AppIcons.photoLibrary,
+              size: 18,
+              color: activeIndex == 4 ? theme.colorScheme.primary : theme.iconTheme.color,
+            ),
+            title: const Text('Photo Library'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (context) => const PhotoLibraryPage()));
             },
           ),
           ListTile(

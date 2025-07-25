@@ -168,6 +168,25 @@ class _GalleryPhotoViewState extends ConsumerState<GalleryPhotoView> {
                     ),
                   ),
                 ),
+              if (!widget.showAddCommentButton && photo.exif != null)
+                SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: IconButton(
+                        icon: Icon(Icons.camera_alt, color: Colors.white),
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) => PhotoExifDialog(exif: photo.exif!),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
