@@ -128,7 +128,7 @@ class _GalleryPhotoViewState extends ConsumerState<GalleryPhotoView> {
                                   final gallery = widget.gallery;
                                   final subject = gallery?.uri;
                                   final focus = photo.uri;
-                                  if (subject == null || focus == null) {
+                                  if (subject == null) {
                                     return;
                                   }
                                   // Use the provider's createComment method
