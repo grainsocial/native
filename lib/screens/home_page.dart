@@ -14,18 +14,18 @@ import 'explore_page.dart';
 import 'notifications_page.dart';
 import 'profile_page.dart';
 
-class MyHomePage extends StatefulWidget {
+class HomePage extends StatefulWidget {
   final String title;
   final int initialTab; // 0: Home, 1: Explore, 2: Notifications, 3: Profile
   final String? did;
   final VoidCallback? onSignOut;
-  const MyHomePage({super.key, required this.title, this.initialTab = 0, this.did, this.onSignOut});
+  const HomePage({super.key, required this.title, this.initialTab = 0, this.did, this.onSignOut});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<HomePage> createState() => _HomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
+class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   PreferredSizeWidget _buildAppBar(ThemeData theme, {required String title}) {
     return AppBar(
       backgroundColor: theme.appBarTheme.backgroundColor,
@@ -88,7 +88,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   }
 
   @override
-  void didUpdateWidget(covariant MyHomePage oldWidget) {
+  void didUpdateWidget(covariant HomePage oldWidget) {
     super.didUpdateWidget(oldWidget);
   }
 
@@ -329,4 +329,4 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       ),
     );
   }
-} // End of _MyHomePageState and file
+} // End of _HomePageState and file

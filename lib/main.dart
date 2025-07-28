@@ -152,7 +152,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       );
     } else {
       home = isSignedIn
-          ? MyHomePage(title: 'Grain', onSignOut: () => _handleSignOut(context))
+          ? HomePage(title: 'Grain', onSignOut: () => _handleSignOut(context))
           : LoginPage(onSignIn: _handleSignIn);
     }
     return MaterialApp(

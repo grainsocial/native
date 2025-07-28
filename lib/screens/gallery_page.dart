@@ -185,7 +185,7 @@ class _GalleryPageState extends ConsumerState<GalleryPage> {
                           if (!mounted) return;
                           Navigator.of(context).pushAndRemoveUntil(
                             MaterialPageRoute(
-                              builder: (_) => MyHomePage(
+                              builder: (_) => HomePage(
                                 title: 'Grain',
                                 initialTab: 3, // Profile tab
                                 did: widget.currentUserDid,
