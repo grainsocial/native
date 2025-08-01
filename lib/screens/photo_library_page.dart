@@ -309,6 +309,13 @@ class _PhotoLibraryPageState extends State<PhotoLibraryPage> {
           initialIndex: photoIndex,
           showAddCommentButton: false,
           onClose: () => Navigator.of(context).pop(),
+          onPhotoDeleted: (deletedPhoto) {
+            // Remove the photo from the local state
+            setState(() {
+              _photos.removeWhere((p) => p.uri == deletedPhoto.uri);
+              _photoGroups = _groupPhotosByDate(_photos);
+            });
+          },
         ),
         transitionDuration: const Duration(milliseconds: 200),
         reverseTransitionDuration: const Duration(milliseconds: 200),

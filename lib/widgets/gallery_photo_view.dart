@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:grain/api.dart';
 import 'package:grain/app_icons.dart';
 import 'package:grain/models/gallery_photo.dart';
+import 'package:grain/models/procedures/delete_photo_request.dart';
 import 'package:grain/providers/gallery_thread_cache_provider.dart';
 import 'package:grain/widgets/add_comment_button.dart';
 import 'package:grain/widgets/add_comment_sheet.dart';
@@ -15,6 +17,7 @@ class GalleryPhotoView extends ConsumerStatefulWidget {
   final void Function(String galleryUri)? onCommentPosted;
   final dynamic gallery;
   final bool showAddCommentButton;
+  final void Function(GalleryPhoto photo)? onPhotoDeleted;
   const GalleryPhotoView({
     super.key,
     required this.photos,
@@ -23,6 +26,7 @@ class GalleryPhotoView extends ConsumerStatefulWidget {
     this.onCommentPosted,
     this.gallery,
     this.showAddCommentButton = true,
+    this.onPhotoDeleted,
   });
 
   @override
@@ -40,6 +44,89 @@ class _GalleryPhotoViewState extends ConsumerState<GalleryPhotoView> {
     _controller = PageController(initialPage: _currentIndex);
   }
 
+  void _showPhotoOptions(BuildContext context) {
+    final photo = widget.photos[_currentIndex];
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(AppIcons.delete, color: Colors.red),
+                title: Text('Delete photo', style: TextStyle(color: Colors.red)),
+                onTap: () async {
+                  Navigator.of(sheetContext).pop();
+                  await _deletePhoto(context, photo);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _deletePhoto(BuildContext context, GalleryPhoto photo) async {
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete Photo'),
+        content: const Text(
+          'Are you sure you want to delete this photo? This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      // Call the API to delete the photo
+      await apiService.deletePhoto(request: DeletePhotoRequest(uri: photo.uri));
+
+      // Notify the parent widget about the deletion
+      widget.onPhotoDeleted?.call(photo);
+
+      // Close the photo view
+      if (widget.onClose != null) {
+        widget.onClose!();
+      } else {
+        Navigator.of(context).maybePop();
+      }
+
+      // Show success message
+      if (mounted && context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Photo deleted successfully')));
+      }
+    } catch (e) {
+      // Show error message
+      if (mounted && context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to delete photo: $e')));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final photo = widget.photos[_currentIndex];
@@ -53,6 +140,13 @@ class _GalleryPhotoViewState extends ConsumerState<GalleryPhotoView> {
           icon: Icon(AppIcons.close),
           onPressed: widget.onClose ?? () => Navigator.of(context).maybePop(),
         ),
+        actions: [
+          if (widget.onPhotoDeleted != null)
+            IconButton(
+              icon: Icon(AppIcons.moreVertical),
+              onPressed: () => _showPhotoOptions(context),
+            ),
+        ],
       ),
       body: SafeArea(
         child: GestureDetector(
@@ -86,7 +180,7 @@ class _GalleryPhotoViewState extends ConsumerState<GalleryPhotoView> {
               if (photo.alt != null && photo.alt?.isNotEmpty == true)
                 Container(
                   width: double.infinity,
-                  color: Colors.black.withOpacity(0.7),
+                  color: Colors.black.withValues(alpha: 0.7),
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                   child: Text(
                     photo.alt!,
