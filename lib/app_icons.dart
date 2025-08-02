@@ -34,4 +34,7 @@ class AppIcons {
   static const IconData bars = FontAwesomeIcons.bars;
   static const IconData arrowRightFromBracket = FontAwesomeIcons.arrowRightFromBracket;
   static const IconData checkCircle = FontAwesomeIcons.circleCheck;
+  static const IconData link = FontAwesomeIcons.link;
+  static const IconData download = FontAwesomeIcons.download;
+  static const IconData bluesky = FontAwesomeIcons.bluesky;
 }

@@ -5,9 +5,9 @@ import 'package:grain/app_icons.dart';
 import 'package:grain/app_theme.dart';
 import 'package:grain/models/gallery.dart';
 import 'package:grain/providers/gallery_cache_provider.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../screens/comments_page.dart';
+import 'share_dialog.dart';
 
 class GalleryActionButtons extends ConsumerWidget {
   final Gallery gallery;
@@ -28,6 +28,16 @@ class GalleryActionButtons extends ConsumerWidget {
     this.onShare,
     this.isLoggedIn = true,
   });
+
+  Future<void> _showShareDialog(BuildContext context, WidgetRef ref) async {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            ShareDialog(gallery: gallery, onComplete: () => Navigator.of(context).pop()),
+        fullscreenDialog: true,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -97,13 +107,8 @@ class GalleryActionButtons extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(10),
                 onTap:
                     onShare ??
-                    () {
-                      final handle = gallery.creator?.handle ?? '';
-                      final uriParts = gallery.uri.split('/');
-                      final galleryRkey = uriParts.isNotEmpty ? uriParts.last : '';
-                      final url = 'https://grain.social/profile/$handle/gallery/$galleryRkey';
-                      final shareText = "Check out this gallery on @grain.social \n$url";
-                      SharePlus.instance.share(ShareParams(text: shareText));
+                    () async {
+                      await _showShareDialog(context, ref);
                     },
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),

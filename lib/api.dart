@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:grain/app_logger.dart';
 import 'package:grain/main.dart';
@@ -710,6 +711,30 @@ class ApiService {
     } catch (e) {
       appLogger.e('Error updating seen notifications: $e');
       return false;
+    }
+  }
+
+  Future<Uint8List?> getGalleryCompositeImage({required String uri}) async {
+    appLogger.i('Fetching gallery composite image for uri: $uri');
+    final session = await auth.getValidSession();
+    final token = session?.token;
+    if (token == null) {
+      appLogger.w('No access token for getGalleryCompositeImage');
+      return null;
+    }
+    final url = '$_apiUrl/xrpc/social.grain.darkroom.getGalleryComposite?uri=$uri';
+    final response = await http.get(Uri.parse(url), headers: {'Authorization': "Bearer $token"});
+    if (response.statusCode != 200) {
+      appLogger.w(
+        'Failed to fetch gallery composite image: \\${response.statusCode} \\${response.body}',
+      );
+      return null;
+    }
+    try {
+      return response.bodyBytes;
+    } catch (e, st) {
+      appLogger.e('Error parsing gallery composite image response: $e', stackTrace: st);
+      return null;
     }
   }
 }
